@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
  <param
     name="robot_description"
@@ -18,11 +19,6 @@
     output="screen" > 
     <rosparam command="load" file="$(find flypulator_description)/param/aeroparam.yaml" />
   </node>
-  
- <node
-   name="sensor_data"
-   pkg="flypulator_sensor_data"
-   type="sensor_data" />
    
  <node 
     name="controller_spawner" 
