@@ -1,0 +1,46 @@
+<launch>
+ <param
+    name="robot_description"
+    textfile="$(find flypulator_description)/urdf/drone.urdf" />
+
+  <include
+    file="$(find gazebo_ros)/launch/empty_world.launch" />
+  <node
+    name="tf_footprint_base"
+    pkg="tf"
+    type="static_transform_publisher"
+    args="0 0 0 0 0 0 base_link base_footprint 40" />
+  <node
+    name="spawn_model"
+    pkg="gazebo_ros"
+    type="spawn_model"
+    args="-file $(find flypulator_description)/urdf/drone.urdf -urdf -model drone"
+    output="screen" > 
+    <rosparam command="load" file="$(find flypulator_description)/param/aeroparam.yaml" />
+  </node>
+  
+ <node
+   name="sensor_data"
+   pkg="flypulator_sensor_data"
+   type="sensor_data" />
+   
+ <node 
+    name="controller_spawner" 
+    pkg="controller_manager" 
+    type="spawner" 
+    respawn="false" 
+    output="screen" 
+    ns="/drone" 
+    args="joint_state_controller">   
+    <rosparam file="$(find flypulator_description)/param/jointstatecontroller.yaml" command="load"/>
+ </node>
+ <node 
+    name="robot_state_publisher"    
+    pkg="robot_state_publisher" 
+    type="robot_state_publisher"
+    respawn="false" output="screen">
+           <remap from="/joint_states" to="/drone/joint_states" />
+ </node>
+
+
+</launch>
