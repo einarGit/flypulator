@@ -1,15 +1,15 @@
-<robot
-  name="drone">
-
+<robot name="drone">
 
 <gazebo>
   <plugin name="aero_plugin" filename="libaero_plugin.so">
   </plugin>
 </gazebo>
+
 <gazebo>
   <plugin name="control_plugin" filename="libcontrol_plugin.so">
   </plugin>
 </gazebo>
+
 <gazebo>
 <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
 <robotNamespace>/drone</robotNamespace>

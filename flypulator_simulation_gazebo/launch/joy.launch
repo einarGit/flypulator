@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+
+<node pkg="joy" type="joy_node" name="joy_node" output="screen" >
+    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="deadzone" value="0.12" />
+    <param name="autorepeat_rate" value="50" />
+  </node>
+
+ <!-- Axes -->
+  <node pkg="flypulator_teleoperation" type="joystick" name="joystick" >
+  <param name="axis_force1" value="3" type="int"/>
+  <param name="axis_force2" value="4" type="int"/>
+  <param name="axis_force3" value="1" type="int"/>
+  <param name="axis_torque1" value="2" type="int"/> <!-- inverse -->
+  <param name="axis_torque2" value="5" type="int"/>
+  <param name="axis_torque3" value="0" type="int"/>
+  <param name="scale_force" value="3" type="double"/>
+  <param name="scale_torque" value="25" type="double"/>
+  </node>
+
+</launch>
+

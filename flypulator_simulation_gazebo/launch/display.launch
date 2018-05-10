@@ -10,6 +10,7 @@
   <param
     name="use_gui"
     value="$(arg gui)" />
+
   <node
     name="joint_state_publisher"
     pkg="joint_state_publisher"
@@ -21,6 +22,7 @@
     pkg="robot_state_publisher"
     type="state_publisher" />
 <param name="use_gui" value="TRUE"/>
+
   <node
     name="rviz"
     pkg="rviz"
