@@ -65,15 +65,15 @@ class ControlPlugin : public ModelPlugin
     double m;           //drone_masse
     double g = 9.81;    //gravity acceleration constant
     double s;           //rotor solidity
-    double Vwind_x = 0;     //wind velocity in global x
-    double Vwind_y = 0;     //wind velocity in global y
-    double Vwind_z = 0;     //wind velocity in global z
+    double Vwind_x = 1e-20;     //wind velocity in global x
+    double Vwind_y = 1e-20;     //wind velocity in global y
+    double Vwind_z = 1e-20;     //wind velocity in global z
     double Vdrone_x;    //drone velocity in global x
     double Vdrone_y;    //drone velocity in global y
     double Vdrone_z;    //drone velocity in global z
-    double Vx = 0;          //air velocity in global x
-    double Vy = 0;          //air velocity in global y
-    double Vz = 0;          //air velocity in global z
+    double Vx = 1e-20;          //air velocity in global x
+    double Vy = 1e-20;          //air velocity in global y
+    double Vz = 1e-20;          //air velocity in global z
     double Vi_h;        //induced velocity for the hovering case
                         //calculated blade rotate velocity with a small original value to avoid Gazebo crash
     double vel_1 = 0;
@@ -111,7 +111,7 @@ class ControlPlugin : public ModelPlugin
     //PID for line velocity
     double linear_p = 3.0;     //The proportional gain
     double linear_i = 0.4;     //The integral gain
-    double linear_d = 0.010;     //The derivative gain
+    double linear_d = 0.011;     //The derivative gain
     double linear_imax = 50.0; //The integral upper limit
     //PID for angular velocity
     double angular_p = 5.00;
@@ -283,6 +283,7 @@ class ControlPlugin : public ModelPlugin
         double Wa_y = this->controllers[3].Update(angularError_y, dt);
         double a_z = this->controllers[4].Update(linearError_z, dt);
         double Wa_z = this->controllers[5].Update(angularError_z, dt);
+
         Eigen::Vector3d lin_acc_global, lin_acc_body, angle_acc_global, angle_acc_body;
         lin_acc_global(0) = a_x;
         lin_acc_global(1) = a_y;
@@ -315,19 +316,7 @@ class ControlPlugin : public ModelPlugin
   public:
     void OnlinkMsg(const gazebo_msgs::LinkStatesConstPtr &msg)
     {
-        Vdrone_x = this->model->GetRelativeLinearVel().x;
-        Vdrone_y = this->model->GetRelativeLinearVel().y;
-        Vdrone_z = this->model->GetRelativeLinearVel().z;
-        Vx = Vwind_x - Vdrone_x;
-        Vy = Vwind_y - Vdrone_y;
-        Vz = Vwind_z - Vdrone_z;
-
-        //TODO: why Vx..z need to be reversed(or set 0), in order to get stable
-        Vx = Vy = Vz = 0;
-        // Vx = -Vx;
-        // Vy = -Vy;
-        // Vz = -Vz;
-
+        // ROS_INFO_STREAM(Vx<<","<<Vx<<","<<Vx);
         //blade1 aero dynamic,Vxx1,Vyy1...airflow velocity in blade local coordinate
         double q1_1, q1_2, q1_3, q1_4, Vxx1, Vyy1, Vzz1, Vxy1, C1, Vi1;
         double CT1, l1, u1, CQ1; //aerodynamic coefficient
@@ -847,12 +836,12 @@ class ControlPlugin : public ModelPlugin
         Vwind_x = _wind_msg->x;
         Vwind_y = _wind_msg->y;
         Vwind_z = _wind_msg->z;
-        // Vdrone_x = this->model->GetRelativeLinearVel().x;
-        // Vdrone_y = this->model->GetRelativeLinearVel().y;
-        // Vdrone_z = this->model->GetRelativeLinearVel().z;
-        // Vx = Vwind_x - Vdrone_x;
-        // Vy = Vwind_y - Vdrone_y;
-        // Vz = Vwind_z - Vdrone_z;
+        Vdrone_x = this->model->GetRelativeLinearVel().x;
+        Vdrone_y = this->model->GetRelativeLinearVel().y;
+        Vdrone_z = this->model->GetRelativeLinearVel().z;
+        Vx = Vwind_x - Vdrone_x;
+        Vy = Vwind_y - Vdrone_y;
+        Vz = Vwind_z - Vdrone_z;
     }
 
   public:

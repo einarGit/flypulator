@@ -63,15 +63,15 @@ class AeroPlugin : public ModelPlugin
   double m;                                                                                                                                              //drone_masse
   double g = 9.81;                                                                                                                                       //gravity acceleration constant
   double s;                                                                                                                                              //rotor solidity
-  double Vwind_x;                                                                                                                                        //wind velocity in global x
-  double Vwind_y;                                                                                                                                        //wind velocity in global y
-  double Vwind_z;                                                                                                                                        //wind velocity in global z
+  double Vwind_x = 1e-20;                                                                                                                                        //wind velocity in global x
+  double Vwind_y = 1e-20;                                                                                                                                        //wind velocity in global y
+  double Vwind_z = 1e-20;                                                                                                                                        //wind velocity in global z
   double Vdrone_x;                                                                                                                                       //drone velocity in global x
   double Vdrone_y;                                                                                                                                       //drone velocity in global y
   double Vdrone_z;                                                                                                                                       //drone velocity in global z
-  double Vx;                                                                                                                                             //air velocity in global x
-  double Vy;                                                                                                                                             //air velocity in global y
-  double Vz;                                                                                                                                             //air velocity in global z
+  double Vx = 1e-20;                                                                                                                                             //air velocity in global x
+  double Vy = 1e-20;                                                                                                                                             //air velocity in global y
+  double Vz = 1e-20;                                                                                                                                             //air velocity in global z
   double Vi_h;   
                                                                                                                                           //induced velocity for the hovering case
   double force_1, force_2, force_3, force_4, force_5, force_6;                                                                                           //thrust
@@ -188,27 +188,21 @@ public:
     //Create a wind velocity topic and subscribe to it
     ros::SubscribeOptions s1 =
         ros::SubscribeOptions::create<geometry_msgs::Vector3>(
-            "/drone/wind_cmd",
-            100,
-            boost::bind(&AeroPlugin::OnRosWindMsg, this, _1),
+            "/drone/wind_cmd",100, boost::bind(&AeroPlugin::OnRosWindMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubWind = this->rosNode->subscribe(s1);
 
     //subscribe to model link states to get position and orientation for coordinate transformation
     ros::SubscribeOptions s2 =
         ros::SubscribeOptions::create<gazebo_msgs::LinkStates>(
-            "/gazebo/link_states",
-            100,
-            boost::bind(&AeroPlugin::OnlinkMsg, this, _1),
+            "/gazebo/link_states",100, boost::bind(&AeroPlugin::OnlinkMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubLink = this->rosNode->subscribe(s2);
 
     //subscribe to control signal,six global velocity for drone
     ros::SubscribeOptions s3 =
         ros::SubscribeOptions::create<flypulator_plugin::Vector6dMsg>(
-            "/drone/rotor_cmd",
-            100,
-            boost::bind(&AeroPlugin::OnControlMsg, this, _1),
+            "/drone/rotor_cmd",100,boost::bind(&AeroPlugin::OnControlMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubControl = this->rosNode->subscribe(s3);
 
@@ -236,7 +230,9 @@ public:
   void OnlinkMsg(const gazebo_msgs::LinkStatesConstPtr &msg)
   {
     // ROS_INFO_STREAM("aero_plugin: get LinkStatesMsg!");
-    int i;
+
+    // ROS_INFO_STREAM(Vx<<","<<Vx<<","<<Vx);
+
     //blade1 aero dynamic,Vxx1,Vyy1...airflow velocity in blade local coordinate
     double q1_1, q1_2, q1_3, q1_4, Vxx1, Vyy1, Vzz1, Vxy1, C1, Vi1;
     double CT1, l1, u1, CQ1; //aerodynamic coefficient
