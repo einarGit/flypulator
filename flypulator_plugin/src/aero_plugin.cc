@@ -1,39 +1,34 @@
 #ifndef _AERO_PLUGIN_HH_
 #define _AERO_PLUGIN_HH_
-#include <gazebo/transport/transport.hh>
-#include <gazebo/msgs/msgs.hh>
-#include <gazebo/gazebo.hh>
-#include <gazebo/physics/physics.hh>
-#include <time.h>
+
+#include <vector>
 #include <iostream>
 #include <math.h>
 #include <thread>
-#include "ros/ros.h"
-#include "ros/callback_queue.h"
-#include "ros/subscribe_options.h"
-#include "std_msgs/Float32.h"
-#include "std_msgs/Int32.h"
-#include "gazebo/sensors/Sensor.hh"
-#include <gazebo/gazebo_config.h>
-#include <gazebo/gazebo_client.hh>
-#include "ros/ros.h"
-#include "geometry_msgs/Vector3.h"
-#include "geometry_msgs/Pose.h"
-#include "gazebo_msgs/LinkStates.h"
-#include <vector>
-#include <tf/transform_datatypes.h>
-#include "stdio.h"
-#include "stdlib.h"
-#include <Eigen/Dense>
-#include "geometry_msgs/Wrench.h"
+#include <fstream>
+
+#include <gazebo/gazebo.hh>
+#include <gazebo/transport/transport.hh>
+#include <gazebo/msgs/msgs.hh>
+#include <gazebo/physics/physics.hh>
 #include <gazebo/common/Events.hh>
 #include <gazebo/common/PID.hh>
 #include <gazebo/common/Time.hh>
-#include <fstream>
+#include <gazebo/sensors/Sensor.hh>
+#include <gazebo/gazebo_config.h>
+#include <gazebo/gazebo_client.hh>
 
-#define pi (M_PI)
+#include <ros/ros.h>
+#include <ros/callback_queue.h>
+
+#include <gazebo_msgs/LinkStates.h>
+#include <geometry_msgs/Wrench.h>
+
+#include <Eigen/Dense>
 
 #include <flypulator_plugin/Vector6dMsg.h>
+
+#define pi (M_PI) // TODO: rename pi to PI
 
 namespace gazebo
 {

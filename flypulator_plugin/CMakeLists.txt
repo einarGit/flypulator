@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sensor_msgs
-  tf
   genmsg
   dynamic_reconfigure
   gazebo_msgs
@@ -25,7 +24,6 @@ find_package(catkin REQUIRED COMPONENTS
   joint_state_controller
   hardware_interface
   position_controllers
-  nav_msgs 
   std_srvs
   message_generation
 )
