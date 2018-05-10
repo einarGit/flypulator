@@ -111,7 +111,7 @@ class ControlPlugin : public ModelPlugin
     //PID for line velocity
     double linear_p = 3.0;     //The proportional gain
     double linear_i = 0.4;     //The integral gain
-    double linear_d = 0.011;     //The derivative gain
+    double linear_d = 0.010;     //The derivative gain
     double linear_imax = 50.0; //The integral upper limit
     //PID for angular velocity
     double angular_p = 5.00;
