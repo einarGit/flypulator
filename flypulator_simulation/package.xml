@@ -1,0 +1,30 @@
+<package>
+  <name>flypulator_simulation</name>
+  <version>0.0.1</version>
+  <description>flypulator contains packages related to modeling, control and simulation of multicopter systems</description>
+  <maintainer email="chao.yao@tu-dresden.de">Chao Yao</maintainer>
+
+  <license>BSD</license>
+
+  <!-- <url type="website"></url> -->
+  <url type="bugtracker">https://github.com/tu-darmstadt-ros-pkg/hector_quadrotor/issues</url>
+
+  <author email="chao.yao@tu-dresden.de">Chao Yao</author>
+  <author email="Jinyao383@hotmail.com">Jinyao Zhu</author>
+  <author email="qiang.ge@mailbox.tu-dresden.de">Qiang Ge</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>flypulator_description</run_depend>
+  <run_depend>flypulator_plugin</run_depend>
+  <run_depend>flypulator_simulation_gazebo</run_depend>
+  <run_depend>flypulator_teleop</run_depend>
+
+  <!-- Dependencies needed only for running tests. -->
+
+</package>

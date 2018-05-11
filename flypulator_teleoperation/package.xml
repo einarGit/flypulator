@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>flypulator_teleoperation</name>
+  <name>flypulator_teleop</name>
   <version>0.0.0</version>
   <description>The joystick package</description>
 
-  <maintainer email="avalon@todo.todo">avalon</maintainer>
+  <maintainer email="chao.yao@tu-dresden.de">Chao Yao</maintainer>
+  <author email="Jinyao383@hotmail.com">Jinyao Zhu</author>
 
   <license>TODO</license>
 
