@@ -23,6 +23,12 @@
 
 #include <gazebo_msgs/LinkStates.h>
 #include <geometry_msgs/Wrench.h>
+#include <geometry_msgs/WrenchStamped.h>
+#include <geometry_msgs/Vector3.h>
+
+#include <sensor_msgs/JointState.h>
+
+#include <tf/transform_broadcaster.h>
 
 #include <Eigen/Dense>
 
@@ -53,22 +59,22 @@ class AeroPlugin : public ModelPlugin
   double k2 = -1.372;
   double k3 = -1.718;
   double k4 = -0.655;
-  double CD0 = 0.04;                                                                                                                                     //Profile_Drag_Coefficient from literatur
-  double rv = 0.7854;                                                                                                                                    //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
-  double m;                                                                                                                                              //drone_masse
-  double g = 9.81;                                                                                                                                       //gravity acceleration constant
-  double s;                                                                                                                                              //rotor solidity
-  double Vwind_x = 1e-20;                                                                                                                                        //wind velocity in global x
-  double Vwind_y = 1e-20;                                                                                                                                        //wind velocity in global y
-  double Vwind_z = 1e-20;                                                                                                                                        //wind velocity in global z
-  double Vdrone_x;                                                                                                                                       //drone velocity in global x
-  double Vdrone_y;                                                                                                                                       //drone velocity in global y
-  double Vdrone_z;                                                                                                                                       //drone velocity in global z
-  double Vx = 1e-20;                                                                                                                                             //air velocity in global x
-  double Vy = 1e-20;                                                                                                                                             //air velocity in global y
-  double Vz = 1e-20;                                                                                                                                             //air velocity in global z
-  double Vi_h;   
-                                                                                                                                          //induced velocity for the hovering case
+  double CD0 = 0.04;      //Profile_Drag_Coefficient from literatur
+  double rv = 0.7854;     //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
+  double m;               //drone_masse
+  double g = 9.81;        //gravity acceleration constant
+  double s;               //rotor solidity
+  double Vwind_x = 1e-20; //wind velocity in global x
+  double Vwind_y = 1e-20; //wind velocity in global y
+  double Vwind_z = 1e-20; //wind velocity in global z
+  double Vdrone_x;        //drone velocity in global x
+  double Vdrone_y;        //drone velocity in global y
+  double Vdrone_z;        //drone velocity in global z
+  double Vx = 1e-20;      //air velocity in global x
+  double Vy = 1e-20;      //air velocity in global y
+  double Vz = 1e-20;      //air velocity in global z
+  double Vi_h;
+  //induced velocity for the hovering case
   double force_1, force_2, force_3, force_4, force_5, force_6;                                                                                           //thrust
   double moment_1, moment_2, moment_3, moment_4, moment_5, moment_6;                                                                                     //torque
   double fh_x1, fh_x2, fh_x3, fh_x4, fh_x5, fh_x6, fh_y1, fh_y2, fh_y3, fh_y4, fh_y5, fh_y6;                                                             //H Force
@@ -96,7 +102,7 @@ class AeroPlugin : public ModelPlugin
   int di_force6 = 1;
   //real rotate direction
   int di_vel1, di_vel2, di_vel3, di_vel4, di_vel5, di_vel6;
-  int bo = 1; //bidirectional optional
+  int bo = 1;            //bidirectional optional
   double vel_min = 1e-6; //50
   double vel_max = 2500;
   //input control signal in velocity DOF 6
@@ -173,31 +179,39 @@ public:
     }
     // Create our ROS node.
     this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
-    ROS_INFO_STREAM("aero_plugin get node:"<<this->rosNode->getNamespace());
-    
+    ROS_INFO_STREAM("aero_plugin get node:" << this->rosNode->getNamespace());
+
     // TODO: Load parameters from .yaml
     // this->readParamsFromServer();
 
-    this->pub_ratio = this->rosNode->advertise<geometry_msgs::Wrench>("/drone/thrust_moment_ratio", 100);
+    this->pub_ratio = this->rosNode->advertise<flypulator_plugin::Vector6dMsg>("/drone/thrust_moment_ratio", 100);
+    this->pub_joint_state = this->rosNode->advertise<sensor_msgs::JointState>("/drone/joint_states", 100);
+
+    // this->pub_link1_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_1_wrench", 100);
+    // this->pub_link2_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_2_wrench", 100);
+    // this->pub_link3_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_3_wrench", 100);
+    // this->pub_link4_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_4_wrench", 100);
+    // this->pub_link5_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_5_wrench", 100);
+    // this->pub_link6_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_6_wrench", 100);
 
     //Create a wind velocity topic and subscribe to it
     ros::SubscribeOptions s1 =
         ros::SubscribeOptions::create<geometry_msgs::Vector3>(
-            "/drone/wind_cmd",100, boost::bind(&AeroPlugin::OnRosWindMsg, this, _1),
+            "/drone/wind_cmd", 100, boost::bind(&AeroPlugin::OnRosWindMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubWind = this->rosNode->subscribe(s1);
 
     //subscribe to model link states to get position and orientation for coordinate transformation
     ros::SubscribeOptions s2 =
         ros::SubscribeOptions::create<gazebo_msgs::LinkStates>(
-            "/gazebo/link_states",100, boost::bind(&AeroPlugin::OnlinkMsg, this, _1),
+            "/gazebo/link_states", 100, boost::bind(&AeroPlugin::OnlinkMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubLink = this->rosNode->subscribe(s2);
 
     //subscribe to control signal,six global velocity for drone
     ros::SubscribeOptions s3 =
         ros::SubscribeOptions::create<flypulator_plugin::Vector6dMsg>(
-            "/drone/rotor_cmd",100,boost::bind(&AeroPlugin::OnControlMsg, this, _1),
+            "/drone/rotor_cmd", 100, boost::bind(&AeroPlugin::OnControlMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubControl = this->rosNode->subscribe(s3);
 
@@ -218,6 +232,11 @@ public:
     this->SetVelocity();
     this->SetForce();
     this->SetTorque();
+
+    // publish tf base_link ---> world
+    tfPublisher();
+    jointStatePubliher();
+    // wrenchPublisher();
   }
 
   //calculate aerodynamic
@@ -273,6 +292,7 @@ public:
     {
       Vi1 = -Vzz1 / 2 + sqrt(pow((Vzz1 / 2), 2) - pow(Vi_h, 2));
     }
+
     if (vel_1 <= vel_min)
     {
       vel_1 = vel_min;
@@ -428,6 +448,7 @@ public:
       vel_3 = vel_max;
       //std::cout<<"Warning! Velocity of blade3 over limit"<<std::endl;
     }
+
     if (Vxx3 >= 0)
     {
       a3 = atan(Vyy3 / Vxx3);
@@ -436,6 +457,7 @@ public:
     {
       a3 = pi + atan(Vyy3 / Vxx3);
     }
+
     fh3 = 0.25 * s * pho * vel_3 * R * A * CD0 * Vxy3;
     fh_x3 = fh3 * cos(a3);
     fh_y3 = fh3 * sin(a3);
@@ -676,14 +698,14 @@ public:
     ratio4 = -3 * R * CQ4 * Sgn(this->link4->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force4;
     ratio5 = -3 * R * CQ5 * Sgn(this->link5->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force5;
     ratio6 = -3 * R * CQ6 * Sgn(this->link6->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force6;
-    
-    geometry_msgs::Wrench _msg;
-    _msg.force.x = ratio1;
-    _msg.force.y = ratio2;
-    _msg.force.z = ratio3;
-    _msg.torque.x = ratio4;
-    _msg.torque.y = ratio5;
-    _msg.torque.z = ratio6;
+
+    flypulator_plugin::Vector6dMsg _msg;
+    _msg.x1 = ratio1;
+    _msg.x2 = ratio2;
+    _msg.x3 = ratio3;
+    _msg.x4 = ratio4;
+    _msg.x5 = ratio5;
+    _msg.x6 = ratio6;
     this->pub_ratio.publish(_msg);
     ros::spinOnce();
   }
@@ -874,17 +896,11 @@ public:
   int Sgn(const double &num)
   {
     if (num < 0)
-    {
       return -1;
-    }
     else if (num > 0)
-    {
       return 1;
-    }
     else
-    {
       return 0;
-    }
   }
   //add force to blade link
 public:
@@ -965,6 +981,134 @@ private:
     this->rosNode->param("motor_resitance", Rm, Rm);
     ROS_INFO_STREAM("areo_plugin: parameters loaded!");
   }
+
+private:
+  void tfPublisher()
+  {
+    static tf::TransformBroadcaster T_br;
+
+    tf::Transform T_tmp;
+    math::Pose pose_tmp;
+
+    pose_tmp = this->link0->GetWorldPose();
+    T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
+    T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
+    T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "world", "base_link"));
+
+    // pose_tmp = this->link1->GetRelativePose();
+    // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
+    // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link1"));
+
+    // pose_tmp = this->link2->GetRelativePose();
+    // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
+    // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link2"));
+
+    // pose_tmp = this->link3->GetRelativePose();
+    // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
+    // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link3"));
+
+    // pose_tmp = this->link4->GetRelativePose();
+    // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
+    // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link4"));
+
+    // pose_tmp = this->link5->GetRelativePose();
+    // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
+    // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link5"));
+
+    // pose_tmp = this->link6->GetRelativePose();
+    // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
+    // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link6"));
+  }
+// publish joint state
+private:
+  void jointStatePubliher()
+  {
+    //publish joint state
+    sensor_msgs::JointState joint_state_msg;
+    joint_state_msg.name.resize(6);
+    joint_state_msg.position.resize(6);
+    joint_state_msg.velocity.resize(6);
+    joint_state_msg.header.stamp = ros::Time::now();
+    joint_state_msg.header.frame_id = "base_link";
+    joint_state_msg.name[0] = this->joint1->GetName();
+    joint_state_msg.name[1] = this->joint2->GetName();
+    joint_state_msg.name[2] = this->joint3->GetName();
+    joint_state_msg.name[3] = this->joint4->GetName();
+    joint_state_msg.name[4] = this->joint5->GetName();
+    joint_state_msg.name[5] = this->joint6->GetName();
+
+    joint_state_msg.position[0] = this->joint1->GetAngle(0).Radian();
+    joint_state_msg.position[1] = this->joint2->GetAngle(0).Radian();
+    joint_state_msg.position[2] = this->joint3->GetAngle(0).Radian();
+    joint_state_msg.position[3] = this->joint4->GetAngle(0).Radian();
+    joint_state_msg.position[4] = this->joint5->GetAngle(0).Radian();
+    joint_state_msg.position[5] = this->joint6->GetAngle(0).Radian();
+
+    pub_joint_state.publish(joint_state_msg);
+  }  
+
+private:
+  void wrenchPublisher()
+  {
+    geometry_msgs::WrenchStamped wrench_msg_tmp;
+    wrench_msg_tmp.header.stamp = ros::Time::now();
+
+    wrench_msg_tmp.header.frame_id = "motor_Link1";
+    wrench_msg_tmp.wrench.force.x = fh_x1;
+    wrench_msg_tmp.wrench.force.y = fh_y1;
+    wrench_msg_tmp.wrench.force.z = force_1;
+    wrench_msg_tmp.wrench.torque.x = moment_R1x;
+    wrench_msg_tmp.wrench.torque.y = moment_R1y;
+    wrench_msg_tmp.wrench.torque.z =  moment_1;
+    this->pub_link1_wrench.publish(wrench_msg_tmp);
+    wrench_msg_tmp.header.frame_id = "motor_Link2";
+    wrench_msg_tmp.wrench.force.x = fh_x2;
+    wrench_msg_tmp.wrench.force.y = fh_y2;
+    wrench_msg_tmp.wrench.force.z = force_2;
+    wrench_msg_tmp.wrench.torque.x = moment_R2x;
+    wrench_msg_tmp.wrench.torque.y = moment_R2y;
+    wrench_msg_tmp.wrench.torque.z =  moment_2;
+    this->pub_link2_wrench.publish(wrench_msg_tmp);
+    wrench_msg_tmp.header.frame_id = "motor_Link3";
+    wrench_msg_tmp.wrench.force.x = fh_x3;
+    wrench_msg_tmp.wrench.force.y = fh_y3;
+    wrench_msg_tmp.wrench.force.z = force_3;
+    wrench_msg_tmp.wrench.torque.x = moment_R3x;
+    wrench_msg_tmp.wrench.torque.y = moment_R3y;
+    wrench_msg_tmp.wrench.torque.z =  moment_3;
+    this->pub_link3_wrench.publish(wrench_msg_tmp);
+    wrench_msg_tmp.header.frame_id = "motor_Link4";
+    wrench_msg_tmp.wrench.force.x = fh_x4;
+    wrench_msg_tmp.wrench.force.y = fh_y4;
+    wrench_msg_tmp.wrench.force.z = force_4;
+    wrench_msg_tmp.wrench.torque.x = moment_R4x;
+    wrench_msg_tmp.wrench.torque.y = moment_R4y;
+    wrench_msg_tmp.wrench.torque.z =  moment_4;
+    this->pub_link4_wrench.publish(wrench_msg_tmp);
+    wrench_msg_tmp.header.frame_id = "motor_Link5";
+    wrench_msg_tmp.wrench.force.x = fh_x5;
+    wrench_msg_tmp.wrench.force.y = fh_y5;
+    wrench_msg_tmp.wrench.force.z = force_5;
+    wrench_msg_tmp.wrench.torque.x = moment_R5x;
+    wrench_msg_tmp.wrench.torque.y = moment_R5y;
+    wrench_msg_tmp.wrench.torque.z =  moment_5;
+    this->pub_link5_wrench.publish(wrench_msg_tmp);
+    wrench_msg_tmp.header.frame_id = "motor_Link6";
+    wrench_msg_tmp.wrench.force.x = fh_x6;
+    wrench_msg_tmp.wrench.force.y = fh_y6;
+    wrench_msg_tmp.wrench.force.z = force_6;
+    wrench_msg_tmp.wrench.torque.x = moment_R6x;
+    wrench_msg_tmp.wrench.torque.y = moment_R6y;
+    wrench_msg_tmp.wrench.torque.z =  moment_6;
+    this->pub_link6_wrench.publish(wrench_msg_tmp);
+  }
+
   /// \brief Pointer to the model.
 private:
   physics::ModelPtr model;
@@ -1046,6 +1190,13 @@ private:
 
 private:
   ros::Publisher pub_ratio;
+  ros::Publisher pub_joint_state;
+  ros::Publisher pub_link1_wrench;
+  ros::Publisher pub_link2_wrench;
+  ros::Publisher pub_link3_wrench;
+  ros::Publisher pub_link4_wrench;
+  ros::Publisher pub_link5_wrench;
+  ros::Publisher pub_link6_wrench;
 };
 
 // Tell Gazebo about this plugin, so that Gazebo can call Load on this plugin.

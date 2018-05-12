@@ -1,14 +1,17 @@
 <?xml version="1.0"?>
 <launch>
- <param name="robot_description" textfile="$(find flypulator_description)/urdf/drone.urdf" />
+ <!-- <param name="robot_description" textfile="$(find flypulator_description)/urdf/drone.urdf" /> -->
+ <!-- <param name="robot_description" command="cat $(find flypulator_description)/urdf/drone.xml" /> -->
+
+ <arg name="model" default="$(find flypulator_description)/urdf/drone.urdf"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch" />
 
-  <node
+  <!-- <node
     name="tf_footprint_base"
     pkg="tf"
     type="static_transform_publisher"
-    args="0 0 0 0 0 0 base_link base_footprint 40" />
+    args="0 0 0 0 0 0 base_link base_footprint 40" /> -->
 
   <node
     name="spawn_model"
@@ -30,7 +33,7 @@
     <rosparam file="$(find flypulator_description)/param/jointstatecontroller.yaml" command="load"/>
  </node> -->
 
-  <node 
+  <!-- <node 
     name="controller_spawner" 
     pkg="controller_manager" 
     type="spawner" 
@@ -38,13 +41,10 @@
     output="screen" 
     args="joint_state_controller" >
     <rosparam file="$(find flypulator_description)/param/jointstatecontroller.yaml" command="load"/>
- </node>
+ </node> -->
 
- <node 
-    name="robot_state_publisher"    
-    pkg="robot_state_publisher" 
-    type="robot_state_publisher"
-    respawn="false" output="screen">
+ <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
+ <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
     <remap from="/joint_states" to="/drone/joint_states" />
  </node>
 

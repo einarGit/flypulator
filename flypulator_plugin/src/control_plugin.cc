@@ -215,7 +215,7 @@ class ControlPlugin : public ModelPlugin
         this->rosSubControl = this->rosNode->subscribe(s3);
 
         ros::SubscribeOptions s4 =
-            ros::SubscribeOptions::create<geometry_msgs::Wrench>(
+            ros::SubscribeOptions::create<flypulator_plugin::Vector6dMsg>(
                 "/drone/thrust_moment_ratio",100,boost::bind(&ControlPlugin::OnRosRatioMsg, this, _1),
                 ros::VoidPtr(), &this->rosQueue);
         this->rosSubRatio = this->rosNode->subscribe(s4);
@@ -814,14 +814,14 @@ class ControlPlugin : public ModelPlugin
     }
 
   public:
-    void OnRosRatioMsg(const geometry_msgs::WrenchConstPtr &_thrust_moment_ratio)
+    void OnRosRatioMsg(const flypulator_plugin::Vector6dMsgConstPtr &_thrust_moment_ratio)
     {
-        ratio1 = _thrust_moment_ratio->force.x;
-        ratio2 = _thrust_moment_ratio->force.y;
-        ratio3 = _thrust_moment_ratio->force.z;
-        ratio4 = _thrust_moment_ratio->torque.x;
-        ratio5 = _thrust_moment_ratio->torque.y;
-        ratio6 = _thrust_moment_ratio->torque.z;
+        ratio1 = _thrust_moment_ratio->x1;
+        ratio2 = _thrust_moment_ratio->x2;
+        ratio3 = _thrust_moment_ratio->x3;
+        ratio4 = _thrust_moment_ratio->x4;
+        ratio5 = _thrust_moment_ratio->x5;
+        ratio6 = _thrust_moment_ratio->x6;
     }
 
   public:
