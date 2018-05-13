@@ -1,0 +1,5 @@
+float64 x_start
+float64 x_end
+duration delta_t
+---
+bool finished
