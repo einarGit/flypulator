@@ -32,7 +32,7 @@
 
 #include <Eigen/Dense>
 
-#include <flypulator_plugin/Vector6dMsg.h>
+#include <flypulator_common_msgs/Vector6dMsg.h>
 
 #define pi (M_PI) // TODO: rename pi to PI
 
@@ -184,7 +184,7 @@ public:
     // TODO: Load parameters from .yaml
     // this->readParamsFromServer();
 
-    this->pub_ratio = this->rosNode->advertise<flypulator_plugin::Vector6dMsg>("/drone/thrust_moment_ratio", 100);
+    this->pub_ratio = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/thrust_moment_ratio", 100);
     this->pub_joint_state = this->rosNode->advertise<sensor_msgs::JointState>("/drone/joint_states", 100);
 
     // this->pub_link1_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_1_wrench", 100);
@@ -210,7 +210,7 @@ public:
 
     //subscribe to control signal,six global velocity for drone
     ros::SubscribeOptions s3 =
-        ros::SubscribeOptions::create<flypulator_plugin::Vector6dMsg>(
+        ros::SubscribeOptions::create<flypulator_common_msgs::Vector6dMsg>(
             "/drone/rotor_cmd", 100, boost::bind(&AeroPlugin::OnControlMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubControl = this->rosNode->subscribe(s3);
@@ -699,7 +699,7 @@ public:
     ratio5 = -3 * R * CQ5 * Sgn(this->link5->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force5;
     ratio6 = -3 * R * CQ6 * Sgn(this->link6->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force6;
 
-    flypulator_plugin::Vector6dMsg _msg;
+    flypulator_common_msgs::Vector6dMsg _msg;
     _msg.x1 = ratio1;
     _msg.x2 = ratio2;
     _msg.x3 = ratio3;
@@ -725,7 +725,7 @@ public:
   }
 
 public:
-  void OnControlMsg(const flypulator_plugin::Vector6dMsgConstPtr &_msg)
+  void OnControlMsg(const flypulator_common_msgs::Vector6dMsgConstPtr &_msg)
   {
     // ROS_INFO_STREAM("aero plugin: get control message!");
     double vel1, vel2, vel3, vel4, vel5, vel6;

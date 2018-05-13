@@ -1,10 +1,10 @@
 
 <package>
-  <name>flypulator_plugin</name>
-  <version>0.0.0</version>
-  <description>The plugin package</description>
+  <name>flypulator_plugin_control</name>
+  <version>0.0.1</version>
+  <description>The control plugin package</description>
 
-  <maintainer email="avalon@todo.todo">avalon</maintainer>
+  <maintainer email="todo@todo.todo">todo</maintainer>
 
   <license>TODO</license>
 
@@ -22,9 +22,9 @@
   <build_depend>hardware_interface</build_depend>
   <build_depend>joint_state_controller</build_depend>
   <build_depend>roslaunch</build_depend>
-  <build_depend>message_generation</build_depend>
+  <build_depend>flypulator_common_msgs</build_depend>
   
-  <run_depend>message_runtime</run_depend>
+  <run_depend>flypulator_common_msgs</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>

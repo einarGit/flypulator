@@ -25,7 +25,7 @@
 
 #include <Eigen/Dense>
 
-#include <flypulator_plugin/Vector6dMsg.h>
+#include <flypulator_common_msgs/Vector6dMsg.h>
 
 
 #define pi (M_PI) // TODO: rename pi to PI
@@ -191,7 +191,7 @@ class ControlPlugin : public ModelPlugin
         this->controllers.push_back(controller_rotation_z);
 
         // publish rotor command (velocity of each propeller)
-        this->pub_cmd = this->rosNode->advertise<flypulator_plugin::Vector6dMsg>("/drone/rotor_cmd", 100);
+        this->pub_cmd = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/rotor_cmd", 100);
 
         //Create a wind velocity topic and subscribe to it
         ros::SubscribeOptions s1 =
@@ -215,7 +215,7 @@ class ControlPlugin : public ModelPlugin
         this->rosSubControl = this->rosNode->subscribe(s3);
 
         ros::SubscribeOptions s4 =
-            ros::SubscribeOptions::create<flypulator_plugin::Vector6dMsg>(
+            ros::SubscribeOptions::create<flypulator_common_msgs::Vector6dMsg>(
                 "/drone/thrust_moment_ratio",100,boost::bind(&ControlPlugin::OnRosRatioMsg, this, _1),
                 ros::VoidPtr(), &this->rosQueue);
         this->rosSubRatio = this->rosNode->subscribe(s4);
@@ -796,7 +796,7 @@ class ControlPlugin : public ModelPlugin
             vel_6 = -b6 / (2 * a0) + sqrt(pow(b6, 2) - 4 * a0 * (c6 - Thrust_ist(5))) / (2 * a0);
         }
 
-        flypulator_plugin::Vector6dMsg _rotor_cmd;
+        flypulator_common_msgs::Vector6dMsg _rotor_cmd;
         // _rotor_cmd.force.x = vel_1 * di_vel1;
         // _rotor_cmd.force.y = vel_2 * di_vel2;
         // _rotor_cmd.force.z = vel_3 * di_vel3;
@@ -814,7 +814,7 @@ class ControlPlugin : public ModelPlugin
     }
 
   public:
-    void OnRosRatioMsg(const flypulator_plugin::Vector6dMsgConstPtr &_thrust_moment_ratio)
+    void OnRosRatioMsg(const flypulator_common_msgs::Vector6dMsgConstPtr &_thrust_moment_ratio)
     {
         ratio1 = _thrust_moment_ratio->x1;
         ratio2 = _thrust_moment_ratio->x2;
