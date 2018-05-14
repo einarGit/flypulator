@@ -34,7 +34,7 @@
 
 #include <flypulator_common_msgs/Vector6dMsg.h>
 
-#define pi (M_PI) // TODO: rename pi to PI
+#define PI (M_PI) 
 
 namespace gazebo
 {
@@ -50,7 +50,7 @@ class AeroPlugin : public ModelPlugin
   double pa = th0 - 0.75 * thtw; //blade pitch angle
   double B = 0.98;               //tip loss factor
   double pho = 1.2;              //air density
-  double A = pi * pow(R, 2);     //rotor aero
+  double A = PI * pow(R, 2);     //rotor aero
   double ki = 1.15;              //factor to calculate torque
   double k = 4.65;               //factor to calculate torque
   //parameters to calculate induced velocity Vi
@@ -165,7 +165,7 @@ public:
     this->link6 = _model->GetChildLink("blade_Link6");
     //calculation of constants
     m = this->link0->GetInertial()->GetMass();
-    s = (N * c) / (pi * R);                              //rotor solidity
+    s = (N * c) / (PI * R);                              //rotor solidity
     Vi_h = -sqrt((m * g) / (2 * N * pho * A * cos(rv))); //induced airflow velocity by hover case
 
     // Initialize ros, if it has not already bee initialized.
@@ -317,7 +317,7 @@ public:
     }
     else
     {
-      a1 = pi + atan(Vyy1 / Vxx1);
+      a1 = PI + atan(Vyy1 / Vxx1);
     }
     fh1 = 0.25 * s * pho * vel_1 * R * A * CD0 * Vxy1; //H-force
     fh_x1 = fh1 * cos(a1);                             //H-force in x direction
@@ -381,7 +381,7 @@ public:
     }
     else
     {
-      a2 = pi + atan(Vyy2 / Vxx2);
+      a2 = PI + atan(Vyy2 / Vxx2);
     }
     fh2 = 0.25 * s * pho * vel_2 * R * A * CD0 * Vxy2;
     fh_x2 = fh2 * cos(a2);
@@ -455,7 +455,7 @@ public:
     }
     else
     {
-      a3 = pi + atan(Vyy3 / Vxx3);
+      a3 = PI + atan(Vyy3 / Vxx3);
     }
 
     fh3 = 0.25 * s * pho * vel_3 * R * A * CD0 * Vxy3;
@@ -537,7 +537,7 @@ public:
     }
     else
     {
-      a4 = pi + atan(Vyy4 / Vxx4);
+      a4 = PI + atan(Vyy4 / Vxx4);
     }
     fh4 = 0.25 * s * pho * vel_4 * R * A * CD0 * Vxy4;
     fh_x4 = fh4 * cos(a4);
@@ -610,7 +610,7 @@ public:
     }
     else
     {
-      a5 = pi + atan(Vyy5 / Vxx5);
+      a5 = PI + atan(Vyy5 / Vxx5);
     }
     fh5 = 0.25 * s * pho * vel_5 * R * A * CD0 * Vxy5;
     fh_x5 = fh5 * cos(a5);
@@ -683,7 +683,7 @@ public:
     }
     else
     {
-      a6 = pi + atan(Vyy6 / Vxx6);
+      a6 = PI + atan(Vyy6 / Vxx6);
     }
     fh6 = 0.25 * s * pho * vel_6 * R * A * CD0 * Vxy6;
     fh_x6 = fh6 * cos(a6);
