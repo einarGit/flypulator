@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(flypulator_plugin)
+project(flypulator_plugin_control)
 
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++11")
@@ -25,20 +25,14 @@ find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   position_controllers
   std_srvs
-  message_generation
+  flypulator_common_msgs
 )
 
-add_message_files(FILES Vector6dMsg.msg)
-generate_messages(DEPENDENCIES std_msgs)
-
-catkin_package(CATKIN_DEPENDS message_runtime)
+catkin_package()
 
 include_directories(${GAZEBO_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 add_library(control_plugin SHARED src/control_plugin.cc)
 target_link_libraries(control_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
-
-add_library(aero_plugin SHARED src/aero_plugin.cc)
-target_link_libraries(aero_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
 
