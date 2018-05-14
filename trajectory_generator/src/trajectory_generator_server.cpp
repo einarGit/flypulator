@@ -30,9 +30,9 @@ void convertTo6DArray(const geometry_msgs::Vector3& x1, const geometry_msgs::Vec
     destination[0] = x1.x;
     destination[1] = x1.y;
     destination[2] = x1.z;
-    destination[3] = x2.x * M_PI / 180.0f;
-    destination[4] = x2.y * M_PI / 180.0f;
-    destination[5] = x2.z * M_PI / 180.0f;
+    destination[3] = x2.x * M_PI / 180.0f; // convert to rad!
+    destination[4] = x2.y * M_PI / 180.0f; // convert to rad!
+    destination[5] = x2.z * M_PI / 180.0f; // convert to rad!
 }
 
 // convert Euler angles to quaternions using roll-pitch-yaw sequence
@@ -67,7 +67,6 @@ void calculateOmegaDot(const float roll, const float roll_dot, const float roll_
 trajectory_msgs::MultiDOFJointTrajectoryPoint generateTrajectoryMessage(const float p[6], const float p_dot[6], const float p_ddot[6], 
                                                                         const Eigen::Quaternionf& q, const Eigen::Vector3f& omega, const Eigen::Vector3f& omega_dot, 
                                                                         const ros::Duration& time_from_start){
-    //TODO confirm valid input
     //TODO Maybe pass reference to output to avoid copying of msg_trajectory
 
     //set linear position, velocity and acceleration in geometry_msgs::Vector3 structs
@@ -125,6 +124,7 @@ trajectory_msgs::MultiDOFJointTrajectoryPoint generateTrajectoryMessage(const fl
 
 bool createTrajectory(geometry_msgs::Vector3& x_start, geometry_msgs::Vector3& x_end, geometry_msgs::Vector3& rpy_start, geometry_msgs::Vector3& rpy_end, 
                             float duration, TrajTypes::Type traj_type){
+    //TODO: check if trajectory is feasible? (vel and acc to high, duration to low)
     // save input values in 6D array
     float pose_start[6];
     convertTo6DArray(x_start, rpy_start, pose_start);
@@ -140,11 +140,11 @@ bool createTrajectory(geometry_msgs::Vector3& x_start, geometry_msgs::Vector3& x
     Eigen::Vector3f omega_current;
     Eigen::Vector3f omega_dot_current;
 
-    float a[6][6]; // polynomial coefficients for trajectory, first dimension: 
+    float a[6][6]; // polynomial coefficients for trajectory, first dimension: axis, second dimension: coefficient (can be more than 6 for higher order polynoms)
 
-    // print console message
+    // calculate polynomial coeffiencts for linear and polynomial trajectory
     switch (traj_type){
-
+        
         case TrajTypes::Linear:
             // calculate constant linear velocity and acceleration (=0)
             for (int dim = 0; dim<6; dim++){
@@ -175,14 +175,18 @@ bool createTrajectory(geometry_msgs::Vector3& x_start, geometry_msgs::Vector3& x
             ROS_ERROR("Polynom type not well defined! Must follow enumeration");
     }
     
-    const ros::Time t_start = ros::Time::now(); // TODO: take ros time here
+    const ros::Time t_start = ros::Time::now(); // Take ros time - sync with "use_sim_time" parameter over /clock topic
     const ros::Duration trajDuration (duration);
-    ros::Time t (t_start.toSec()); // running time
-    ROS_INFO("Start Time: %f", t.toSec());
-    ros::Rate r(10); //1Hz
+
+    ros::Time t (t_start.toSec()); // running time variable
+
+    ROS_DEBUG("Start Time: %f", t.toSec());
+
+    ros::Rate r(10); //TODO: take Frequency of state estimation
+
     // start continous message publishing 
     while ( t <= t_start + trajDuration ){
-        // calculate x(t)
+        // calculate trajectory for position, velocity, acceleration, and euler angles trajectory and its derivatives (not equal to omega and omega_dot!!)
         if (traj_type == TrajTypes::Linear || traj_type == TrajTypes::Polynomial)
         {
             // linear trajectory is also a polynomial trajectory with different coeffiencts (set before)
@@ -195,7 +199,7 @@ bool createTrajectory(geometry_msgs::Vector3& x_start, geometry_msgs::Vector3& x
         }
         // add other trajectory types here
        
-        // vel_current and acc_current remain constant on linear trajectory, so no need for calculation
+        // calculate rotational trajectory from euler angles trajectory
         // calculate quaternion from euler angles
         euler2Quaternion(pose_current[3], pose_current[4], pose_current[5], q_current);
         // calculate omega from euler angles and their derivative
@@ -209,13 +213,11 @@ bool createTrajectory(geometry_msgs::Vector3& x_start, geometry_msgs::Vector3& x
         trajectory_msgs::MultiDOFJointTrajectoryPoint msg = generateTrajectoryMessage(pose_current, vel_current, acc_current, 
                                                                                     q_current, omega_current, omega_dot_current, ros::Duration(t-t_start));
         trajectory_publisher.publish(msg); //publish message to topic /trajectory
-
-         //TODO sleep 1/frequency of Pose estimation
         
         ros::spinOnce(); // not necessary (?) but good measure
-        r.sleep();
-        t = ros::Time::now();
-        ROS_INFO("Current Time: %f", t.toSec());
+        r.sleep(); // keep frequency, so sleep until next timestep
+        t = ros::Time::now(); //update time
+        ROS_DEBUG("Current Time: %f", t.toSec());
     }
 
     ROS_INFO("trajectory finished!");
@@ -223,13 +225,14 @@ bool createTrajectory(geometry_msgs::Vector3& x_start, geometry_msgs::Vector3& x
     return true;
 }
 
-
+// create polynomial trajectory from request and give response
 bool createPolynomialTrajectory(trajectory_generator::polynomial_trajectory::Request &req,
                             trajectory_generator::polynomial_trajectory::Response &res){
     res.finished = createTrajectory(req.x_start, req.x_end, req.rpy_start, req.rpy_end, req.delta_t,TrajTypes::Polynomial);
     return true;
 }
 
+// create linear trajectory from request and give response
 bool createLinearTrajectory(trajectory_generator::linear_trajectory::Request &req,
                             trajectory_generator::linear_trajectory::Response &res){
     res.finished = createTrajectory(req.x_start, req.x_end, req.rpy_start, req.rpy_end, req.delta_t,TrajTypes::Linear);
@@ -242,16 +245,14 @@ int main(int argc, char **argv)
     ros::init(argc,argv,"trajectory_generator"); //pass node name (!)
     ros::NodeHandle n;
 
-    //register service
+    //register services
     ros::ServiceServer serviceLinTraj = n.advertiseService("linear_trajectory",createLinearTrajectory);
-    ROS_INFO("service linear_trajectory ready");
+    ROS_INFO("Service linear_trajectory ready");
     ros::ServiceServer servicePolTraj = n.advertiseService("polynomial_trajectory",createPolynomialTrajectory);
-    ROS_INFO("service polynomial_trajectory ready");
+    ROS_INFO("Service polynomial_trajectory ready");
 
     //register publisher for output message
-    trajectory_publisher = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("trajectory",1000);
-    //trajectory_publisher = n.advertise<std_msgs::String>("trajectory",1000);
-    
+    trajectory_publisher = n.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("trajectory",1000);    
 
     ros::spin(); //keep server alive and watch for requests
 
