@@ -58,6 +58,7 @@ find_package(Eigen3 REQUIRED)
 add_service_files(
   FILES
   linear_trajectory.srv
+  polynomial_trajectory.srv
 )
 
 ## Generate actions in the 'action' folder
