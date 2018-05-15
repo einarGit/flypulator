@@ -7,7 +7,7 @@
   <license>BSD</license>
 
   <author email="chao.yao@tu-dresden.de">Chao Yao</author>
-  <author email="jan.krieglstein@gmail.com">Jinyao Zhu</author>
+  <author email="jan.krieglstein@gmail.com">Jan Krieglstein</author>
 
   <!-- Dependencies which this package needs to build itself. -->
   <buildtool_depend>catkin</buildtool_depend>
