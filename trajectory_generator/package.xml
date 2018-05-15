@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>trajectory_generator</name>
-  <version>0.0.0</version>
-  <description>The trajectory_generator package provides 6D trajectories of different types</description>
+  <version>0.0.9</version>
+  <description>The trajectory_generator package provides 6D trajectories of different types: Linear trajectory and polynomial trajectory (fifth order polynomial).
+  It publishes the trajectory as a trajectory_msgs/MultiDOFJointTrajectoryPoint to topic /trajectory periodically with frequency as determined by pose estimation 
+  (not implemented yet). The trajectories can be requested by services "linear_trajectory" and "polynomial_trajectory". </description>
 
   <maintainer email="jan.krieglstein@tu-dresden.de">Jan Krieglstein</maintainer>
   <maintainer email="chao.yao@tu-dresden.de">Chao Yao</maintainer>
