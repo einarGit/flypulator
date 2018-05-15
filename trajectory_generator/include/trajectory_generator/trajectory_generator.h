@@ -32,8 +32,9 @@ class TrajectoryGenerator {
         }
 
         // create and send trajectory with pose estimation frequency
-        bool createAndSendTrajectory(geometry_msgs::Vector3& x_start, geometry_msgs::Vector3& x_end, geometry_msgs::Vector3& rpy_start, geometry_msgs::Vector3& rpy_end, 
-                            float duration, TrajTypes::Type traj_type);
+        bool createAndSendTrajectory(const geometry_msgs::Vector3& x_start, const geometry_msgs::Vector3& x_end, 
+                                     const geometry_msgs::Vector3& rpy_start, const geometry_msgs::Vector3& rpy_end, 
+                                     const float duration, const TrajTypes::Type traj_type);
 
     private: 
         //message publisher for output trajectory, needs to be global to be visible to create<..>Trajectory functions

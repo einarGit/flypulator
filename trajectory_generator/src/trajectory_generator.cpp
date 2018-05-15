@@ -1,8 +1,9 @@
 #include "trajectory_generator/trajectory_generator.h"
 
 // create Trajectory and send it periodically
-bool TrajectoryGenerator::createAndSendTrajectory(geometry_msgs::Vector3& x_start, geometry_msgs::Vector3& x_end, geometry_msgs::Vector3& rpy_start, geometry_msgs::Vector3& rpy_end, 
-                            float duration, TrajTypes::Type traj_type){
+bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& x_start, const geometry_msgs::Vector3& x_end, 
+                                                  const geometry_msgs::Vector3& rpy_start, const geometry_msgs::Vector3& rpy_end, 
+                                                  const float duration, const TrajTypes::Type traj_type){
     //TODO: check if trajectory is feasible? (vel and acc to high, duration to low)
     // save input values in 6D array
     float pose_start[6];
