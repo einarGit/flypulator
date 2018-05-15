@@ -14,7 +14,7 @@
 #include <eigen3/Eigen/Dense> //TODO Why does <Eigen/Dense> not work??
 #include <math.h> //sin,cos functions, M_PI
 
-namespace TrajTypes // own namespace for enumeration following style guide http://wiki.ros.org/CppStyleGuide
+namespace trajectory_types // own namespace for enumeration following style guide http://wiki.ros.org/CppStyleGuide
 {
   enum Type
   {
@@ -34,7 +34,7 @@ class TrajectoryGenerator {
         // create and send trajectory with pose estimation frequency
         bool createAndSendTrajectory(const geometry_msgs::Vector3& x_start, const geometry_msgs::Vector3& x_end, 
                                      const geometry_msgs::Vector3& rpy_start, const geometry_msgs::Vector3& rpy_end, 
-                                     const float duration, const TrajTypes::Type traj_type);
+                                     const float duration, const trajectory_types::Type traj_type);
 
     private: 
         //message publisher for output trajectory, needs to be global to be visible to create<..>Trajectory functions

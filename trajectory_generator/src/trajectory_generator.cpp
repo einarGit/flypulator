@@ -3,7 +3,7 @@
 // create Trajectory and send it periodically
 bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& x_start, const geometry_msgs::Vector3& x_end, 
                                                   const geometry_msgs::Vector3& rpy_start, const geometry_msgs::Vector3& rpy_end, 
-                                                  const float duration, const TrajTypes::Type traj_type){
+                                                  const float duration, const trajectory_types::Type traj_type){
     //TODO: check if trajectory is feasible? (vel and acc to high, duration to low)
     // save input values in 6D array
     float pose_start[6];
@@ -25,7 +25,7 @@ bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& 
     // calculate polynomial coeffiencts for linear and polynomial trajectory
     switch (traj_type){
         
-        case TrajTypes::Linear:
+        case trajectory_types::Linear:
             // calculate constant linear velocity and acceleration (=0)
             for (int dim = 0; dim<6; dim++){
                 a[dim][0] = pose_start[dim];
@@ -38,7 +38,7 @@ bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& 
             ROS_INFO("Start linear trajectory..");
             break;
 
-        case TrajTypes::Polynomial:
+        case trajectory_types::Polynomial:
             // calculate polynomial coefficients
             for (int dim = 0; dim<6; dim++){
                 a[dim][0] = pose_start[dim];
@@ -67,7 +67,7 @@ bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& 
     // start continous message publishing 
     while ( t <= t_start + trajDuration ){
         // calculate trajectory for position, velocity, acceleration, and euler angles trajectory and its derivatives (not equal to omega and omega_dot!!)
-        if (traj_type == TrajTypes::Linear || traj_type == TrajTypes::Polynomial)
+        if (traj_type == trajectory_types::Linear || traj_type == trajectory_types::Polynomial)
         {
             // linear trajectory is also a polynomial trajectory with different coeffiencts (set before)
             float dt = (float) (t.toSec() - t_start.toSec());
