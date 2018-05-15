@@ -57,4 +57,4 @@ class TrajectoryGenerator {
 
 };
 
-#endif /* TRAJ_HPP_ */
+#endif //TRAJECTORY_GENERATOR_H
