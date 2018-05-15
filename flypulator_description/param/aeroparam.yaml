@@ -16,7 +16,7 @@ default_blade3_rotation_direction: 1
 default_blade4_rotation_direction: -1
 default_blade5_rotation_direction: 1
 default_blade6_rotation_direction: -1
-bidirectional_optional: 0
+bidirectional_optional: false
 KV_value: 890
 nominal_no_load_voltage: 10
 nominal_no_load_current: 0.5
