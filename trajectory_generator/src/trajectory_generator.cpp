@@ -92,7 +92,7 @@ bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& 
         // Concatenate informations to trajectory message
         trajectory_msgs::MultiDOFJointTrajectoryPoint msg = generateTrajectoryMessage(pose_current, vel_current, acc_current, 
                                                                                     q_current, omega_current, omega_dot_current, ros::Duration(t-t_start));
-        this->trajectory_publisher.publish(msg); //publish message to topic /trajectory
+        this->trajectory_publisher_.publish(msg); //publish message to topic /trajectory
 
         ros::spinOnce(); // not necessary (?) but good measure
         r.sleep(); // keep frequency, so sleep until next timestep

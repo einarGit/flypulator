@@ -28,7 +28,7 @@ class TrajectoryGenerator {
 
     public: //constructor takes publisher to publish message
         TrajectoryGenerator(ros::Publisher& pub){
-            trajectory_publisher = pub;
+            trajectory_publisher_ = pub;
         }
 
         // create and send trajectory with pose estimation frequency
@@ -38,7 +38,7 @@ class TrajectoryGenerator {
 
     private: 
         //message publisher for output trajectory, needs to be global to be visible to create<..>Trajectory functions
-        ros::Publisher trajectory_publisher; 
+        ros::Publisher trajectory_publisher_; 
         // create trajectory message 
         trajectory_msgs::MultiDOFJointTrajectoryPoint generateTrajectoryMessage(const float p[6], const float p_dot[6], const float p_ddot[6], 
                                     const Eigen::Quaternionf& q, const Eigen::Vector3f& omega, const Eigen::Vector3f& omega_dot, 
