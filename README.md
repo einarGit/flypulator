@@ -41,3 +41,7 @@ They can be called by the following command (for instance):
 
 The trajectory generator publishes [MultiDOFJointTrajectoryPoint Messages](http://docs.ros.org/jade/api/trajectory_msgs/html/msg/MultiDOFJointTrajectoryPoint.html) to the topic 
 "/trajectory". The sliding mode controller listens to this topic.
+
+## Code
+
+The code style follows the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). Hence, class member variables have a underscore at the end (e.g. `variable1_`). Global variables have a leading `g_` prefix (e.g. `g_variable2`). For performance reasons, all functions which are called frequently do not return values, but get a reference on the output passed as argument, so the result can be stored in this reference.
