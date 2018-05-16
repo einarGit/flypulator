@@ -1,10 +1,12 @@
-#Trajectory Generator and Controller for Flypulator Project
+# Trajectory Generator and Controller for Flypulator Project
 
 ## Start
 Use the following command to start trajectory generator node:
+
 ` rosrun trajectory_generator trajetory_generator_server ` 
 
 and to start sliding mode controller node:
+
 ` rosrun sliding_mode_controller sliding_mode_controller `
 
 ## User Interface
