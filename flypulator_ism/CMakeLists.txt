@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   message_generation
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -88,10 +89,9 @@ find_package(Eigen3 REQUIRED)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/control_parameters.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -105,7 +105,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES sliding_mode_controller
-   CATKIN_DEPENDS roscpp std_msgs geometry_msgs trajectory_msgs
+   CATKIN_DEPENDS roscpp std_msgs geometry_msgs trajectory_msgs dynamic_reconfigure
 #  DEPENDS system_lib
 )
 
