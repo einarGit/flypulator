@@ -25,7 +25,7 @@
   <run_depend>flypulator_plugin_aero</run_depend>
   <run_depend>flypulator_plugin_control</run_depend>
   <run_depend>flypulator_simulation_gazebo</run_depend>
-  <run_depend>flypulator_teleop</run_depend>
+
 
   <!-- Dependencies needed only for running tests. -->
 
