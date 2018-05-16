@@ -29,7 +29,7 @@ class SlidingModeController {
     public: 
         SlidingModeController(){};
         SlidingModeController(float drone_parameter){
-            m_drone_parameter = drone_parameter;
+            drone_parameter_ = drone_parameter;
             integral_T_ = Eigen::Vector3f (0,0,0);
             integral_R_ = Eigen::Vector4f (0,0,0,0);
         };
@@ -66,41 +66,54 @@ class SlidingModeController {
             eta_err_ = eta_d_ * eta_ + eps_d_.dot(eps_); //transposed eps_d_ times eps_ is equal to dot product
             eps_err_ = eta_d_*eps_ - eta_ * eps_d_ - eps_d_.cross(eps_); // skew symmetric matrix times vector is equal to cross product
 
+            // calculate z1
             z_1_R_(0) = 1 - std::abs(eta_err_); // std::abs is overloaded by math.h such that abs(float) works
             z_1_R_(1) = eps_err_.x();
             z_1_R_(2) = eps_err_.y();
             z_1_R_(3) = eps_err_.z();
             
+            // calculate error omega
             omega_err_ = x_current.omega - x_des.omega;
 
-            // build matrix GT
+            // calculate matrix GT (T.. transposed, means 4x3)
             matrix_g_transposed_.row(0) << sgn(eta_err_)*eps_err_.x(), sgn(eta_err_)*eps_err_.y(), sgn(eta_err_)*eps_err_.z();
             matrix_g_transposed_.block(1,0,3,3) << eta_err_, -eps_err_.z(), eps_err_.y(),
                                                   eps_err_.z(), eta_err_, -eps_err_.x(),
                                                   -eps_err_.y(), eps_err_.x(), eta_err_;
+            // calculate z2
             z_2_R_ = 0.5f * matrix_g_transposed_ * omega_err_;
 
+            // calculate first derivative of error quaternion 
             eta_dot_err_ = -0.5f * (eps_err_).dot(omega_err_);
             eps_dot_err_ = matrix_g_transposed_.block(1,0,3,3) * omega_err_;
+
+            // calculate matrix G_dot_T (T.. transposed, means 4x3)
             matrix_g_dot_transposed_.row(0) << sgn(eta_err_)*eps_dot_err_.x(), sgn(eta_err_)*eps_dot_err_.y(), sgn(eta_err_)*eps_dot_err_.z();
             matrix_g_dot_transposed_.block(1,0,3,3) << eta_dot_err_, -eps_dot_err_.z(), eps_dot_err_.y(),
                                                   eps_dot_err_.z(), eta_dot_err_, -eps_dot_err_.x(),
                                                   -eps_dot_err_.y(), eps_dot_err_.x(), eta_dot_err_;
             
+            // calculate sliding surface s
             s_R_ = z_2_R_ + lambda_R_ * z_1_R_;
+
+            // calculate output
             u_R_ = - inertia_*matrix_g_transposed_.transpose()* 
                     ( 2*lambda_R_*z_2_R_ + matrix_g_dot_transposed_*omega_err_ + 2.0f * K_R_ * 2.0f/M_PI * (atan(s_R_.array())).matrix() ) + 
                     inertia_*x_des.omega_dot + x_current.omega.cross(inertia_*x_current.omega);
-
+                    
+            // integral sliding mode: calculate integral value
             integral_R_ = integral_R_ + 2.0f /M_PI * K_R_ * (atan(s_R_.array())).matrix() * t_delta_.toSec(); 
+            // calculate integral sliding surface
             s_R_I_ = s_R_ + integral_R_;
+            // calculate integral output
             u_R_I_ = - K_R_I_ * 2.0f / M_PI * ( atan( ( 0.5f*inertia_inv_.transpose()*matrix_g_transposed_.transpose() * s_R_I_ ).array())).matrix();
             
+            // output is the sum of both rotational outputs (with and without integral action)
             controlForceAndTorque.u_R = u_R_ + u_R_I_; // already torque dimension
         };
 
     private:
-        float m_drone_parameter;
+        float drone_parameter_;
         float mass_;
         Eigen::Matrix3f inertia_;
         Eigen::Matrix3f inertia_inv_;
@@ -155,12 +168,12 @@ class BaseController {
     public:
         BaseController(){
             readDroneParameterFromServer();
-            SlidingModeController test (m_drone_parameter);
-            m_sliding_mode_controller = test; // test if it works!?
+            SlidingModeController controller (drone_parameter_);
+            sliding_mode_controller_ = controller; // test if it works!?
         };
         void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, float spinningRates[6]){
             
-            m_sliding_mode_controller.computeControlForceTorqueInput(x_des, x_current, m_controlForceAndTorque);
+            sliding_mode_controller_.computeControlForceTorqueInput(x_des, x_current, controlForceAndTorque_);
 
             mapControlForceTorqueInputToPropellerRates(spinningRates);
         };
@@ -168,9 +181,9 @@ class BaseController {
     private:
         void readDroneParameterFromServer(){};
         void mapControlForceTorqueInputToPropellerRates(float spinningRates[6]){};
-        float m_drone_parameter;
-        ForceTorqueInput m_controlForceAndTorque;
-        SlidingModeController m_sliding_mode_controller;
+        float drone_parameter_;
+        ForceTorqueInput controlForceAndTorque_;
+        SlidingModeController sliding_mode_controller_;
 };
 
 
