@@ -47,10 +47,10 @@ class AeroPlugin : public ModelPlugin
   double a = 5.7;                //2D_lift_curve_slope
   double th0 = 0.7;              //Profile inclination angle
   double thtw = 0.5;             //Inclination change along radius
-  double pa = th0 - 0.75 * thtw; //blade pitch angle TODO: fix bug!!! pa is always calculated with default value
+  double pa;                     //blade pitch angle 
   double B = 0.98;               //tip loss factor
   double pho = 1.2;              //air density
-  double A = PI * pow(R, 2);     //wing area  TODO: fix bug!!! A is always calculated with default value
+  double A;                      //wing area 
   double ki = 1.15;              //factor to calculate torque
   double k = 4.65;               //factor to calculate torque
   //coefficients to calculate induced velocity Vi in vortex ring state
@@ -162,10 +162,16 @@ public:
     this->link4 = _model->GetChildLink("blade_Link4");
     this->link5 = _model->GetChildLink("blade_Link5");
     this->link6 = _model->GetChildLink("blade_Link6");
+    
+    //TODO: Load parameters from .yaml
+    //this->readParamsFromServer();    
+    
     //calculation of constants
     m = this->link0->GetInertial()->GetMass();
     s = (N * c) / (PI * R);                              //rotor solidity
+    A = PI * pow(R, 2);                                  //wing area
     Vi_h = -sqrt((m * g) / (2 * N * pho * A * cos(rv))); //induced airflow velocity in hovering case
+    pa = th0 - 0.75 * thtw;                              //blade pitch angle
 
     // Initialize ros, if it has not already bee initialized.
     if (!ros::isInitialized())
@@ -179,9 +185,6 @@ public:
     // Create our ROS node.
     this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
     ROS_INFO_STREAM("aero_plugin get node:" << this->rosNode->getNamespace());
-
-    // TODO: Load parameters from .yaml
-    // this->readParamsFromServer();
 
     this->pub_ratio = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/thrust_moment_ratio", 100);
     this->pub_joint_state = this->rosNode->advertise<sensor_msgs::JointState>("/drone/joint_states", 100);
