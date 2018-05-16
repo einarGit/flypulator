@@ -1,11 +1,11 @@
 # Trajectory Generator and Controller for Flypulator Project
 
 ## Build
-The content of this repository must be cloned into the `/src` folder of a catkin workspace. For example, an existing workspace in `~/catkin_ws` needs the following (in new Terminal):
+The content of this repository must be cloned into the `/src` folder of a catkin workspace. For example, an existing workspace in `~/catkin_ws` requires the following steps (in a new terminal):
 
 ```
 cd ~/catkin_ws/src/
-git clone https://github.com/danneboom/flypulator_tracking_control
+git clone https://github.com/danneboom/flypulator_tracking_control.git
 cd ..
 catkin_make
 ```
@@ -13,7 +13,7 @@ Dont forget sourcing the setup.bash file:
 ```
 source ~/catkin_ws/devel/setup.bash
 ```
-To do sourcing permanently, edit the .bashrc file with `gedit ~/.bashrc` and add the source command from above (`source ~/catkin_ws/devel/setup.bash`). Note that you have to start a new terminal to apply the changes. You can check if it has worked by trying to locate your package using `rospack find sliding_mode_controller`.
+To do sourcing permanently, edit the .bashrc file with `gedit ~/.bashrc` and add the source command from above (`source ~/catkin_ws/devel/setup.bash`). *Note that you have to start a new terminal to apply the changes*. You can check if it has worked by trying to locate your package using `rospack find sliding_mode_controller`.
 
 So by now, the packages are located at `~/catkin_ws/src/flypulator_tracking_control/trajectory_generator` and `~/catkin_ws/src/flypulator_tracking_control/sliding_mode_controller`.
 
