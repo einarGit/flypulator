@@ -1,0 +1,48 @@
+
+<package>
+  <name>flypulator_plugin_control</name>
+  <version>0.0.1</version>
+  <description>The control plugin package</description>
+
+  <maintainer email="todo@todo.todo">todo</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>controller_manager</build_depend>
+  <build_depend>effort_controllers</build_depend>
+  <build_depend>position_controllers</build_depend>
+  <build_depend>controller_interface</build_depend>
+  <build_depend>hardware_interface</build_depend>
+  <build_depend>joint_state_controller</build_depend>
+  <build_depend>roslaunch</build_depend>
+  <build_depend>flypulator_common_msgs</build_depend>
+  
+  <run_depend>flypulator_common_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>joint_state_controller</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>controller_interface</run_depend>
+  <run_depend>hardware_interface</run_depend>
+  <run_depend>effort_controllers</run_depend>
+  <run_depend>position_controllers</run_depend>
+  <run_depend>controller_manager</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>controller_manager</run_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>joint_state_publisher</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>rviz</run_depend>
+  <run_depend>xacro</run_depend>
+  <run_depend>gazebo</run_depend>
+
+</package>

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>flypulator_teleop</name>
+  <version>0.0.0</version>
+  <description>The joystick package</description>
+
+  <maintainer email="chao.yao@tu-dresden.de">Chao Yao</maintainer>
+  <author email="Jinyao383@hotmail.com">Jinyao Zhu</author>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+
+</package>
