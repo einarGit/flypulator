@@ -41,16 +41,16 @@ namespace gazebo
 /// \brief A plugin to control drone
 class AeroPlugin : public ModelPlugin
 {
-  int N_default = 6;                     //number of energie
-  double c_default = 0.016;              //blade chord width
-  double R_default = 0.15;               //blade radius
-  double a_default = 5.7;                //2D_lift_curve_slope
-  double th0_default = 0.7;              //Profile inclination angle
-  double thtw_default = 0.5;             //Inclination change along radius
-  double pa = th0_default - 0.75 * thtw_default; //blade pitch angle //TODO: fix bug!!! pa is always calculated with default value
-  double B_default = 0.98;               //tip loss factor
-  double pho_default = 1.2;              //air density
-  double A = PI * pow(R_default, 2);     //wing area  //TODO: fix bug!!! A is always calculated with default value
+  int N = 6;                     //number of energie
+  double c = 0.016;              //blade chord width
+  double R = 0.15;               //blade radius
+  double a = 5.7;                //2D_lift_curve_slope
+  double th0 = 0.7;              //Profile inclination angle
+  double thtw = 0.5;             //Inclination change along radius
+  double pa = th0 - 0.75 * thtw; //blade pitch angle TODO: fix bug!!! pa is always calculated with default value
+  double B = 0.98;               //tip loss factor
+  double pho = 1.2;              //air density
+  double A = PI * pow(R, 2);     //wing area  TODO: fix bug!!! A is always calculated with default value
   double ki = 1.15;              //factor to calculate torque
   double k = 4.65;               //factor to calculate torque
   //coefficients to calculate induced velocity Vi in vortex ring state
@@ -59,8 +59,8 @@ class AeroPlugin : public ModelPlugin
   double k2 = -1.372;
   double k3 = -1.718;
   double k4 = -0.655;
-  double CD0_default = 0.04;      //Profile_Drag_Coefficient from literatur
-  double rv_default = 0.7854;     //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
+  double CD0 = 0.04;      //Profile_Drag_Coefficient from literatur
+  double rv = 0.7854;     //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
   double m;               //drone_masse
   double g = 9.81;        //gravity acceleration constant
   double s;               //rotor solidity
@@ -86,12 +86,12 @@ class AeroPlugin : public ModelPlugin
   double vel_6 = 0;                                               //calculated blade spinning velocity
   double force_x, force_y, force_z, torque_x, torque_y, torque_z; //input wrench
   //default blade rotating direction 1 counterclockwise; -1 clockwise
-  int di_1_default = 1;
-  int di_2_default = -1;
-  int di_3_default = 1;
-  int di_4_default = -1;
-  int di_5_default = 1;
-  int di_6_default = -1;
+  int di_1 = 1;
+  int di_2 = -1;
+  int di_3 = 1;
+  int di_4 = -1;
+  int di_5 = 1;
+  int di_6 = -1;
   //thrust force direction
   int di_force1 = 1;
   int di_force2 = 1;
@@ -101,15 +101,15 @@ class AeroPlugin : public ModelPlugin
   int di_force6 = 1;
   //real rotate direction
   int di_vel1, di_vel2, di_vel3, di_vel4, di_vel5, di_vel6;
-  bool bidirectional_default = false;            //bidirectional option
-  double vel_min_default = 1e-6; //min rotor speed
-  double vel_max_default = 2500; //max rotor speed
+  bool bidirectional = false;            //bidirectional option
+  double vel_min = 1e-6; //min rotor speed
+  double vel_max = 2500; //max rotor speed
   //input control signal in velocity DOF 6, unused
   //double Vx_input, Vy_input, Vz_input, Wx_input, Wy_input, Wz_input;
-  double Kv0_default = 890;  //KV Value of the BLDC motor
-  double Um0_default = 10;   //nominal no-load voltage
-  double Im0_default = 0.5;  //nominal no-load current
-  double Rm_default = 0.101; //resitance
+  double Kv0 = 890;  //KV Value of the BLDC motor
+  double Um0 = 10;   //nominal no-load voltage
+  double Im0 = 0.5;  //nominal no-load current
+  double Rm = 0.101; //resitance
                      
   Eigen::Matrix3d T_trans;  //transformation matrix from global coordinate to body coordinate
   /// \brief Constructor
@@ -955,29 +955,29 @@ private:
   void readParamsFromServer()
   {
     ROS_INFO_STREAM("areo_plugin: loading parameters...");
-    this->rosNode->param("rotor_number", N, N_default);
-    this->rosNode->param("blade_chord_width", c, c_default);
-    this->rosNode->param("blade_radius", R, R_default);
-    this->rosNode->param("2D_lift_curve_slope", a, a_default);
-    this->rosNode->param("profile_inclination_angle", th0, th0_default);
-    this->rosNode->param("radial_inclination_change", thtw, thtw_default);
-    this->rosNode->param("TLF", B, B_default);
-    this->rosNode->param("air_density", pho, pho_default);
-    this->rosNode->param("Profile_Drag_Coefficient", CD0, CD0_default);
-    this->rosNode->param("rotor_axis_vertical_axis_angle", rv, rv_default);
-    this->rosNode->param("minimal_rotor_velocity", vel_min, vel_min_default);
-    this->rosNode->param("maximal_rotor_velocity", vel_max, vel_max_default);
-    this->rosNode->param("default_blade1_rotation_direction", di_1, di_1_default);
-    this->rosNode->param("default_blade2_rotation_direction", di_2, di_2_default);
-    this->rosNode->param("default_blade3_rotation_direction", di_3, di_3_default);
-    this->rosNode->param("default_blade4_rotation_direction", di_4, di_4_default);
-    this->rosNode->param("default_blade5_rotation_direction", di_5, di_5_default);
-    this->rosNode->param("default_blade6_rotation_direction", di_6, di_6_default);
-    this->rosNode->param("bidirectional_optional", bidirectional, bidirectional_default);
-    this->rosNode->param("KV_value", Kv0, Kv0_default);
-    this->rosNode->param("nominal_no_load_voltage", Um0, Um0_default);
-    this->rosNode->param("nominal_no_load_current", Im0, Im0_default);
-    this->rosNode->param("motor_resitance", Rm, Rm_default);
+    this->rosNode->param("rotor_number", N, N);
+    this->rosNode->param("blade_chord_width", c, c);
+    this->rosNode->param("blade_radius", R, R);
+    this->rosNode->param("2D_lift_curve_slope", a, a);
+    this->rosNode->param("profile_inclination_angle", th0, th0);
+    this->rosNode->param("radial_inclination_change", thtw, thtw);
+    this->rosNode->param("TLF", B, B);
+    this->rosNode->param("air_density", pho, pho);
+    this->rosNode->param("Profile_Drag_Coefficient", CD0, CD0);
+    this->rosNode->param("rotor_axis_vertical_axis_angle", rv, rv);
+    this->rosNode->param("minimal_rotor_velocity", vel_min, vel_min);
+    this->rosNode->param("maximal_rotor_velocity", vel_max, vel_max);
+    this->rosNode->param("default_blade1_rotation_direction", di_1, di_1);
+    this->rosNode->param("default_blade2_rotation_direction", di_2, di_2);
+    this->rosNode->param("default_blade3_rotation_direction", di_3, di_3);
+    this->rosNode->param("default_blade4_rotation_direction", di_4, di_4);
+    this->rosNode->param("default_blade5_rotation_direction", di_5, di_5);
+    this->rosNode->param("default_blade6_rotation_direction", di_6, di_6);
+    this->rosNode->param("bidirectional_optional", bidirectional, bidirectional);
+    this->rosNode->param("KV_value", Kv0, Kv0);
+    this->rosNode->param("nominal_no_load_voltage", Um0, Um0);
+    this->rosNode->param("nominal_no_load_current", Im0, Im0);
+    this->rosNode->param("motor_resitance", Rm, Rm);
     ROS_INFO_STREAM("areo_plugin: parameters loaded!");
   }
 
