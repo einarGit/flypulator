@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>sliding_mode_controller</name>
+  <name>flypulator_ism</name>
   <version>0.0.0</version>
-  <description>The sliding_mode_controller package</description>
+  <description>The sliding_mode_controller package for flypulator project</description>
 
   <maintainer email="jan.krieglstein@tu-dresden.de">Jan Krieglstein</maintainer>
   <maintainer email="chao.yao@tu-dresden.de">Chao Yao</maintainer>

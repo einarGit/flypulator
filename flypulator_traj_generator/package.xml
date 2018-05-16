@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>trajectory_generator</name>
+  <name>flypulator_traj_generator</name>
   <version>0.0.9</version>
   <description>The trajectory_generator package provides 6D trajectories of different types: Linear trajectory and polynomial trajectory (fifth order polynomial).
   It publishes the trajectory as a trajectory_msgs/MultiDOFJointTrajectoryPoint to topic /trajectory periodically with frequency as determined by pose estimation 
