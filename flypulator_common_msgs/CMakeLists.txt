@@ -7,7 +7,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-add_message_files(FILES Vector6dMsg.msg)
+add_message_files(FILES
+  RotorVelStamped.msg Vector6dMsg.msg)
 
 generate_messages(DEPENDENCIES std_msgs)
 

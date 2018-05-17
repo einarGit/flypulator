@@ -1,12 +1,12 @@
-
 <package>
   <name>flypulator_common_msgs</name>
   <version>0.0.1</version>
   <description>The common messages package</description>
 
   <maintainer email="jinyao383@hotmail.com">Jinyao Zhu</maintainer>
+  <author email="leonhartyao@gmail.com">Chao Yao</author>
 
-  <license>TODO</license>
+  <license>GPLv3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
