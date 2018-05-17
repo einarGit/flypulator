@@ -19,6 +19,7 @@
 #include <gazebo/gazebo_client.hh>
 
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <ros/callback_queue.h>
 
 #include <gazebo_msgs/LinkStates.h>
@@ -127,7 +128,7 @@ public:
     ROS_INFO_STREAM("Loading AeroPlugin ...");
     if (_model->GetJointCount() == 0)
     {
-      std::cerr << "Invalid joint count, plugin not loaded\n";
+      ROS_ERROR("Invalid joint count, plugin not loaded");
       return;
     }
 
@@ -141,8 +142,8 @@ public:
     this->joint4 = _model->GetJoint("blade_joint4");
     this->joint5 = _model->GetJoint("blade_joint5");
     this->joint6 = _model->GetJoint("blade_joint6");
-    //apply joint motors to set joint velocity
-    this->joint1->SetParam("fmax", 0, 1000000.0);
+    //set joint velocity using joint motors to set joint velocity
+    this->joint1->SetParam("fmax", 0, 1000000.0); //fmax: maximum joint force or torque
     this->joint2->SetParam("fmax", 0, 1000000.0);
     this->joint3->SetParam("fmax", 0, 1000000.0);
     this->joint4->SetParam("fmax", 0, 1000000.0);
@@ -163,8 +164,8 @@ public:
     this->link5 = _model->GetChildLink("blade_Link5");
     this->link6 = _model->GetChildLink("blade_Link6");
     
-    //TODO: Load parameters from .yaml
-    //this->readParamsFromServer();    
+    //load aerodynamic parameters
+    this->readParamsFromServer();    
     
     //calculation of constants
     m = this->link0->GetInertial()->GetMass();
@@ -953,11 +954,11 @@ public:
     // ROS_INFO_STREAM("aero plugin: SetVelocity()!");
   }
 
-  //load parameter from gazebo server
+  //load parameter from ROS parameter server
 private:
   void readParamsFromServer()
   {
-    ROS_INFO_STREAM("areo_plugin: loading parameters...");
+    ROS_INFO_STREAM("aero_plugin: loading aerodynamic parameters...");
     this->rosNode->param("rotor_number", N, N);
     this->rosNode->param("blade_chord_width", c, c);
     this->rosNode->param("blade_radius", R, R);
@@ -981,7 +982,7 @@ private:
     this->rosNode->param("nominal_no_load_voltage", Um0, Um0);
     this->rosNode->param("nominal_no_load_current", Im0, Im0);
     this->rosNode->param("motor_resitance", Rm, Rm);
-    ROS_INFO_STREAM("areo_plugin: parameters loaded!");
+    ROS_INFO_STREAM("aero_plugin: aerodynamic parameters loaded!");
   }
 
 private:
