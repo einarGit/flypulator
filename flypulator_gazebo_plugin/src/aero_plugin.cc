@@ -34,6 +34,7 @@
 #include <Eigen/Dense>
 
 #include <flypulator_common_msgs/Vector6dMsg.h>
+#include <flypulator_common_msgs/RotorVelStamped.h>
 
 #define PI (M_PI) 
 
@@ -187,8 +188,8 @@ public:
     this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
     ROS_INFO_STREAM("aero_plugin get node:" << this->rosNode->getNamespace());
 
-    this->pub_ratio = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/thrust_moment_ratio", 100);
-    this->pub_joint_state = this->rosNode->advertise<sensor_msgs::JointState>("/drone/joint_states", 100);
+    this->pub_ratio = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/thrust_moment_ratio", 10);
+    this->pub_joint_state = this->rosNode->advertise<sensor_msgs::JointState>("/drone/joint_states", 50);
 
     // this->pub_link1_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_1_wrench", 100);
     // this->pub_link2_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_2_wrench", 100);
@@ -213,7 +214,7 @@ public:
 
     //subscribe to control signal,six global velocity for drone
     ros::SubscribeOptions s3 =
-        ros::SubscribeOptions::create<flypulator_common_msgs::Vector6dMsg>(
+        ros::SubscribeOptions::create<flypulator_common_msgs::RotorVelStamped>(
             "/drone/rotor_cmd", 100, boost::bind(&AeroPlugin::OnControlMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubControl = this->rosNode->subscribe(s3);
@@ -728,162 +729,52 @@ public:
   }
 
 public:
-  void OnControlMsg(const flypulator_common_msgs::Vector6dMsgConstPtr &_msg)
+  void OnControlMsg(const flypulator_common_msgs::RotorVelStampedConstPtr &_msg)
   {
     // ROS_INFO_STREAM("aero plugin: get control message!");
-    double vel1, vel2, vel3, vel4, vel5, vel6;
-    // vel1 = _msg->force.x;
-    // vel2 = _msg->force.y;
-    // vel3 = _msg->force.z;
-    // vel4 = _msg->torque.x;
-    // vel5 = _msg->torque.y;
-    // vel6 = _msg->torque.z;
-    vel1 = _msg->x1;
-    vel2 = _msg->x2;
-    vel3 = _msg->x3;
-    vel4 = _msg->x4;
-    vel5 = _msg->x5;
-    vel6 = _msg->x6;
-    // ROS_INFO_STREAM(vel1<<","<<vel2<<","<<vel3<<","<<vel4<<","<<vel5<<","<<vel6);
-    if (bidirectional) //bidirectional mode
+    if (_msg->velocity.size() !=6)
     {
-      if (vel1 < 0)
+      ROS_ERROR("Dimention of rotor cmd does not match joint number!");
+      return;
+    }
+
+//TODO: add limitation of maximum rotor velocity
+    if (bidirectional)  //bi-directional rotors
+    {
+      for (int i=0; i<5;i++)
       {
-        vel_1 = abs(vel1);
-        di_vel1 = -di_1;
-        di_force1 = -1;
+        if (_msg->velocity[i] < 0)
+        {
+          vel_1 = abs(_msg->velocity[i]);
+          di_vel1 = -di_1;    //inverse rotating direction
+          di_force1 = -1;
+        }
+        else
+        {
+          vel_1 = _msg->velocity[i];
+          di_vel1 = di_1;    //keep default rotating direction
+          di_force1 = 1;
+        }
       }
-      else
+    }
+    else      //uni-directional rotors
+    {
+      for (int i=0; i<5; i++)
       {
-        vel_1 = vel1;
+        if (_msg->velocity[i] < 0)
+        {
+          vel_1 = 0;  //lower boundary
+        }
+        else
+        {
+          vel_1 = _msg->velocity[i];
+        }
         di_vel1 = di_1;
         di_force1 = 1;
       }
-      if (vel2 < 0)
-      {
-        vel_2 = abs(vel2);
-        di_vel2 = -di_2;
-        di_force2 = -1;
-      }
-      else
-      {
-        vel_2 = vel2;
-        di_vel2 = di_2;
-        di_force2 = 1;
-      }
-      if (vel3 < 0)
-      {
-        vel_3 = abs(vel3);
-        di_vel3 = -di_3;
-        di_force3 = -1;
-      }
-      else
-      {
-        vel_3 = vel3;
-        di_vel3 = di_3;
-        di_force3 = 1;
-      }
-      if (vel4 < 0)
-      {
-        vel_4 = abs(vel4);
-        di_vel4 = -di_4;
-        di_force4 = -1;
-      }
-      else
-      {
-        vel_4 = vel4;
-        di_vel4 = di_4;
-        di_force4 = 1;
-      }
-      if (vel5 < 0)
-      {
-        vel_5 = abs(vel5);
-        di_vel5 = -di_5;
-        di_force5 = -1;
-      }
-      else
-      {
-        vel_5 = vel5;
-        di_vel5 = di_5;
-        di_force5 = 1;
-      }
-      if (vel6 < 0)
-      {
-        vel_6 = abs(vel6);
-        di_vel6 = -di_6;
-        di_force6 = -1;
-      }
-      else
-      {
-        vel_6 = vel6;
-        di_vel6 = di_6;
-        di_force6 = 1;
-      }
     }
-    else
-    {
-      if (vel1 < 0)
-      {
-        vel_1 = 0;
-      }
-      else
-      {
-        vel_1 = vel1;
-      }
-      di_vel1 = di_1;
-      di_force1 = 1;
-      if (vel2 < 0)
-      {
-        vel_2 = 0;
-      }
-      else
-      {
-        vel_2 = vel2;
-      }
-      di_vel2 = di_2;
-      di_force2 = 1;
-      if (vel3 < 0)
-      {
-        vel_3 = 0;
-      }
-      else
-      {
-        vel_3 = vel3;
-      }
-      di_vel3 = di_3;
-      di_force3 = 1;
-      if (vel4 < 0)
-      {
-        vel_4 = 0;
-      }
-      else
-      {
-        vel_4 = vel4;
-      }
-      di_vel4 = di_4;
-      di_force4 = 1;
-      if (vel5 < 0)
-      {
-        vel_5 = 0;
-      }
-      else
-      {
-        vel_5 = vel5;
-      }
-      di_vel5 = di_5;
-      di_force5 = 1;
-      if (vel6 < 0)
-      {
-        vel_6 = 0;
-      }
-      else
-      {
-        vel_6 = vel6;
-      }
-      di_vel6 = di_6;
-      di_force6 = 1;
-    }
-  }
+  }    
+    
 
 private:
   void QueueThread()
