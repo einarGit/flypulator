@@ -29,7 +29,15 @@ struct ForceTorqueInput {
     Eigen::Vector3f u_R; // rotational torque input
 };
 
-class SlidingModeController {
+// abstract superclass for controllers, follow http://cpp.nope.bz/pure_virtual.html
+class BaseController {
+    public: 
+        virtual ~BaseController(){};
+        virtual void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, ForceTorqueInput& controlForceAndTorque) =0;
+        virtual void configCallback(flypulator_control::control_parameterConfig& config, uint32_t level) = 0;
+};
+
+class SlidingModeController : public BaseController {
     public: 
         SlidingModeController(){};
         SlidingModeController(float drone_parameter){
@@ -116,6 +124,14 @@ class SlidingModeController {
             controlForceAndTorque.u_R = u_R_ + u_R_I_; // already torque dimension
         };
 
+        virtual void configCallback(flypulator_control::control_parameterConfig& config, uint32_t level){
+              ROS_INFO("Reconfigure Request: %d %f %s %s %d", 
+            config.int_param, config.double_param, 
+            config.str_param.c_str(), 
+            config.bool_param?"True":"False", 
+            config.size);
+        }
+
     private:
         float drone_parameter_;
         float mass_;
@@ -168,32 +184,34 @@ class SlidingModeController {
 
 };
 
-class BaseController {
+class ControllerInterface {
     public:
-        BaseController(){
+        ControllerInterface(){
             readDroneParameterFromServer();
-            SlidingModeController controller (drone_parameter_);
-            sliding_mode_controller_ = controller; // test if it works!?
+            controller_ = new SlidingModeController(drone_parameter_); // use new, otherwise object is destroyed after this function and pointer is a dead pointer
+            // see also 
+            // https://stackoverflow.com/questions/6337294/creating-an-object-with-or-without-new?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
         };
         void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, float spinningRates[6]){
             
-            sliding_mode_controller_.computeControlForceTorqueInput(x_des, x_current, controlForceAndTorque_);
-
+            controller_->computeControlForceTorqueInput(x_des, x_current, controlForceAndTorque_);
             mapControlForceTorqueInputToPropellerRates(spinningRates);
         };
+
+        BaseController* getControllerReference(){
+            return controller_;
+        }
        
     private:
         void readDroneParameterFromServer(){};
         void mapControlForceTorqueInputToPropellerRates(float spinningRates[6]){};
         float drone_parameter_;
         ForceTorqueInput controlForceAndTorque_;
-        SlidingModeController sliding_mode_controller_;
+        BaseController* controller_;
 };
 
 
-
-
-BaseController* g_drone_controller_p;
+ControllerInterface* g_drone_controller_p;
 PoseVelocityAcceleration g_currentPose;
 PoseVelocityAcceleration g_desiredPose;
 
@@ -251,7 +269,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub = n.subscribe("trajectory", 1000, trajectoryMessageCallback);
 
     // create controller
-    BaseController m_drone_controller;
+    ControllerInterface m_drone_controller;
     g_drone_controller_p = &m_drone_controller;
 
     //Eigen::Vector3f test;
@@ -267,8 +285,8 @@ int main(int argc, char **argv)
     // https://github.com/UCSD-E4E/stingray-auv/wiki/Writing-publisher-subscriber-with-dynamic-reconfigure-and-parameter-server-(C----)
     dynamic_reconfigure::Server<flypulator_control::control_parameterConfig> dr_srv;
     dynamic_reconfigure::Server<flypulator_control::control_parameterConfig>::CallbackType cb;
-    //cb = boost::bind(&NodeExample::configCallback, node_example, _1, _2);
-    //dr_srv.setCallback(cb);
+    cb = boost::bind(&BaseController::configCallback, g_drone_controller_p->getControllerReference() , _1, _2); //set callback of controller object
+    dr_srv.setCallback(cb);
 
     ros::spin();
 

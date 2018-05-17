@@ -138,7 +138,7 @@ include_directories(
 
 add_executable(controller_node src/controller_node.cpp)
 
-#add_dependencies(controller_node ${PROJECT_NAME}_gencfg)
+add_dependencies(controller_node ${PROJECT_NAME}_gencfg)
 #add_dependencies(controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS}) 
 
 
