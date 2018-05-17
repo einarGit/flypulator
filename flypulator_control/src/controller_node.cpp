@@ -33,15 +33,18 @@ struct ForceTorqueInput {
 class BaseController {
     public: 
         virtual ~BaseController(){};
-        virtual void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, ForceTorqueInput& controlForceAndTorque) =0;
+        virtual void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, ForceTorqueInput& controlForceAndTorque) = 0;
         virtual void configCallback(flypulator_control::control_parameterConfig& config, uint32_t level) = 0;
 };
 
 class SlidingModeController : public BaseController {
     public: 
         SlidingModeController(){};
-        SlidingModeController(float drone_parameter){
-            drone_parameter_ = drone_parameter;
+        SlidingModeController(const float mass, const Eigen::Matrix3f inertia, const float gravity){
+            mass_ = mass;
+            inertia_ = inertia;
+            inertia_inv_ = inertia.inverse();
+            gravity_ = Eigen::Vector3f (0,0,gravity);
             integral_T_ = Eigen::Vector3f (0,0,0);
             integral_R_ = Eigen::Vector4f (0,0,0,0);
         };
@@ -124,22 +127,35 @@ class SlidingModeController : public BaseController {
             controlForceAndTorque.u_R = u_R_ + u_R_I_; // already torque dimension
         };
 
-        virtual void configCallback(flypulator_control::control_parameterConfig& config, uint32_t level){
-              ROS_INFO("Reconfigure Request: %d %f %s %s %d", 
-            config.int_param, config.double_param, 
-            config.str_param.c_str(), 
-            config.bool_param?"True":"False", 
-            config.size);
+        // callback for dynamic reconfigure
+        void configCallback(flypulator_control::control_parameterConfig& config, uint32_t level){
+              ROS_INFO("Reconfigure Request: \n lambda_T = %f, \n k_T \t  = %f, \n k_T_I \t  = %f, \n lambda_R = %f, \n k_R \t  = %f, \n k_R_I \t  = %f",
+               config.ism_lambda_T, config.ism_k_T, config.ism_k_T_I, config.ism_lambda_R, config.ism_k_R, config.ism_k_R_I);
+               // set new values to class variables
+               lambda_T_ = (float) config.ism_lambda_T;
+               lambda_R_ = (float) config.ism_lambda_R;
+               K_T_ << config.ism_k_T, 0, 0,
+                        0, config.ism_k_T, 0,
+                        0, 0, config.ism_k_T;
+               K_T_I_ << config.ism_k_T_I, 0, 0,
+                        0, config.ism_k_T_I, 0,
+                        0, 0, config.ism_k_T_I;    
+               K_R_ << config.ism_k_R, 0, 0, 0, //K_R_ is 4x4
+                        0, config.ism_k_R, 0, 0,
+                        0, 0, config.ism_k_R, 0,
+                        0, 0, 0, config.ism_k_R;
+               K_R_I_ << config.ism_k_R_I, 0, 0,
+                        0, config.ism_k_R_I, 0,
+                        0, 0, config.ism_k_R_I;   
         }
 
     private:
-        float drone_parameter_;
         float mass_;
         Eigen::Matrix3f inertia_;
         Eigen::Matrix3f inertia_inv_;
+        Eigen::Vector3f gravity_;
         //translational variables
         float lambda_T_;
-        Eigen::Vector3f gravity_;
         Eigen::Matrix3f K_T_;
         Eigen::Matrix3f K_T_I_;
         Eigen::Vector3f z_1_T_;
@@ -187,15 +203,25 @@ class SlidingModeController : public BaseController {
 class ControllerInterface {
     public:
         ControllerInterface(){
+            // read drone parameters from ros parameter server
             readDroneParameterFromServer();
-            controller_ = new SlidingModeController(drone_parameter_); // use new, otherwise object is destroyed after this function and pointer is a dead pointer
+            float mass = (float) (drone_parameter_["mass"]);
+            Eigen::Matrix3f inertia;
+            inertia << (float) drone_parameter_["i_xx"], 0 ,0,
+                        0, (float) drone_parameter_["i_yy"], 0,
+                        0, 0, (float) drone_parameter_["i_zz"];
+
+            float gravity = (float) drone_parameter_["gravity"];
+
+            controller_ = new SlidingModeController(mass, inertia, gravity); // use new, otherwise object is destroyed after this function and pointer is a dead pointer
             // see also 
             // https://stackoverflow.com/questions/6337294/creating-an-object-with-or-without-new?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
         };
         void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, float spinningRates[6]){
-            
+            // call controller to compute Force and Torque output
             controller_->computeControlForceTorqueInput(x_des, x_current, controlForceAndTorque_);
-            mapControlForceTorqueInputToPropellerRates(spinningRates);
+            // map control force and torque to spinning velocities of the propellers resp. rotors
+            mapControlForceTorqueInputToPropellerRates(x_current, spinningRates);
         };
 
         BaseController* getControllerReference(){
@@ -203,9 +229,43 @@ class ControllerInterface {
         }
        
     private:
-        void readDroneParameterFromServer(){};
+        void readDroneParameterFromServer(){
+            if (ros::param::get("/uav", drone_parameter_)){
+                ROS_DEBUG("Drone parameter load successfully from parameter server");
+            } 
+            else {   
+                ROS_WARN("no drone parameter available, use default values...");
+                drone_parameter_["mass"] = 10;
+                drone_parameter_["i_xx"] = 0.4;
+                drone_parameter_["i_yy"] = 0.4;
+                drone_parameter_["i_zz"] = 0.8;
+                drone_parameter_["alpha"] = 0.7854;
+                drone_parameter_["beta"] = 0;
+                drone_parameter_["delta_h"] = 0;
+                drone_parameter_["length"] = 0.5;
+                drone_parameter_["gravity"] = 9.81;
+                drone_parameter_["k"] = 0.000056;
+                drone_parameter_["b"] = 0.0000011;
+            }
+            
+            if (ros::param::get("/controller/type",controller_type_)){
+                ROS_INFO("Controller type = %s",controller_type_.c_str());
+                if ( ! (controller_type_.compare("ism") == 0 )  ) // add new controller types here with || !controller_type_.equals(<newControllerTypeAsString>)
+                {
+                    ROS_WARN("Controller type from parameter server not known! Taking ism as default"); // add "or <newControllerType>" for new controller type
+                    controller_type_ = "ism";
+                }
+            }
+            else{
+                ROS_WARN("Controller type could not be read from parameter server, taking ism as default");
+                controller_type_ = "ism";
+            }
+
+        };
+
         void mapControlForceTorqueInputToPropellerRates(float spinningRates[6]){};
-        float drone_parameter_;
+        std::map<std::string,double> drone_parameter_;
+        std::string controller_type_;
         ForceTorqueInput controlForceAndTorque_;
         BaseController* controller_;
 };
@@ -272,21 +332,14 @@ int main(int argc, char **argv)
     ControllerInterface m_drone_controller;
     g_drone_controller_p = &m_drone_controller;
 
-    //Eigen::Vector3f test;
-    Eigen::Quaternionf test1 (0.2,0.7,0.3,0.1);
-    Eigen::Vector3f test = test1.vec().transpose();
-    Eigen::Vector3f test2 (1,2,3);
-    ROS_INFO("[%f,%f,%f]", test.x(), test.y(), test.z());
-    float test3 = -test.dot(test2);
-    ROS_INFO("%f", test3);
-
-
     // Set up a dynamic reconfigure server following
     // https://github.com/UCSD-E4E/stingray-auv/wiki/Writing-publisher-subscriber-with-dynamic-reconfigure-and-parameter-server-(C----)
     dynamic_reconfigure::Server<flypulator_control::control_parameterConfig> dr_srv;
     dynamic_reconfigure::Server<flypulator_control::control_parameterConfig>::CallbackType cb;
     cb = boost::bind(&BaseController::configCallback, g_drone_controller_p->getControllerReference() , _1, _2); //set callback of controller object
     dr_srv.setCallback(cb);
+
+    //ros::Publisher rotor_cmd_pub = n.advertise<std_msgs::String>("chatter", 1000);
 
     ros::spin();
 
