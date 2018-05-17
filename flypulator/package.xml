@@ -1,0 +1,29 @@
+<package>
+  <name>flypulator</name>
+  <version>0.0.1</version>
+  <description>flypulator contains packages related to modeling, control and simulation of multicopter systems</description>
+  <maintainer email="chao.yao@tu-dresden.de">Chao Yao</maintainer>
+
+  <license>GPLv3</license>
+
+  <!-- <url type="website"></url> -->
+  <url type="bugtracker">https://github.com/FLYing-maniPULATOR/flypulator/issues</url>
+
+  <author email="chao.yao@tu-dresden.de">Chao Yao</author>
+  <author email="Jinyao383@hotmail.com">Jinyao Zhu</author>
+  <author email="qiang.ge@mailbox.tu-dresden.de">Qiang Ge</author>
+  <author email="jan.krieglstein@gmail.com">Jan Krieglstein</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+
+  <run_depend>flypulator_description</run_depend>
+  <run_depend>flypulator_common_msgs</run_depend>
+  <run_depend>flypulator_gazebo_plugin</run_depend>
+  <run_depend>flypulator_traj_generator</run_depend>
+  <run_depend>flypulator_teleoperation</run_depend>
+  <run_depend>flypulator_control</run_depend>
+
+
+</package>
