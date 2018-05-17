@@ -2,7 +2,7 @@
 .project
 .pydevproject
 cmake_install.cmake
-CMakeLists.txt
+/CMakeLists.txt
 build/
 bin/
 lib/
