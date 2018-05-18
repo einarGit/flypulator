@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(flypulator_control)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -103,7 +103,7 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+   INCLUDE_DIRS include
 #  LIBRARIES controller_node
    CATKIN_DEPENDS roscpp std_msgs geometry_msgs trajectory_msgs dynamic_reconfigure
 #  DEPENDS system_lib
@@ -116,7 +116,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -136,7 +136,9 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/controller_node_node.cpp)
 
-add_executable(controller_node src/controller_node.cpp)
+add_executable(controller_node src/controller_node.cpp src/controller_interface.cpp src/sliding_mode_controller.cpp)
+
+#add_executable(controller_node src/controller_node.cpp src/sliding_mode_controller.cpp)
 
 add_dependencies(controller_node ${PROJECT_NAME}_gencfg)
 #add_dependencies(controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS}) 
