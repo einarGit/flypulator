@@ -263,7 +263,7 @@ class ControllerInterface {
 
         };
 
-        void mapControlForceTorqueInputToPropellerRates(float spinningRates[6]){};
+        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, float spinningRates[6]){};
         std::map<std::string,double> drone_parameter_;
         std::string controller_type_;
         ForceTorqueInput controlForceAndTorque_;
