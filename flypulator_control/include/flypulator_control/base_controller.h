@@ -18,18 +18,13 @@ struct PoseVelocityAcceleration {
     }
 };
 
-struct ForceTorqueInput {
-    Eigen::Vector3f u_T; // translational force input
-    Eigen::Vector3f u_R; // rotational torque input
-};
-
 // Abstract class, no objects from this class allowed, following http://cpp.nope.bz/pure_virtual.html
 // Superclass for all controller types
 class BaseController {
     public: 
         virtual ~BaseController(){}; 
         // compute Control Force and Torque
-        virtual void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, ForceTorqueInput& controlForceAndTorque) = 0;
+        virtual void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& controlForceAndTorque) = 0;
         // callback for dynamic reconfigure, sets dynamic parameters (controller gains)
         virtual void configCallback(flypulator_control::control_parameterConfig& config, uint32_t level) = 0;
 };

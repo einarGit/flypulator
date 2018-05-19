@@ -6,18 +6,19 @@ PoseVelocityAcceleration g_currentPose;
 PoseVelocityAcceleration g_desiredPose;
 int g_rotor_vel_message_counter = 0;
 ros::Publisher* g_rotor_cmd_pub;
+Eigen::Matrix<float,6,1> g_spinningRates;
 
 void computeControlOutputAndPublish(){
-    float spinningRates[6]; 
+    
     // compute spinning rates
     ROS_DEBUG("Compute Control Output..");
-    g_drone_controller_p->computeControlOutput(g_desiredPose, g_currentPose, spinningRates);
+    g_drone_controller_p->computeControlOutput(g_desiredPose, g_currentPose, g_spinningRates);
     ROS_DEBUG("Control Output computed! Prepare rotor cmd message...");
     // build message
     flypulator_common_msgs::RotorVelStamped msg;
     msg.header.stamp = ros::Time::now();
     for (int i = 0; i<6;i++){
-        msg.velocity.push_back(spinningRates[i]);
+        msg.velocity.push_back(g_spinningRates(i,0));
         msg.name.push_back(std::string("blade_joint") + std::to_string(i)); 
     }
     ROS_DEBUG("Send rotor cmd message..");
@@ -96,7 +97,9 @@ int main(int argc, char **argv)
     cb = boost::bind(&BaseController::configCallback, g_drone_controller_p->getControllerReference() , _1, _2); //set callback of controller object
     dr_srv.setCallback(cb);
 
-    
+    // set inital quaternions (default initialization zero)
+    g_desiredPose.q = Eigen::Quaternionf (1,0,0,0);
+    g_currentPose.q = Eigen::Quaternionf (1,0,0,0);
 
     ros::spin();
 

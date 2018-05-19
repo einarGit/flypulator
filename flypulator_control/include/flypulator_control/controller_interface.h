@@ -27,7 +27,7 @@ class ControllerInterface {
     public:
         ControllerInterface();
 
-        void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, float spinningRates[6]);
+        void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinningRates);
 
         BaseController* getControllerReference(){
             return controller_;
@@ -35,12 +35,16 @@ class ControllerInterface {
        
     private:
         void readDroneParameterFromServer();
-        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, float spinningRates[6]);
+        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinningRates);
+        void computeMappingMatrix();
 
         std::map<std::string,double> drone_parameter_;
         std::string controller_type_;
-        ForceTorqueInput controlForceAndTorque_;
+        Eigen::Matrix<float,6,1> controlForceAndTorque_;
         BaseController* controller_;
+        Eigen::Matrix<float, 6,6> map_matrix_;
+        Eigen::Matrix<float, 6, 6> convert_force_part_to_b_;
+        Eigen::Matrix<float, 6, 6> map_matrix_inverse_b_;
 };
 
 #endif // CONTROLLER_INTERFACE_H
