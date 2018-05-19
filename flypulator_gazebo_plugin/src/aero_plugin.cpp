@@ -80,9 +80,9 @@ class AeroPlugin : public ModelPlugin
   double moment_1, moment_2, moment_3, moment_4, moment_5, moment_6;                                                                                     //torque
   double fh_x1, fh_x2, fh_x3, fh_x4, fh_x5, fh_x6, fh_y1, fh_y2, fh_y3, fh_y4, fh_y5, fh_y6;                                                             //H Force
   double moment_R1x, moment_R1y, moment_R2x, moment_R2y, moment_R3x, moment_R3y, moment_R4x, moment_R4y, moment_R5x, moment_R5y, moment_R6x, moment_R6y; //roll moment
-  double rotor_vel[6] ={0}; // blade spinning velocity
   double force_x, force_y, force_z, torque_x, torque_y, torque_z; //input wrench
   
+  double rotor_vel[6] ={0}; // blade spinning velocity
   int di_blade_rot[6]= {1,-1,1,-1,1,-1}; //default blade rotating direction 1 counterclockwise; -1 clockwise
   int di_force[6]={1,1,1,1,1,1}; //thrust force direction
   int di_vel[6]={1,1,1,1,1,1}; //real rotate direction

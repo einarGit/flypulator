@@ -38,3 +38,6 @@ target_link_libraries(aero_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
 
 add_library(control_plugin SHARED src/control_plugin.cpp)
 target_link_libraries(control_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
+
+add_library(fake_sensor_plugin SHARED src/fake_sensor_plugin.cpp)
+target_link_libraries(fake_sensor_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
