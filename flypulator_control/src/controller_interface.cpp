@@ -79,15 +79,17 @@ void ControllerInterface::readDroneParameterFromServer(){
 };
 
 // map control force and torques to propeller spinning rates
-// TODO implement
 void ControllerInterface::mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinningRates){
     ROS_DEBUG("map control forces and torques to propeller rates...");
 
     // [force, torqe] = ^B M * omega_spin
-    // 
+    // convert forces to body frame
     convert_force_part_to_b_.block(0,0,3,3) = x_current.q.toRotationMatrix();
+    // calculate inverse mapping matrix
     map_matrix_inverse_b_ = (convert_force_part_to_b_ * map_matrix_).inverse();
+    // calculate square of spinning rates
     spinningRates = map_matrix_inverse_b_ * controlForceAndTorque_;
+    // calculate spinning rates with correct sign
     for (int i = 0; i<6; i++){
         if (spinningRates(i,0)>=0){
             spinningRates(i,0) = sqrt(spinningRates(i,0));
@@ -98,14 +100,15 @@ void ControllerInterface::mapControlForceTorqueInputToPropellerRates(const PoseV
     }
 };
 
+// computes mapping matrix of spinning rates to forces/torques
 void ControllerInterface::computeMappingMatrix(){
     // compute thrust directions
     float alpha;
     float beta;
     float gamma;
-    Eigen::Vector3f e_r;
-    Eigen::Vector3f mom;
-    Eigen::Vector3f r_ti;
+    Eigen::Vector3f e_r; // thrust direction
+    Eigen::Vector3f mom; // drag + thrust torque
+    Eigen::Vector3f r_ti; // vector from COM to i-th rotor
     float k = (float) drone_parameter_["k"];
     float b = (float) drone_parameter_["b"];
     float l = (float) drone_parameter_["length"];
@@ -115,16 +118,16 @@ void ControllerInterface::computeMappingMatrix(){
         alpha = (float) drone_parameter_["alpha"] * pow(-1,i);
         beta = (float) drone_parameter_["beta"] * pow(-1,i);;
         gamma = ((float) i) * M_PI / 3.0f;
-
+        // compute thrust direction
         e_r = Eigen::Vector3f (cos(alpha) * sin(beta) * cos(gamma) + sin(alpha)*sin(gamma),
                                   cos(alpha) * sin(beta) * sin(gamma) - sin(alpha)*cos(gamma),
                                   cos(alpha) * cos(beta));
-
+        // compute r_ti vector;
         r_ti << l * cos(gamma), l*sin(gamma), dh ;
-
+        // compute thrust and drag torque
+        mom = k * r_ti.cross(e_r) + b * pow(-1,i+1) * e_r; 
         // save to class variable map_matrix
-        map_matrix_.block(0,i,3,1) = k * e_r;
-        mom = k * r_ti.cross(e_r) + b * pow(-1,i+1) * e_r;    
+        map_matrix_.block(0,i,3,1) = k * e_r;   
         map_matrix_.block(3,i,3,1) = mom;
     }
 }
