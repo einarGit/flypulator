@@ -80,29 +80,13 @@ class AeroPlugin : public ModelPlugin
   double moment_1, moment_2, moment_3, moment_4, moment_5, moment_6;                                                                                     //torque
   double fh_x1, fh_x2, fh_x3, fh_x4, fh_x5, fh_x6, fh_y1, fh_y2, fh_y3, fh_y4, fh_y5, fh_y6;                                                             //H Force
   double moment_R1x, moment_R1y, moment_R2x, moment_R2y, moment_R3x, moment_R3y, moment_R4x, moment_R4y, moment_R5x, moment_R5y, moment_R6x, moment_R6y; //roll moment
-  double vel_1 = 0;
-  double vel_2 = 0;
-  double vel_3 = 0;
-  double vel_4 = 0;
-  double vel_5 = 0;
-  double vel_6 = 0;                                               //calculated blade spinning velocity
+  double rotor_vel[6] ={0}; // blade spinning velocity
   double force_x, force_y, force_z, torque_x, torque_y, torque_z; //input wrench
-  //default blade rotating direction 1 counterclockwise; -1 clockwise
-  int di_1 = 1;
-  int di_2 = -1;
-  int di_3 = 1;
-  int di_4 = -1;
-  int di_5 = 1;
-  int di_6 = -1;
-  //thrust force direction
-  int di_force1 = 1;
-  int di_force2 = 1;
-  int di_force3 = 1;
-  int di_force4 = 1;
-  int di_force5 = 1;
-  int di_force6 = 1;
-  //real rotate direction
-  int di_vel1, di_vel2, di_vel3, di_vel4, di_vel5, di_vel6;
+  
+  int di_blade_rot[6]= {1,-1,1,-1,1,-1}; //default blade rotating direction 1 counterclockwise; -1 clockwise
+  int di_force[6]={1,1,1,1,1,1}; //thrust force direction
+  int di_vel[6]={1,1,1,1,1,1}; //real rotate direction
+
   bool bidirectional = false;            //bidirectional option
   double vel_min = 1e-6; //min rotor speed
   double vel_max = 2500; //max rotor speed
@@ -166,7 +150,7 @@ public:
     this->link6 = _model->GetChildLink("blade_Link6");
     
     //load aerodynamic parameters
-    this->readParamsFromServer();    
+    // this->readParamsFromServer();    
     
     //calculation of constants
     m = this->link0->GetInertial()->GetMass();
@@ -297,24 +281,24 @@ public:
       Vi1 = -Vzz1 / 2 + sqrt(pow((Vzz1 / 2), 2) - pow(Vi_h, 2));
     }
 
-    if (vel_1 <= vel_min)
+    if (rotor_vel[0] <= vel_min)
     {
-      vel_1 = vel_min;
+      rotor_vel[0] = vel_min;
       //std::cout<<"Warning! Velocity of blade1 under limit"<<std::endl;  //TODO: replace with ros warning
     }
-    else if (vel_1 >= vel_max)
+    else if (rotor_vel[0] >= vel_max)
     {
-      vel_1 = vel_max;
+      rotor_vel[0] = vel_max;
       //std::cout<<"Warning! Velocity of blade1 over limit"<<std::endl;
     }
 
-    force_1 = di_force1 * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((vel_1 * R), 2) + (pa / 2) * B * pow(Vxy1, 2) - (-Vi1 - Vzz1) * pow(B, 2) * vel_1 * R / 2);
-    CT1 = abs(force_1) / (0.5 * pho * pow((vel_1 * R), 2) * A);
-    l1 = (-Vi1 - Vzz1) / (vel_1 * R); // inflow rate
-    u1 = Vxy1 / (vel_1 * R);
+    force_1 = di_force[0] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[0] * R), 2) + (pa / 2) * B * pow(Vxy1, 2) - (-Vi1 - Vzz1) * pow(B, 2) * rotor_vel[0] * R / 2);
+    CT1 = abs(force_1) / (0.5 * pho * pow((rotor_vel[0] * R), 2) * A);
+    l1 = (-Vi1 - Vzz1) / (rotor_vel[0] * R); // inflow rate
+    u1 = Vxy1 / (rotor_vel[0] * R);
     CQ1 = ki * l1 * CT1 + 0.25 * s * CD0 * (1 + k * pow(u1, 2));
-    moment_1 = -0.5 * pho * pow((vel_1 * R), 2) * A * R * CQ1 * Sgn(this->link1->GetRelativeAngularVel().z);
-    momentR1 = 0.125 * s * a * pho * R * A * Vxy1 * (((4 / 3) * th0 - thtw) * vel_1 * R + Vi1 + Vzz1);
+    moment_1 = -0.5 * pho * pow((rotor_vel[0] * R), 2) * A * R * CQ1 * Sgn(this->link1->GetRelativeAngularVel().z);
+    momentR1 = 0.125 * s * a * pho * R * A * Vxy1 * (((4 / 3) * th0 - thtw) * rotor_vel[0] * R + Vi1 + Vzz1);
     if (Vxx1 >= 0)
     {
       a1 = atan(Vyy1 / Vxx1); //orientation of Vxy in blade coordinate
@@ -323,7 +307,7 @@ public:
     {
       a1 = PI + atan(Vyy1 / Vxx1);
     }
-    fh1 = 0.25 * s * pho * vel_1 * R * A * CD0 * Vxy1; //H-force
+    fh1 = 0.25 * s * pho * rotor_vel[0] * R * A * CD0 * Vxy1; //H-force
     fh_x1 = fh1 * cos(a1);                             //H-force in x direction
     fh_y1 = fh1 * sin(a1);                             //H-force in y direction
     moment_R1x = momentR1 * cos(a1);                   //roll moment in x direction
@@ -369,14 +353,14 @@ public:
       Vi2 = -Vzz2 / 2 + sqrt(pow((Vzz2 / 2), 2) - pow(Vi_h, 2));
     }
 
-    if (vel_2 <= vel_min)
+    if (rotor_vel[1] <= vel_min)
     {
-      vel_2 = vel_min;
+      rotor_vel[1] = vel_min;
       //std::cout<<"Warning! Velocity of blade2 under limit"<<std::endl;
     }
-    else if (vel_2 >= vel_max)
+    else if (rotor_vel[1] >= vel_max)
     {
-      vel_2 = vel_max;
+      rotor_vel[1] = vel_max;
       //std::cout<<"Warning! Velocity of blade 2 over limit"<<std::endl;
     }
     if (Vxx2 >= 0)
@@ -387,16 +371,16 @@ public:
     {
       a2 = PI + atan(Vyy2 / Vxx2);
     }
-    fh2 = 0.25 * s * pho * vel_2 * R * A * CD0 * Vxy2;
+    fh2 = 0.25 * s * pho * rotor_vel[1] * R * A * CD0 * Vxy2;
     fh_x2 = fh2 * cos(a2);
     fh_y2 = fh2 * sin(a2);
-    force_2 = di_force2 * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((vel_2 * R), 2) + (pa / 2) * B * pow(Vxy2, 2) - (-Vi2 - Vzz2) * pow(B, 2) * vel_2 * R / 2);
-    CT2 = abs(force_2) / (0.5 * pho * pow((vel_2 * R), 2) * A);
-    l2 = (-Vi2 - Vzz2) / (vel_2 * R);
-    u2 = Vxy2 / (vel_2 * R);
+    force_2 = di_force[1] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[1] * R), 2) + (pa / 2) * B * pow(Vxy2, 2) - (-Vi2 - Vzz2) * pow(B, 2) * rotor_vel[1] * R / 2);
+    CT2 = abs(force_2) / (0.5 * pho * pow((rotor_vel[1] * R), 2) * A);
+    l2 = (-Vi2 - Vzz2) / (rotor_vel[1] * R);
+    u2 = Vxy2 / (rotor_vel[1] * R);
     CQ2 = ki * l2 * CT2 + 0.25 * s * CD0 * (1 + k * pow(u2, 2));
-    moment_2 = -0.5 * pho * pow((vel_2 * R), 2) * A * R * CQ2 * Sgn(this->link2->GetRelativeAngularVel().z);
-    momentR2 = 0.125 * s * a * pho * R * A * Vxy2 * (((4 / 3) * th0 - thtw) * vel_2 * R + Vi2 + Vzz2);
+    moment_2 = -0.5 * pho * pow((rotor_vel[1] * R), 2) * A * R * CQ2 * Sgn(this->link2->GetRelativeAngularVel().z);
+    momentR2 = 0.125 * s * a * pho * R * A * Vxy2 * (((4 / 3) * th0 - thtw) * rotor_vel[1] * R + Vi2 + Vzz2);
 
     moment_R2x = momentR2 * cos(a2);
     moment_R2y = momentR2 * sin(a2);
@@ -442,14 +426,14 @@ public:
       Vi3 = -Vzz3 / 2 + sqrt(pow((Vzz3 / 2), 2) - pow(Vi_h, 2));
     }
 
-    if (vel_3 <= vel_min)
+    if (rotor_vel[2] <= vel_min)
     {
-      vel_3 = vel_min;
+      rotor_vel[2] = vel_min;
       //std::cout<<"Warning! Velocity of blade3 under limit"<<std::endl;
     }
-    else if (vel_3 >= vel_max)
+    else if (rotor_vel[2] >= vel_max)
     {
-      vel_3 = vel_max;
+      rotor_vel[2] = vel_max;
       //std::cout<<"Warning! Velocity of blade3 over limit"<<std::endl;
     }
 
@@ -462,17 +446,17 @@ public:
       a3 = PI + atan(Vyy3 / Vxx3);
     }
 
-    fh3 = 0.25 * s * pho * vel_3 * R * A * CD0 * Vxy3;
+    fh3 = 0.25 * s * pho * rotor_vel[2] * R * A * CD0 * Vxy3;
     fh_x3 = fh3 * cos(a3);
     fh_y3 = fh3 * sin(a3);
 
-    force_3 = di_force3 * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((vel_3 * R), 2) + (pa / 2) * B * pow(Vxy3, 2) - (-Vi3 - Vzz3) * pow(B, 2) * vel_3 * R / 2);
-    CT3 = abs(force_3) / (0.5 * pho * pow((vel_3 * R), 2) * A);
-    l3 = (-Vi3 - Vzz3) / (vel_3 * R);
-    u3 = Vxy3 / (vel_3 * R);
+    force_3 = di_force[2] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[2] * R), 2) + (pa / 2) * B * pow(Vxy3, 2) - (-Vi3 - Vzz3) * pow(B, 2) * rotor_vel[2] * R / 2);
+    CT3 = abs(force_3) / (0.5 * pho * pow((rotor_vel[2] * R), 2) * A);
+    l3 = (-Vi3 - Vzz3) / (rotor_vel[2] * R);
+    u3 = Vxy3 / (rotor_vel[2] * R);
     CQ3 = ki * l3 * CT3 + 0.25 * s * CD0 * (1 + k * pow(u3, 2));
-    moment_3 = -0.5 * pho * pow((vel_3 * R), 2) * A * R * CQ3 * Sgn(this->link3->GetRelativeAngularVel().z);
-    momentR3 = 0.125 * s * a * pho * R * A * Vxy3 * (((4 / 3) * th0 - thtw) * vel_3 * R + Vi3 + Vzz3);
+    moment_3 = -0.5 * pho * pow((rotor_vel[2] * R), 2) * A * R * CQ3 * Sgn(this->link3->GetRelativeAngularVel().z);
+    momentR3 = 0.125 * s * a * pho * R * A * Vxy3 * (((4 / 3) * th0 - thtw) * rotor_vel[2] * R + Vi3 + Vzz3);
 
     moment_R3x = momentR3 * cos(a3);
     moment_R3y = momentR3 * sin(a3);
@@ -517,24 +501,24 @@ public:
     {
       Vi4 = -Vzz4 / 2 + sqrt(pow((Vzz4 / 2), 2) - pow(Vi_h, 2));
     }
-    if (vel_4 <= vel_min)
+    if (rotor_vel[3] <= vel_min)
     {
-      vel_4 = vel_min;
+      rotor_vel[3] = vel_min;
       //std::cout<<"Warning! Velocity of blade4 under limit"<<std::endl;
     }
-    else if (vel_4 >= vel_max)
+    else if (rotor_vel[3] >= vel_max)
     {
-      vel_4 = vel_max;
+      rotor_vel[3] = vel_max;
       //std::cout<<"Warning! Velocity of blade4 over limit"<<std::endl;
     }
 
-    force_4 = di_force4 * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((vel_4 * R), 2) + (pa / 2) * B * pow(Vxy4, 2) - (-Vi4 - Vzz4) * pow(B, 2) * vel_4 * R / 2);
-    CT4 = abs(force_4) / (0.5 * pho * pow((vel_4 * R), 2) * A);
-    l4 = (-Vi4 - Vzz4) / (vel_4 * R);
-    u4 = Vxy4 / (vel_4 * R);
+    force_4 = di_force[3] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[3] * R), 2) + (pa / 2) * B * pow(Vxy4, 2) - (-Vi4 - Vzz4) * pow(B, 2) * rotor_vel[3] * R / 2);
+    CT4 = abs(force_4) / (0.5 * pho * pow((rotor_vel[3] * R), 2) * A);
+    l4 = (-Vi4 - Vzz4) / (rotor_vel[3] * R);
+    u4 = Vxy4 / (rotor_vel[3] * R);
     CQ4 = ki * l4 * CT4 + 0.25 * s * CD0 * (1 + k * pow(u4, 2));
-    moment_4 = -0.5 * pho * pow((vel_4 * R), 2) * A * R * CQ4 * Sgn(this->link4->GetRelativeAngularVel().z);
-    momentR4 = 0.125 * s * a * pho * R * A * Vxy4 * (((4 / 3) * th0 - thtw) * vel_4 * R + Vi4 + Vzz4);
+    moment_4 = -0.5 * pho * pow((rotor_vel[3] * R), 2) * A * R * CQ4 * Sgn(this->link4->GetRelativeAngularVel().z);
+    momentR4 = 0.125 * s * a * pho * R * A * Vxy4 * (((4 / 3) * th0 - thtw) * rotor_vel[3] * R + Vi4 + Vzz4);
     if (Vxx4 >= 0)
     {
       a4 = atan(Vyy4 / Vxx4);
@@ -543,7 +527,7 @@ public:
     {
       a4 = PI + atan(Vyy4 / Vxx4);
     }
-    fh4 = 0.25 * s * pho * vel_4 * R * A * CD0 * Vxy4;
+    fh4 = 0.25 * s * pho * rotor_vel[3] * R * A * CD0 * Vxy4;
     fh_x4 = fh4 * cos(a4);
     fh_y4 = fh4 * sin(a4);
 
@@ -590,24 +574,24 @@ public:
     {
       Vi5 = -Vzz5 / 2 + sqrt(pow((Vzz5 / 2), 2) - pow(Vi_h, 2));
     }
-    if (vel_5 <= vel_min)
+    if (rotor_vel[4] <= vel_min)
     {
-      vel_5 = vel_min;
+      rotor_vel[4] = vel_min;
       //std::cout<<"Warning! Velocity of blade5 under limit"<<std::endl;
     }
-    else if (vel_5 >= vel_max)
+    else if (rotor_vel[4] >= vel_max)
     {
-      vel_5 = vel_max;
+      rotor_vel[4] = vel_max;
       //std::cout<<"Warning! Velocity of blade5 over limit"<<std::endl;
     }
 
-    force_5 = di_force5 * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((vel_5 * R), 2) + (pa / 2) * B * pow(Vxy5, 2) - (-Vi5 - Vzz5) * pow(B, 2) * vel_5 * R / 2);
-    CT5 = abs(force_5) / (0.5 * pho * pow((vel_5 * R), 2) * A);
-    l5 = (-Vi5 - Vzz5) / (vel_5 * R);
-    u5 = Vxy5 / (vel_5 * R);
+    force_5 = di_force[4] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[4] * R), 2) + (pa / 2) * B * pow(Vxy5, 2) - (-Vi5 - Vzz5) * pow(B, 2) * rotor_vel[4] * R / 2);
+    CT5 = abs(force_5) / (0.5 * pho * pow((rotor_vel[4] * R), 2) * A);
+    l5 = (-Vi5 - Vzz5) / (rotor_vel[4] * R);
+    u5 = Vxy5 / (rotor_vel[4] * R);
     CQ5 = ki * l5 * CT5 + 0.25 * s * CD0 * (1 + k * pow(u5, 2));
-    moment_5 = -0.5 * pho * pow((vel_5 * R), 2) * A * R * CQ5 * Sgn(this->link5->GetRelativeAngularVel().z);
-    momentR5 = 0.125 * s * a * pho * R * A * Vxy5 * (((4 / 3) * th0 - thtw) * vel_5 * R + Vi5 + Vzz5);
+    moment_5 = -0.5 * pho * pow((rotor_vel[4] * R), 2) * A * R * CQ5 * Sgn(this->link5->GetRelativeAngularVel().z);
+    momentR5 = 0.125 * s * a * pho * R * A * Vxy5 * (((4 / 3) * th0 - thtw) * rotor_vel[4] * R + Vi5 + Vzz5);
     if (Vxx5 >= 0)
     {
       a5 = atan(Vyy5 / Vxx5);
@@ -616,7 +600,7 @@ public:
     {
       a5 = PI + atan(Vyy5 / Vxx5);
     }
-    fh5 = 0.25 * s * pho * vel_5 * R * A * CD0 * Vxy5;
+    fh5 = 0.25 * s * pho * rotor_vel[4] * R * A * CD0 * Vxy5;
     fh_x5 = fh5 * cos(a5);
     fh_y5 = fh5 * sin(a5);
 
@@ -663,24 +647,24 @@ public:
     {
       Vi6 = -Vzz6 / 2 + sqrt(pow((Vzz6 / 2), 2) - pow(Vi_h, 2));
     }
-    if (vel_6 <= vel_min)
+    if (rotor_vel[5] <= vel_min)
     {
-      vel_6 = vel_min;
+      rotor_vel[5] = vel_min;
       //std::cout<<"Warning! Velocity of blade6 under limit"<<std::endl;
     }
-    else if (vel_6 >= vel_max)
+    else if (rotor_vel[5] >= vel_max)
     {
-      vel_6 = vel_max;
+      rotor_vel[5] = vel_max;
       //std::cout<<"Warning! Velocity of blade6 over limit"<<std::endl;
     }
 
-    force_6 = di_force6 * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((vel_6 * R), 2) + (pa / 2) * B * pow(Vxy6, 2) - (-Vi6 - Vzz6) * pow(B, 2) * vel_6 * R / 2);
-    CT6 = abs(force_6) / (0.5 * pho * pow((vel_6 * R), 2) * A);
-    l6 = (-Vi6 - Vzz6) / (vel_6 * R);
-    u6 = Vxy6 / (vel_6 * R);
+    force_6 = di_force[5] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[5] * R), 2) + (pa / 2) * B * pow(Vxy6, 2) - (-Vi6 - Vzz6) * pow(B, 2) * rotor_vel[5] * R / 2);
+    CT6 = abs(force_6) / (0.5 * pho * pow((rotor_vel[5] * R), 2) * A);
+    l6 = (-Vi6 - Vzz6) / (rotor_vel[5] * R);
+    u6 = Vxy6 / (rotor_vel[5] * R);
     CQ6 = ki * l6 * CT6 + 0.25 * s * CD0 * (1 + k * pow(u6, 2));
-    moment_6 = -0.5 * pho * pow((vel_6 * R), 2) * A * R * CQ6 * Sgn(this->link6->GetRelativeAngularVel().z);
-    momentR6 = 0.125 * s * a * pho * R * A * Vxy6 * (((4 / 3) * th0 - thtw) * vel_6 * R + Vi6 + Vzz6);
+    moment_6 = -0.5 * pho * pow((rotor_vel[5] * R), 2) * A * R * CQ6 * Sgn(this->link6->GetRelativeAngularVel().z);
+    momentR6 = 0.125 * s * a * pho * R * A * Vxy6 * (((4 / 3) * th0 - thtw) * rotor_vel[5] * R + Vi6 + Vzz6);
     if (Vxx6 >= 0)
     {
       a6 = atan(Vyy6 / Vxx6);
@@ -689,19 +673,19 @@ public:
     {
       a6 = PI + atan(Vyy6 / Vxx6);
     }
-    fh6 = 0.25 * s * pho * vel_6 * R * A * CD0 * Vxy6;
+    fh6 = 0.25 * s * pho * rotor_vel[5] * R * A * CD0 * Vxy6;
     fh_x6 = fh6 * cos(a6);
     fh_y6 = fh6 * sin(a6);
 
     moment_R6x = momentR6 * cos(a6);
     moment_R6y = momentR6 * sin(a6);
     double ratio1, ratio2, ratio3, ratio4, ratio5, ratio6;
-    ratio1 = -3 * R * CQ1 * Sgn(this->link1->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force1;
-    ratio2 = -3 * R * CQ2 * Sgn(this->link2->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force2;
-    ratio3 = -3 * R * CQ3 * Sgn(this->link3->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force3;
-    ratio4 = -3 * R * CQ4 * Sgn(this->link4->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force4;
-    ratio5 = -3 * R * CQ5 * Sgn(this->link5->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force5;
-    ratio6 = -3 * R * CQ6 * Sgn(this->link6->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force6;
+    ratio1 = -3 * R * CQ1 * Sgn(this->link1->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force[0];
+    ratio2 = -3 * R * CQ2 * Sgn(this->link2->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force[1];
+    ratio3 = -3 * R * CQ3 * Sgn(this->link3->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force[2];
+    ratio4 = -3 * R * CQ4 * Sgn(this->link4->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force[3];
+    ratio5 = -3 * R * CQ5 * Sgn(this->link5->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force[4];
+    ratio6 = -3 * R * CQ6 * Sgn(this->link6->GetRelativeAngularVel().z) / (s * a * pa * pow(B, 3)) * di_force[5];
 
     flypulator_common_msgs::Vector6dMsg _msg;
     _msg.x1 = ratio1;
@@ -741,36 +725,36 @@ public:
 //TODO: add limitation of maximum rotor velocity
     if (bidirectional)  //bi-directional rotors
     {
-      for (int i=0; i<5;i++)
+      for (int i=0; i<6;i++)
       {
         if (_msg->velocity[i] < 0)
         {
-          vel_1 = abs(_msg->velocity[i]);
-          di_vel1 = -di_1;    //inverse rotating direction
-          di_force1 = -1;
+          rotor_vel[i] = abs(_msg->velocity[i]);
+          di_vel[i] = -di_blade_rot[i];    //inverse rotating direction
+          di_force[i] = -1;
         }
         else
         {
-          vel_1 = _msg->velocity[i];
-          di_vel1 = di_1;    //keep default rotating direction
-          di_force1 = 1;
+          rotor_vel[i] = _msg->velocity[i];
+          di_vel[i] = di_blade_rot[i];    //keep default rotating direction
+          di_force[i] = 1;
         }
       }
     }
     else      //uni-directional rotors
     {
-      for (int i=0; i<5; i++)
+      for (int i=0; i<6; i++)
       {
         if (_msg->velocity[i] < 0)
         {
-          vel_1 = 0;  //lower boundary
+          rotor_vel[i] = 0;  //lower boundary
         }
         else
         {
-          vel_1 = _msg->velocity[i];
+          rotor_vel[i] = _msg->velocity[i];
         }
-        di_vel1 = di_1;
-        di_force1 = 1;
+        di_vel[i] = di_blade_rot[i];
+        di_force[i] = 1;
       }
     }
   }    
@@ -835,13 +819,13 @@ public:
 public:
   void SetVelocity()
   {
-    this->joint1->SetParam("vel", 0, vel_1 * di_vel1);
-    this->joint2->SetParam("vel", 0, vel_2 * di_vel2);
-    this->joint3->SetParam("vel", 0, vel_3 * di_vel3);
-    this->joint4->SetParam("vel", 0, vel_4 * di_vel4);
-    this->joint5->SetParam("vel", 0, vel_5 * di_vel5);
-    this->joint6->SetParam("vel", 0, vel_6 * di_vel6);
-    // ROS_INFO_STREAM(vel_1<<","<<vel_2<<","<<vel_3<<","<<vel_4<<","<<vel_5<<","<<vel_6);
+    this->joint1->SetParam("vel", 0, rotor_vel[0] * di_vel[0]);
+    this->joint2->SetParam("vel", 0, rotor_vel[1] * di_vel[1]);
+    this->joint3->SetParam("vel", 0, rotor_vel[2] * di_vel[2]);
+    this->joint4->SetParam("vel", 0, rotor_vel[3] * di_vel[3]);
+    this->joint5->SetParam("vel", 0, rotor_vel[4] * di_vel[4]);
+    this->joint6->SetParam("vel", 0, rotor_vel[5] * di_vel[5]);
+    // ROS_INFO_STREAM(rotor_vel[0]<<","<<rotor_vel[1]<<","<<rotor_vel[2]<<","<<rotor_vel[3]<<","<<rotor_vel[4]<<","<<rotor_vel[5]);
     // ROS_INFO_STREAM("aero plugin: SetVelocity()!");
   }
 
@@ -862,12 +846,12 @@ private:
     this->rosNode->param("rotor_axis_vertical_axis_angle", rv, rv);
     this->rosNode->param("minimal_rotor_velocity", vel_min, vel_min);
     this->rosNode->param("maximal_rotor_velocity", vel_max, vel_max);
-    this->rosNode->param("default_blade1_rotation_direction", di_1, di_1);
-    this->rosNode->param("default_blade2_rotation_direction", di_2, di_2);
-    this->rosNode->param("default_blade3_rotation_direction", di_3, di_3);
-    this->rosNode->param("default_blade4_rotation_direction", di_4, di_4);
-    this->rosNode->param("default_blade5_rotation_direction", di_5, di_5);
-    this->rosNode->param("default_blade6_rotation_direction", di_6, di_6);
+    this->rosNode->param("default_blade1_rotation_direction", di_blade_rot[0], di_blade_rot[0]);
+    this->rosNode->param("default_blade2_rotation_direction", di_blade_rot[1], di_blade_rot[1]);
+    this->rosNode->param("default_blade3_rotation_direction", di_blade_rot[2], di_blade_rot[2]);
+    this->rosNode->param("default_blade4_rotation_direction", di_blade_rot[3], di_blade_rot[3]);
+    this->rosNode->param("default_blade5_rotation_direction", di_blade_rot[4], di_blade_rot[4]);
+    this->rosNode->param("default_blade6_rotation_direction", di_blade_rot[5], di_blade_rot[5]);
     this->rosNode->param("bidirectional_optional", bidirectional, bidirectional);
     this->rosNode->param("KV_value", Kv0, Kv0);
     this->rosNode->param("nominal_no_load_voltage", Um0, Um0);

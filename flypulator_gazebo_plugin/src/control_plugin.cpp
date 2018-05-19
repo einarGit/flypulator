@@ -26,6 +26,7 @@
 #include <Eigen/Dense>
 
 #include <flypulator_common_msgs/Vector6dMsg.h>
+#include <flypulator_common_msgs/RotorVelStamped.h>
 
 
 #define pi (M_PI) // TODO: rename pi to PI
@@ -191,7 +192,7 @@ class ControlPlugin : public ModelPlugin
         this->controllers.push_back(controller_rotation_z);
 
         // publish rotor command (velocity of each propeller)
-        this->pub_cmd = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/rotor_cmd", 100);
+        this->pub_cmd = this->rosNode->advertise<flypulator_common_msgs::RotorVelStamped>("/drone/rotor_cmd", 100);
 
         //Create a wind velocity topic and subscribe to it
         ros::SubscribeOptions s1 =
@@ -796,19 +797,24 @@ class ControlPlugin : public ModelPlugin
             vel_6 = -b6 / (2 * a0) + sqrt(pow(b6, 2) - 4 * a0 * (c6 - Thrust_ist(5))) / (2 * a0);
         }
 
-        flypulator_common_msgs::Vector6dMsg _rotor_cmd;
-        // _rotor_cmd.force.x = vel_1 * di_vel1;
-        // _rotor_cmd.force.y = vel_2 * di_vel2;
-        // _rotor_cmd.force.z = vel_3 * di_vel3;
-        // _rotor_cmd.torque.x = vel_4 * di_vel4;
-        // _rotor_cmd.torque.y = vel_5 * di_vel5;
-        // _rotor_cmd.torque.z = vel_6 * di_vel6;
-        _rotor_cmd.x1 = vel_1 * di_vel1;
-        _rotor_cmd.x2 = vel_2 * di_vel2;
-        _rotor_cmd.x3 = vel_3 * di_vel3;
-        _rotor_cmd.x4 = vel_4 * di_vel4;
-        _rotor_cmd.x5 = vel_5 * di_vel5;
-        _rotor_cmd.x6 = vel_6 * di_vel6;
+        flypulator_common_msgs::RotorVelStamped _rotor_cmd;
+
+        _rotor_cmd.header.stamp = ros::Time::now();
+        _rotor_cmd.name.resize(6);
+        _rotor_cmd.velocity.resize(6);
+
+        _rotor_cmd.name[0] = "motor1";  
+        _rotor_cmd.velocity[0] = vel_1 * di_vel1;
+        _rotor_cmd.name[1] = "motor2";  
+        _rotor_cmd.velocity[1] = vel_2 * di_vel2;
+        _rotor_cmd.name[2] = "motor3";  
+        _rotor_cmd.velocity[2] = vel_3 * di_vel3;
+        _rotor_cmd.name[3] = "motor4";  
+        _rotor_cmd.velocity[3] = vel_4 * di_vel4;
+        _rotor_cmd.name[4] = "motor5";  
+        _rotor_cmd.velocity[4] = vel_5 * di_vel5;
+        _rotor_cmd.name[5] = "motor6";  
+        _rotor_cmd.velocity[5] = vel_6 * di_vel6;
         this->pub_cmd.publish(_rotor_cmd);
         ros::spinOnce();
     }
