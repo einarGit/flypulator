@@ -3,10 +3,10 @@ PS: merge the develop branch to master only after validation.
 # Gazebo simulation
 
 ## Launch:  
-roslaunch flypulator_simulation_gazebo gazebo.launch
+roslaunch flypulator gazebo.launch
 
 ## Check tf in rviz: 
-rviz -d flypulator_simulation/flypulator_description/simulation.rviz
+roslaunch flypulator_description igs.launch
 
 # Trajectory Generator and Controller for Flypulator Project
 
