@@ -3,7 +3,7 @@
  <!-- <param name="robot_description" textfile="$(find flypulator_description)/urdf/drone.urdf" /> -->
  <!-- <param name="robot_description" command="cat $(find flypulator_description)/urdf/drone.xml" /> -->
 
- <arg name="model" default="$(find flypulator_description)/urdf/drone.urdf"/>
+ <arg name="model" default="$(find flypulator_description)/urdf/hexarotor_igs.urdf"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch" />
 
@@ -17,7 +17,7 @@
     name="spawn_model"
     pkg="gazebo_ros"
     type="spawn_model"
-    args="-file $(find flypulator_description)/urdf/drone.urdf -urdf -model drone"
+    args="-file $(find flypulator_description)/urdf/hexarotor_igs.urdf -urdf -model drone"
     output="screen" > 
     <rosparam file="$(find flypulator_description)/param/aeroparam.yaml" command="load"/>
   </node>
