@@ -139,20 +139,20 @@ class ControlPlugin : public ModelPlugin
         this->model = _model;
         // Get the first joint. We are making an assumption about the model
         // having six joints that is the rotational joint.
-        this->joint1 = _model->GetJoint("blade_joint1");
-        this->joint2 = _model->GetJoint("blade_joint2");
-        this->joint3 = _model->GetJoint("blade_joint3");
-        this->joint4 = _model->GetJoint("blade_joint4");
-        this->joint5 = _model->GetJoint("blade_joint5");
-        this->joint6 = _model->GetJoint("blade_joint6");
+        this->joint1 = _model->GetJoint("blade_joint_1");
+        this->joint2 = _model->GetJoint("blade_joint_2");
+        this->joint3 = _model->GetJoint("blade_joint_3");
+        this->joint4 = _model->GetJoint("blade_joint_4");
+        this->joint5 = _model->GetJoint("blade_joint_5");
+        this->joint6 = _model->GetJoint("blade_joint_6");
         //get the six blade link
         this->link0 = _model->GetChildLink("base_link");
-        this->link1 = _model->GetChildLink("blade_Link1");
-        this->link2 = _model->GetChildLink("blade_Link2");
-        this->link3 = _model->GetChildLink("blade_Link3");
-        this->link4 = _model->GetChildLink("blade_Link4");
-        this->link5 = _model->GetChildLink("blade_Link5");
-        this->link6 = _model->GetChildLink("blade_Link6");
+        this->link1 = _model->GetChildLink("blade_link_1");
+        this->link2 = _model->GetChildLink("blade_link_2");
+        this->link3 = _model->GetChildLink("blade_link_3");
+        this->link4 = _model->GetChildLink("blade_link_4");
+        this->link5 = _model->GetChildLink("blade_link_5");
+        this->link6 = _model->GetChildLink("blade_link_6");
         //calculation of constants
         m = this->link0->GetInertial()->GetMass();
         s = (N * c) / (pi * R);                              //rotor solidity

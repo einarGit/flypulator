@@ -121,12 +121,12 @@ public:
     this->model = _model;
     // Get the first joint. We are making an assumption about the model
     // having six joints that is the rotational joint.
-    this->joint1 = _model->GetJoint("blade_joint1");
-    this->joint2 = _model->GetJoint("blade_joint2");
-    this->joint3 = _model->GetJoint("blade_joint3");
-    this->joint4 = _model->GetJoint("blade_joint4");
-    this->joint5 = _model->GetJoint("blade_joint5");
-    this->joint6 = _model->GetJoint("blade_joint6");
+    this->joint1 = _model->GetJoint("blade_joint_1");
+    this->joint2 = _model->GetJoint("blade_joint_2");
+    this->joint3 = _model->GetJoint("blade_joint_3");
+    this->joint4 = _model->GetJoint("blade_joint_4");
+    this->joint5 = _model->GetJoint("blade_joint_5");
+    this->joint6 = _model->GetJoint("blade_joint_6");
     //set joint velocity using joint motors to set joint velocity
     this->joint1->SetParam("fmax", 0, 1000000.0); //fmax: maximum joint force or torque
     this->joint2->SetParam("fmax", 0, 1000000.0);
@@ -142,12 +142,12 @@ public:
     this->joint6->SetParam("vel", 0, 0.0);
     //get the six blade link
     this->link0 = _model->GetChildLink("base_link");
-    this->link1 = _model->GetChildLink("blade_Link1");
-    this->link2 = _model->GetChildLink("blade_Link2");
-    this->link3 = _model->GetChildLink("blade_Link3");
-    this->link4 = _model->GetChildLink("blade_Link4");
-    this->link5 = _model->GetChildLink("blade_Link5");
-    this->link6 = _model->GetChildLink("blade_Link6");
+    this->link1 = _model->GetChildLink("blade_Link_1");
+    this->link2 = _model->GetChildLink("blade_Link_2");
+    this->link3 = _model->GetChildLink("blade_Link_3");
+    this->link4 = _model->GetChildLink("blade_Link_4");
+    this->link5 = _model->GetChildLink("blade_Link_5");
+    this->link6 = _model->GetChildLink("blade_Link_6");
     
     //load aerodynamic parameters
     // this->readParamsFromServer();    
@@ -876,32 +876,32 @@ private:
     // pose_tmp = this->link1->GetRelativePose();
     // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
     // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
-    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link1"));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_link_1"));
 
     // pose_tmp = this->link2->GetRelativePose();
     // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
     // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
-    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link2"));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_link_2"));
 
     // pose_tmp = this->link3->GetRelativePose();
     // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
     // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
-    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link3"));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_link_3"));
 
     // pose_tmp = this->link4->GetRelativePose();
     // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
     // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
-    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link4"));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_link_4"));
 
     // pose_tmp = this->link5->GetRelativePose();
     // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
     // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
-    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link5"));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_link_5"));
 
     // pose_tmp = this->link6->GetRelativePose();
     // T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
     // T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
-    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_Link6"));
+    // T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "base_link", "blade_link_6"));
   }
 // publish joint state
 private:
