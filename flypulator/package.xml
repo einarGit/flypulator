@@ -24,5 +24,6 @@
   <run_depend>flypulator_traj_generator</run_depend>
   <run_depend>flypulator_teleoperation</run_depend>
   <run_depend>flypulator_control</run_depend>
+  <run_depend>hector_gazebo_plugins</run_depend>
 
 </package>
