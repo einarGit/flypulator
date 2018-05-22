@@ -35,9 +35,12 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 
 add_library(aero_plugin SHARED src/aero_plugin.cpp)
 target_link_libraries(aero_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
+add_dependencies(aero_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(control_plugin SHARED src/control_plugin.cpp)
 target_link_libraries(control_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
+add_dependencies(control_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(fake_sensor_plugin SHARED src/fake_sensor_plugin.cpp)
 target_link_libraries(fake_sensor_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
+add_dependencies(fake_sensor_plugin ${catkin_EXPORTED_TARGETS})
