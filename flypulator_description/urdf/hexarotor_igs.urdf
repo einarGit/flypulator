@@ -1,6 +1,122 @@
 <?xml version="1.0"?>
 <robot
-  name="Hexacopter">
+  name="drone">
+
+  <gazebo>
+    <plugin name="aero_plugin" filename="libaero_plugin.so">
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="control_plugin" filename="libcontrol_plugin.so">
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="fake_sensor_plugin" filename="libfake_sensor_plugin.so">
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/drone</robotNamespace>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="drone_internal_imu_plugin" filename="libhector_gazebo_ros_imu.so" >
+      <alwaysOn>true</alwaysOn>
+      <bodyName>base_link</bodyName>
+      <frameName>base_link</frameName>
+      <topicName>IMU/imu_data</topicName>
+      <serviceName>drone/internal_sensors/imu_service</serviceName>
+      <updateRate>100.0</updateRate>
+      <gaussianNoise>0.001</gaussianNoise>
+      <!-- accelerometer params -->
+      <accelOffset>0.0 0.0 0.0</accelOffset>
+      <accelGaussianNoise>0.0003 0.0003 0.0003</accelGaussianNoise>
+      <accelDrift>0.00004 0.00004 0.00004</accelDrift>
+      <accelFrequency>0.0025 0.0025 0.0025</accelFrequency>
+      <!-- gyroscope params -->
+      <rateOffset>0.0 0.0 0.0</rateOffset>
+      <rateDrift>0.01 0.01 0.01</rateDrift>
+      <rateDriftFrequency>0.001 0.001 0.001</rateDriftFrequency>
+      <rateGaussianNoise>0.01 0.01 0.01</rateGaussianNoise>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="drone_internal_magnetic_sim" filename="libhector_gazebo_ros_magnetic.so">
+      <updateRate>100.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <frameId>base_link</frameId>
+      <topicName>MAGNET/magnetic_data</topicName>
+      <offset>0 0 0</offset>
+      <drift>0.0 0.0 0.0</drift>
+      <gaussianNoise>1.3e-3 1.3e-3 1.3e-3</gaussianNoise>
+    </plugin>
+  </gazebo>
+
+  <!--
+  <gazebo>
+    <plugin name="drone_internal_gps_sim" filename="libhector_gazebo_ros_gps.so">
+      <updateRate>4.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <frameId>base_link</frameId>
+      <topicName>GPS/fix</topicName>
+      <velocityTopicName>GPS/fix_velocity</velocityTopicName>
+      <referenceLatitude>49.860246</referenceLatitude>
+      <referenceLongitude>8.687077</referenceLongitude>
+      <drift>0.0 0.0 0.0</drift>
+      <gaussianNoise>0.01 0.01 0.01</gaussianNoise>
+      <velocityDrift>0 0 0</velocityDrift>
+      <velocityGaussianNoise>0.01 0.01 0.01</velocityGaussianNoise>
+    </plugin>
+  </gazebo>
+  -->
+
+   <!-- 
+  <gazebo reference="base_link">
+    <sensor type="camera" name="camera1">
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <vertical_fov>3.1415926</vertical_fov>
+        <image>
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>  -->
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. --> <!--
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>camera1</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>base_link</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+  -->
+
   <link
     name="base_link">
     <inertial>
@@ -1013,4 +1129,66 @@
       effort="0"
       velocity="630" />
   </joint>
+
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_1">
+    <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_2">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor2">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran3">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_3">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor3">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran4">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_4">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor4">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran5">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_5">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor5">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran6">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_6">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor6">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
 </robot>
