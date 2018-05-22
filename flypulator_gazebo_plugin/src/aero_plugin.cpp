@@ -142,12 +142,12 @@ public:
     this->joint6->SetParam("vel", 0, 0.0);
     //get the six blade link
     this->link0 = _model->GetChildLink("base_link");
-    this->link1 = _model->GetChildLink("blade_Link_1");
-    this->link2 = _model->GetChildLink("blade_Link_2");
-    this->link3 = _model->GetChildLink("blade_Link_3");
-    this->link4 = _model->GetChildLink("blade_Link_4");
-    this->link5 = _model->GetChildLink("blade_Link_5");
-    this->link6 = _model->GetChildLink("blade_Link_6");
+    this->link1 = _model->GetChildLink("blade_link_1");
+    this->link2 = _model->GetChildLink("blade_link_2");
+    this->link3 = _model->GetChildLink("blade_link_3");
+    this->link4 = _model->GetChildLink("blade_link_4");
+    this->link5 = _model->GetChildLink("blade_link_5");
+    this->link6 = _model->GetChildLink("blade_link_6");
     
     //load aerodynamic parameters
     // this->readParamsFromServer();    
@@ -757,6 +757,8 @@ public:
         di_force[i] = 1;
       }
     }
+    // ROS_INFO_STREAM("aero:"<<_msg->velocity[0]<<","<<_msg->velocity[1]<<","<<_msg->velocity[2]<<","<<_msg->velocity[3]<<","<<_msg->velocity[4]<<","<<_msg->velocity[5]);
+    // ROS_INFO_STREAM("aero:"<<rotor_vel[0]<<","<<rotor_vel[1]<<","<<rotor_vel[2]<<","<<rotor_vel[3]<<","<<rotor_vel[4]<<","<<rotor_vel[5]);
   }    
     
 
@@ -825,7 +827,7 @@ public:
     this->joint4->SetParam("vel", 0, rotor_vel[3] * di_vel[3]);
     this->joint5->SetParam("vel", 0, rotor_vel[4] * di_vel[4]);
     this->joint6->SetParam("vel", 0, rotor_vel[5] * di_vel[5]);
-    // ROS_INFO_STREAM(rotor_vel[0]<<","<<rotor_vel[1]<<","<<rotor_vel[2]<<","<<rotor_vel[3]<<","<<rotor_vel[4]<<","<<rotor_vel[5]);
+    // ROS_INFO_STREAM("aero:"<<rotor_vel[0]<<","<<rotor_vel[1]<<","<<rotor_vel[2]<<","<<rotor_vel[3]<<","<<rotor_vel[4]<<","<<rotor_vel[5]);
     // ROS_INFO_STREAM("aero plugin: SetVelocity()!");
   }
 

@@ -297,12 +297,12 @@ class ControlPlugin : public ModelPlugin
         // force_x = 0;
         // force_y = 0;
         force_z = m * lin_acc_body(2);
-        // force_z = -m * 9.81*0.01;
+        // force_z = m * 9.81*1.5;
         torque_x = -Jxx * angle_acc_body(0);
         torque_y = -Jyy * angle_acc_body(1);
         torque_z = -Jzz * angle_acc_body(2);
         // torque_x = -Jxx * 0;
-        // torque_y = -Jyy * 8;
+        // torque_y = -Jyy * 0;
         // torque_z = -Jzz * 0;
         lastSimTime = curTime;
     }
@@ -799,6 +799,9 @@ class ControlPlugin : public ModelPlugin
 
         flypulator_common_msgs::RotorVelStamped _rotor_cmd;
 
+        // vel_1 = vel_2 = vel_3 = vel_4 = vel_5 = vel_6 = 200;
+        // di_vel1 = di_vel2 =di_vel3 = di_vel4 = di_vel5 = di_vel6 = 1;
+
         _rotor_cmd.header.stamp = ros::Time::now();
         _rotor_cmd.name.resize(6);
         _rotor_cmd.velocity.resize(6);
@@ -817,6 +820,7 @@ class ControlPlugin : public ModelPlugin
         _rotor_cmd.velocity[5] = vel_6 * di_vel6;
         this->pub_cmd.publish(_rotor_cmd);
         ros::spinOnce();
+        // ROS_INFO_STREAM("control:"<<vel_1<<","<<vel_2<<","<<vel_3<<","<<vel_4<<","<<vel_5<<","<<vel_6);
     }
 
   public:

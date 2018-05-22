@@ -2,10 +2,10 @@
 <robot
   name="drone">
   
-  <!--<gazebo>
+  <gazebo>
     <plugin name="aero_plugin" filename="libaero_plugin.so">
     </plugin>
-  </gazebo> -->
+  </gazebo>
 
   <gazebo>
     <plugin name="control_plugin" filename="libcontrol_plugin.so">
