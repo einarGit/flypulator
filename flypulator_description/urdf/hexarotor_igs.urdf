@@ -25,6 +25,7 @@
 
   <gazebo>
     <plugin name="drone_internal_imu_plugin" filename="libhector_gazebo_ros_imu.so" >
+      <robotNamespace>/drone</robotNamespace>
       <alwaysOn>true</alwaysOn>
       <bodyName>base_link</bodyName>
       <frameName>base_link</frameName>
@@ -47,6 +48,7 @@
 
   <gazebo>
     <plugin name="drone_internal_magnetic_sim" filename="libhector_gazebo_ros_magnetic.so">
+      <robotNamespace>/drone</robotNamespace>
       <updateRate>100.0</updateRate>
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
@@ -59,6 +61,7 @@
 
   <gazebo>
     <plugin name="drone_internal_gps_sim" filename="libhector_gazebo_ros_gps.so">
+      <robotNamespace>/drone</robotNamespace>
       <updateRate>4.0</updateRate>
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
@@ -97,6 +100,7 @@
         </noise>
       </camera>
       <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <robotNamespace>/drone</robotNamespace>
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
         <cameraName>camera1</cameraName>
@@ -114,7 +118,7 @@
   </gazebo>
 
 
-  <link
+  <!-- <link
     name="dummy_link">
     <inertial>
       <origin
@@ -153,7 +157,7 @@
           filename="package://flypulator_description/meshes/dummy_link.STL" />
       </geometry>
     </collision>
-  </link>
+  </link> -->
   <link
     name="base_link">
     <inertial>
@@ -194,7 +198,7 @@
       </geometry>
     </collision>
   </link>
-  <joint
+  <!-- <joint
     name="base_joint"
     type="fixed">
     <origin
@@ -206,7 +210,7 @@
       link="base_link" />
     <axis
       xyz="0 0 0" />
-  </joint>
+  </joint> -->
   <link
     name="arm_link_1">
     <inertial>

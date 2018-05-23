@@ -798,6 +798,7 @@ public:
     this->link4->AddRelativeForce(math::Vector3(fh_x4, fh_y4, force_4));
     this->link5->AddRelativeForce(math::Vector3(fh_x5, fh_y5, force_5));
     this->link6->AddRelativeForce(math::Vector3(fh_x6, fh_y6, force_6));
+    // ROS_INFO_STREAM("force:"<<force_1<<","<<force_2<<","<<force_3<<","<<force_4<<","<<force_5<<","<<force_6);
   }
   //add torque to blade link
 public:
@@ -939,7 +940,7 @@ private:
     geometry_msgs::WrenchStamped wrench_msg_tmp;
     wrench_msg_tmp.header.stamp = ros::Time::now();
 
-    wrench_msg_tmp.header.frame_id = "motor_Link1";
+    wrench_msg_tmp.header.frame_id = "motor_link_1";
     wrench_msg_tmp.wrench.force.x = fh_x1;
     wrench_msg_tmp.wrench.force.y = fh_y1;
     wrench_msg_tmp.wrench.force.z = force_1;
@@ -947,7 +948,7 @@ private:
     wrench_msg_tmp.wrench.torque.y = moment_R1y;
     wrench_msg_tmp.wrench.torque.z =  moment_1;
     this->pub_link1_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_Link2";
+    wrench_msg_tmp.header.frame_id = "motor_link_2";
     wrench_msg_tmp.wrench.force.x = fh_x2;
     wrench_msg_tmp.wrench.force.y = fh_y2;
     wrench_msg_tmp.wrench.force.z = force_2;
@@ -955,7 +956,7 @@ private:
     wrench_msg_tmp.wrench.torque.y = moment_R2y;
     wrench_msg_tmp.wrench.torque.z =  moment_2;
     this->pub_link2_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_Link3";
+    wrench_msg_tmp.header.frame_id = "motor_link_3";
     wrench_msg_tmp.wrench.force.x = fh_x3;
     wrench_msg_tmp.wrench.force.y = fh_y3;
     wrench_msg_tmp.wrench.force.z = force_3;
@@ -963,7 +964,7 @@ private:
     wrench_msg_tmp.wrench.torque.y = moment_R3y;
     wrench_msg_tmp.wrench.torque.z =  moment_3;
     this->pub_link3_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_Link4";
+    wrench_msg_tmp.header.frame_id = "motor_link_4";
     wrench_msg_tmp.wrench.force.x = fh_x4;
     wrench_msg_tmp.wrench.force.y = fh_y4;
     wrench_msg_tmp.wrench.force.z = force_4;
@@ -971,7 +972,7 @@ private:
     wrench_msg_tmp.wrench.torque.y = moment_R4y;
     wrench_msg_tmp.wrench.torque.z =  moment_4;
     this->pub_link4_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_Link5";
+    wrench_msg_tmp.header.frame_id = "motor_link_5";
     wrench_msg_tmp.wrench.force.x = fh_x5;
     wrench_msg_tmp.wrench.force.y = fh_y5;
     wrench_msg_tmp.wrench.force.z = force_5;
@@ -979,7 +980,7 @@ private:
     wrench_msg_tmp.wrench.torque.y = moment_R5y;
     wrench_msg_tmp.wrench.torque.z =  moment_5;
     this->pub_link5_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_Link6";
+    wrench_msg_tmp.header.frame_id = "motor_link_6";
     wrench_msg_tmp.wrench.force.x = fh_x6;
     wrench_msg_tmp.wrench.force.y = fh_y6;
     wrench_msg_tmp.wrench.force.z = force_6;

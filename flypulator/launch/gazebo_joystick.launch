@@ -48,6 +48,6 @@
     <remap from="/joint_states" to="/drone/joint_states" />
  </node>
 
-<include file="$(find flypulator_teleoperation)/launch/joy.launch" />
+<include file="$(find flypulator_teleop)/launch/joy.launch" />
 
 </launch>
