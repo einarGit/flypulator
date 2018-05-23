@@ -1,0 +1,9 @@
+<launch>
+	<rosparam command="load" file="$(find flypulator_control)/cfg/drone_parameter.yaml" />
+
+	<node name="controller_node" pkg="flypulator_control" type="controller_node" 			output="screen">
+	</node>
+
+	<node name="trajectory_generator_server" pkg="flypulator_traj_generator" 			type="trajectory_generator_server" output="screen">
+	</node> 
+</launch>
