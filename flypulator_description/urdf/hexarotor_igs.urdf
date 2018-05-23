@@ -115,20 +115,60 @@
 
 
   <link
+    name="dummy_link">
+    <inertial>
+      <origin
+        xyz="4.8268E-18 2.8159E-17 0.005"
+        rpy="0 0 0" />
+      <mass
+        value="0" />
+      <inertia
+        ixx="0"
+        ixy="0"
+        ixz="0"
+        iyy="0"
+        iyz="0"
+        izz="0" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://flypulator_description/meshes/dummy_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://flypulator_description/meshes/dummy_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
     name="base_link">
     <inertial>
       <origin
-        xyz="3.9269E-15 8.4015E-15 -0.018301"
+        xyz="5.4812E-15 1.1988E-14 0.03"
         rpy="0 0 0" />
       <mass
-        value="4.5104" />
+        value="3.2461" />
       <inertia
-        ixx="0.2003"
-        ixy="0.00024017"
-        ixz="-8.2287E-16"
-        iyy="0.074429"
-        iyz="-1.9116E-14"
-        izz="0.20479" />
+        ixx="0.024024"
+        ixy="4.5619E-06"
+        ixz="2.0062E-17"
+        iyy="0.024019"
+        iyz="-6.6864E-17"
+        izz="0.044056" />
     </inertial>
     <visual>
       <origin
@@ -141,7 +181,7 @@
       <material
         name="">
         <color
-          rgba="0.75294 0.75294 0.75294 1" />
+          rgba="1 1 1 1" />
       </material>
     </visual>
     <collision>
@@ -154,6 +194,19 @@
       </geometry>
     </collision>
   </link>
+  <joint
+    name="base_joint"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="dummy_link" />
+    <child
+      link="base_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
   <link
     name="arm_link_1">
     <inertial>
@@ -198,8 +251,8 @@
     name="arm_joint_1"
     type="fixed">
     <origin
-      xyz="0.0379263277638919 -0.0218967755438572 0.03"
-      rpy="6.5556015652822E-16 -1.01435265127275E-15 -2.09439510239319" />
+      xyz="0.037926 -0.021897 0.03"
+      rpy="0 0 -2.0944" />
     <parent
       link="base_link" />
     <child
@@ -305,7 +358,7 @@
     type="continuous">
     <origin
       xyz="0 0 0.046"
-      rpy="6.1162E-18 -8.1315E-20 0" />
+      rpy="0 0 0" />
     <parent
       link="motor_link_1" />
     <child
@@ -320,17 +373,17 @@
     name="arm_link_2">
     <inertial>
       <origin
-        xyz="-6.45987155706608E-05 0.359297517735395 0.000291609283292308"
+        xyz="-6.4599E-05 0.3593 0.00029161"
         rpy="0 0 0" />
       <mass
-        value="0.113071616632983" />
+        value="0.11307" />
       <inertia
-        ixx="0.00358337872206462"
-        ixy="1.51596305369758E-06"
-        ixz="-3.3319900957408E-06"
-        iyy="2.98059014866106E-05"
-        iyz="-6.78615560568246E-06"
-        izz="0.00359635047022107" />
+        ixx="0.0035834"
+        ixy="1.516E-06"
+        ixz="-3.332E-06"
+        iyy="2.9806E-05"
+        iyz="-6.7862E-06"
+        izz="0.0035964" />
     </inertial>
     <visual>
       <origin
@@ -360,8 +413,8 @@
     name="arm_joint_2"
     type="fixed">
     <origin
-      xyz="0.0368267925361948 0.0212619585841613 0.0300000000000008"
-      rpy="8.02409225127727E-16 -8.45899975464507E-16 -1.0471975511966" />
+      xyz="0.036827 0.021262 0.03"
+      rpy="0 0 -1.0472" />
     <parent
       link="base_link" />
     <child
@@ -373,17 +426,17 @@
     name="motor_link_2">
     <inertial>
       <origin
-        xyz="1.27673377314785E-07 1.57053931859608E-07 0.0195362446087649"
+        xyz="1.2767E-07 1.5705E-07 0.019536"
         rpy="0 0 0" />
       <mass
-        value="0.0980407364233949" />
+        value="0.098041" />
       <inertia
-        ixx="3.26207140793099E-05"
-        ixy="-6.6552393914887E-10"
-        ixz="2.19396423829522E-10"
-        iyy="3.26190970819821E-05"
-        iyz="2.69899167424102E-10"
-        izz="4.36594955144742E-05" />
+        ixx="3.2621E-05"
+        ixy="-6.6552E-10"
+        ixz="2.194E-10"
+        iyy="3.2619E-05"
+        iyz="2.699E-10"
+        izz="4.3659E-05" />
     </inertial>
     <visual>
       <origin
@@ -413,8 +466,8 @@
     name="motor_joint_2"
     type="fixed">
     <origin
-      xyz="-0.00124895892184227 0.562306513541 0.00484208436052164"
-      rpy="0.237364418851718 0.000417019559747398 -1.57252008000707" />
+      xyz="-0.001249 0.56231 0.0048421"
+      rpy="0.23736 0.00041702 -1.5725" />
     <parent
       link="arm_link_2" />
     <child
@@ -426,17 +479,17 @@
     name="blade_link_2">
     <inertial>
       <origin
-        xyz="-1.4065876085545E-05 -2.55237663435159E-06 -0.00162646027121978"
+        xyz="-1.4066E-05 -2.5524E-06 -0.0016265"
         rpy="0 0 0" />
       <mass
-        value="0.0627428767604964" />
+        value="0.062743" />
       <inertia
-        ixx="8.36866833291662E-06"
-        ixy="3.36333705844784E-05"
-        ixz="-2.0544463406869E-09"
-        iyy="0.001400131781522"
-        iyz="-4.4118071653896E-10"
-        izz="0.00140738407622868" />
+        ixx="8.3687E-06"
+        ixy="3.3633E-05"
+        ixz="-2.0545E-09"
+        iyy="0.0014001"
+        iyz="-4.4118E-10"
+        izz="0.0014074" />
     </inertial>
     <visual>
       <origin
@@ -467,7 +520,7 @@
     type="continuous">
     <origin
       xyz="0 0 0.046"
-      rpy="8.0491E-16 0 -5.5511E-17" />
+      rpy="0 0 0" />
     <parent
       link="motor_link_2" />
     <child
@@ -482,17 +535,17 @@
     name="arm_link_3">
     <inertial>
       <origin
-        xyz="7.5838155291795E-05 0.35929751798952 0.000288890203180497"
+        xyz="7.5838E-05 0.3593 0.00028889"
         rpy="0 0 0" />
       <mass
-        value="0.113071616827671" />
+        value="0.11307" />
       <inertia
-        ixx="0.00358337978027546"
-        ixy="-1.7536051706911E-06"
-        ixz="3.33404096432986E-06"
-        iyy="2.98059015235748E-05"
-        iyz="-6.72866419460223E-06"
-        izz="0.00359634942044135" />
+        ixx="0.0035834"
+        ixy="-1.7536E-06"
+        ixz="3.334E-06"
+        iyy="2.9806E-05"
+        iyz="-6.7287E-06"
+        izz="0.0035963" />
     </inertial>
     <visual>
       <origin
@@ -522,8 +575,8 @@
     name="arm_joint_3"
     type="fixed">
     <origin
-      xyz="0 0.0437852352480928 0.0300000000000009"
-      rpy="8.9161997561106E-17 4.34108246398995E-14 -1.11022302462516E-16" />
+      xyz="0 0.043785 0.03"
+      rpy="0 0 0" />
     <parent
       link="base_link" />
     <child
@@ -535,17 +588,17 @@
     name="motor_link_3">
     <inertial>
       <origin
-        xyz="-1.85010233688665E-07 -8.65308782405094E-08 0.0195362442133871"
+        xyz="-1.8501E-07 -8.6531E-08 0.019536"
         rpy="0 0 0" />
       <mass
-        value="0.0980407398276978" />
+        value="0.098041" />
       <inertia
-        ixx="3.26198912586558E-05"
-        ixy="-1.04178195709081E-09"
-        ixz="-3.16009189124849E-10"
-        iyy="3.26199272198111E-05"
-        iyz="-1.49217697437535E-10"
-        izz="4.36595022787714E-05" />
+        ixx="3.262E-05"
+        ixy="-1.0418E-09"
+        ixz="-3.1601E-10"
+        iyy="3.262E-05"
+        iyz="-1.4922E-10"
+        izz="4.366E-05" />
     </inertial>
     <visual>
       <origin
@@ -588,17 +641,17 @@
     name="blade_link_3">
     <inertial>
       <origin
-        xyz="2.39721083415967E-05 3.43436363869909E-06 -0.00162644083949853"
+        xyz="2.3972E-05 3.4344E-06 -0.0016264"
         rpy="0 0 0" />
       <mass
-        value="0.0627473719638348" />
+        value="0.062747" />
       <inertia
-        ixx="7.61162990923721E-06"
-        ixy="-8.73671881165227E-06"
-        ixz="1.64909561297701E-09"
-        iyy="0.00140104844094952"
-        iyz="4.1878215671187E-10"
-        izz="0.00140754364741932" />
+        ixx="7.6116E-06"
+        ixy="-8.7367E-06"
+        ixz="1.6491E-09"
+        iyy="0.001401"
+        iyz="4.1878E-10"
+        izz="0.0014075" />
     </inertial>
     <visual>
       <origin
@@ -629,7 +682,7 @@
     type="continuous">
     <origin
       xyz="0 0 0.046"
-      rpy="-4.1154E-08 2.7756E-17 -5.5511E-17" />
+      rpy="0 0 0" />
     <parent
       link="motor_link_3" />
     <child
@@ -644,17 +697,17 @@
     name="arm_link_4">
     <inertial>
       <origin
-        xyz="0.000309848428748983 0.359287787025405 0.00048199542235914"
+        xyz="0.00030985 0.35929 0.000482"
         rpy="0 0 0" />
       <mass
-        value="0.113071614536243" />
+        value="0.11307" />
       <inertia
-        ixx="0.00358337799003561"
-        ixy="-2.18577034743147E-06"
-        ixz="-3.34022311248574E-06"
-        iyy="2.9814790798697E-05"
-        iyz="-8.67257978822727E-06"
-        izz="0.0035963422444839" />
+        ixx="0.0035834"
+        ixy="-2.1858E-06"
+        ixz="-3.3402E-06"
+        iyy="2.9815E-05"
+        iyz="-8.6726E-06"
+        izz="0.0035963" />
     </inertial>
     <visual>
       <origin
@@ -684,8 +737,8 @@
     name="arm_joint_4"
     type="fixed">
     <origin
-      xyz="-0.0379272628526742 0.0218973154176168 0.03"
-      rpy="-0.000529898657228908 2.74334852536435E-07 1.04823974425529" />
+      xyz="-0.037927 0.021897 0.03"
+      rpy="-0.0005299 2.7433E-07 1.0482" />
     <parent
       link="base_link" />
     <child
@@ -703,8 +756,8 @@
         value="0.0980406960173388" />
       <inertia
         ixx="3.26188033140448E-05"
-        ixy="-3.49302598897242E-10"
-        ixz="-3.49575062028036E-10"
+        ixy="-3.49302598897268E-10"
+        ixz="-3.49575062028029E-10"
         iyy="3.26209244263571E-05"
         iyz="6.37620073400378E-11"
         izz="4.36594174532518E-05" />
@@ -791,7 +844,7 @@
     type="continuous">
     <origin
       xyz="0 0 0.046"
-      rpy="-8.888E-17 -6.7763E-20 -4.3368E-19" />
+      rpy="0 0 0" />
     <parent
       link="motor_link_4" />
     <child
@@ -806,17 +859,17 @@
     name="arm_link_5">
     <inertial>
       <origin
-        xyz="7.58387640751E-05 0.359297512493941 0.000288889903746748"
+        xyz="7.5839E-05 0.3593 0.00028889"
         rpy="0 0 0" />
       <mass
-        value="0.113071612209128" />
+        value="0.11307" />
       <inertia
-        ixx="0.00358337969566119"
-        ixy="-1.75361404286493E-06"
-        ixz="3.33404115374709E-06"
-        iyy="2.98059009237571E-05"
-        iyz="-6.72865991392346E-06"
-        izz="0.00359634933545393" />
+        ixx="0.0035834"
+        ixy="-1.7536E-06"
+        ixz="3.334E-06"
+        iyy="2.9806E-05"
+        iyz="-6.7287E-06"
+        izz="0.0035963" />
     </inertial>
     <visual>
       <origin
@@ -846,8 +899,8 @@
     name="arm_joint_5"
     type="fixed">
     <origin
-      xyz="-0.0368267925361943 -0.0212619585841622 0.0300000000000001"
-      rpy="2.38424860458359E-16 -5.05424148413291E-16 2.09439510239319" />
+      xyz="-0.036827 -0.021262 0.03"
+      rpy="0 0 2.0944" />
     <parent
       link="base_link" />
     <child
@@ -912,17 +965,17 @@
     name="blade_link_5">
     <inertial>
       <origin
-        xyz="1.4066E-05 2.5524E-06 -0.0016265"
+        xyz="1.40657839642344E-05 2.55238020613335E-06 -0.00162646027788624"
         rpy="0 0 0" />
       <mass
-        value="0.062743" />
+        value="0.0627428768132032" />
       <inertia
-        ixx="8.3687E-06"
-        ixy="3.3633E-05"
-        ixz="2.0545E-09"
-        iyy="0.0014001"
-        iyz="4.4118E-10"
-        izz="0.0014074" />
+        ixx="8.36866834540492E-06"
+        ixy="3.36333705704991E-05"
+        ixz="2.05440542622532E-09"
+        iyy="0.00140013178281873"
+        iyz="4.41180476618572E-10"
+        izz="0.00140738407753076" />
     </inertial>
     <visual>
       <origin
@@ -953,7 +1006,7 @@
     type="continuous">
     <origin
       xyz="0 0 0.046"
-      rpy="-7.7716E-16 0 0" />
+      rpy="0 0 0" />
     <parent
       link="motor_link_5" />
     <child
@@ -1008,8 +1061,8 @@
     name="arm_joint_6"
     type="fixed">
     <origin
-      xyz="0 -0.0437852352480966 0.0300000000000001"
-      rpy="9.38614440953606E-16 1.69378355161205E-16 -3.14159265358979" />
+      xyz="0 -0.043785 0.03"
+      rpy="9.3861E-16 1.6938E-16 -3.1416" />
     <parent
       link="base_link" />
     <child
@@ -1115,7 +1168,7 @@
     type="continuous">
     <origin
       xyz="0 0 0.046"
-      rpy="-1.1102E-16 1.3878E-17 -5.5511E-17" />
+      rpy="0 0 0" />
     <parent
       link="motor_link_6" />
     <child
@@ -1125,5 +1178,111 @@
     <limit
       effort="0"
       velocity="630" />
+  </joint>
+  <link
+    name="foot_link_left">
+    <inertial>
+      <origin
+        xyz="-0.00011774 0.10021 -0.00011751"
+        rpy="0 0 0" />
+      <mass
+        value="0.63218" />
+      <inertia
+        ixx="0.020147"
+        ixy="1.3816E-05"
+        ixz="-1.5221E-07"
+        iyy="0.0087761"
+        iyz="1.9672E-05"
+        izz="0.011488" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://flypulator_description/meshes/foot_link_left.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://flypulator_description/meshes/foot_link_left.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="foot_link_left"
+    type="fixed">
+    <origin
+      xyz="-0.00062258 0.40242 -0.1931"
+      rpy="1.5708 1.0405 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="foot_link_left" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="foot_link_right">
+    <inertial>
+      <origin
+        xyz="-0.00011774 0.10021 -0.00011751"
+        rpy="0 0 0" />
+      <mass
+        value="0.63218" />
+      <inertia
+        ixx="0.020147"
+        ixy="1.3816E-05"
+        ixz="-1.5221E-07"
+        iyy="0.0087761"
+        iyz="1.9672E-05"
+        izz="0.011488" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://flypulator_description/meshes/foot_link_right.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://flypulator_description/meshes/foot_link_right.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="foot_joint_right"
+    type="fixed">
+    <origin
+      xyz="0.00062258 -0.40242 -0.1931"
+      rpy="1.5708 1.0405 1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="foot_link_right" />
+    <axis
+      xyz="0 0 0" />
   </joint>
 </robot>

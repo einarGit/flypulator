@@ -6,8 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /RobotModel1
-        - /RobotModel1/Links1
       Splitter Ratio: 0.5
     Tree Height: 715
   - Class: rviz/Selection
@@ -92,37 +90,52 @@ Visualization Manager:
           Value: true
         base_link:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         blade_link_1:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         blade_link_2:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         blade_link_3:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         blade_link_4:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         blade_link_5:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         blade_link_6:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        dummy_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        foot_link_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        foot_link_right:
+          Alpha: 1
+          Show Axes: false
           Show Trail: false
           Value: true
         motor_link_1:
@@ -161,6 +174,93 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        arm_link_1:
+          Value: true
+        arm_link_2:
+          Value: true
+        arm_link_3:
+          Value: true
+        arm_link_4:
+          Value: true
+        arm_link_5:
+          Value: true
+        arm_link_6:
+          Value: true
+        base_link:
+          Value: true
+        blade_link_1:
+          Value: true
+        blade_link_2:
+          Value: true
+        blade_link_3:
+          Value: true
+        blade_link_4:
+          Value: true
+        blade_link_5:
+          Value: true
+        blade_link_6:
+          Value: true
+        dummy_link:
+          Value: true
+        foot_link_left:
+          Value: true
+        foot_link_right:
+          Value: true
+        motor_link_1:
+          Value: true
+        motor_link_2:
+          Value: true
+        motor_link_3:
+          Value: true
+        motor_link_4:
+          Value: true
+        motor_link_5:
+          Value: true
+        motor_link_6:
+          Value: true
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        dummy_link:
+          base_link:
+            arm_link_1:
+              motor_link_1:
+                blade_link_1:
+                  {}
+            arm_link_2:
+              motor_link_2:
+                blade_link_2:
+                  {}
+            arm_link_3:
+              motor_link_3:
+                blade_link_3:
+                  {}
+            arm_link_4:
+              motor_link_4:
+                blade_link_4:
+                  {}
+            arm_link_5:
+              motor_link_5:
+                blade_link_5:
+                  {}
+            arm_link_6:
+              motor_link_6:
+                blade_link_6:
+                  {}
+            foot_link_left:
+              {}
+            foot_link_right:
+              {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -186,25 +286,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.06194401
+      Distance: 2.73086119
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.242620453
-        Y: -0.103523195
-        Z: 0.206005082
+        X: -0.145273641
+        Y: -0.136319578
+        Z: 0.278860867
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.20039843
+      Pitch: 0.255398303
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.39040554
+      Yaw: 0.195404738
     Saved: ~
 Window Geometry:
   Displays:
