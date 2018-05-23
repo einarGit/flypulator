@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 #include "flypulator_control/controller_interface.h" // performs all necessary includes
 #include "trajectory_msgs/MultiDOFJointTrajectoryPoint.h"
+#include "flypulator_common_msgs/UavStateStamped.h"
 
 ControllerInterface* g_drone_controller_p;
 PoseVelocityAcceleration g_currentPose;
@@ -24,6 +25,13 @@ void computeControlOutputAndPublish(){
     }
     ROS_DEBUG("Send rotor cmd message..");
     g_rotor_cmd_pub->publish(msg);
+}
+
+template <class T>
+T GetMax (T a, T b) {
+  T result;
+  result = (a>b)? a : b;
+  return (result);
 }
 
 // encode a trajectory_msgs::MultiDOFJointTrajectoryPoint message to PoseVelocityAcceleration object
@@ -57,6 +65,35 @@ void encodeTrajectoryMsg(const trajectory_msgs::MultiDOFJointTrajectoryPoint::Co
     pose_dest.omega_dot = omega_dot_des;
 }
 
+void encodeStateMsg(const flypulator_common_msgs::UavStateStamped::ConstPtr& msg, PoseVelocityAcceleration& pose_dest){
+    geometry_msgs::Pose transform = msg->pose;
+    geometry_msgs::Twist velocity = msg->velocity;
+    geometry_msgs::Accel acceleration = msg->acceleration;
+
+    geometry_msgs::Point p_des_msg = transform.position;
+    geometry_msgs::Quaternion q_des_msg = transform.orientation;
+    geometry_msgs::Vector3 p_dot_des_msg = velocity.linear;
+    geometry_msgs::Vector3 omega_des_msg = velocity.angular;
+    geometry_msgs::Vector3 p_ddot_des_msg = acceleration.linear;
+    geometry_msgs::Vector3 omega_dot_des_msg = acceleration.angular;
+
+    Eigen::Vector3f p_des (p_des_msg.x, p_des_msg.y, p_des_msg.z);
+    Eigen::Quaternionf q_des (q_des_msg.w, q_des_msg.x, q_des_msg.y, q_des_msg.z);
+
+    Eigen::Vector3f p_dot_des (p_dot_des_msg.x, p_dot_des_msg.y, p_dot_des_msg.z);
+    Eigen::Vector3f omega_des (omega_des_msg.x, omega_des_msg.y, omega_des_msg.z);
+
+    Eigen::Vector3f p_ddot_des (p_ddot_des_msg.x, p_ddot_des_msg.y, p_ddot_des_msg.z);
+    Eigen::Vector3f omega_dot_des (omega_dot_des_msg.x, omega_dot_des_msg.y, omega_dot_des_msg.z);
+
+    // update global variable for desired pose
+    pose_dest.p = p_des;
+    pose_dest.q = q_des;
+    pose_dest.p_dot = p_dot_des;
+    pose_dest.omega = omega_des;
+    pose_dest.p_ddot = p_ddot_des;
+    pose_dest.omega_dot = omega_dot_des;
+}
 
 // receive trajectory message
 void trajectoryMessageCallback(const trajectory_msgs::MultiDOFJointTrajectoryPoint::ConstPtr& msg){
@@ -72,15 +109,15 @@ void trajectoryMessageCallback(const trajectory_msgs::MultiDOFJointTrajectoryPoi
 
 
 // receive state estimation message
-void stateMessageCallback(const trajectory_msgs::MultiDOFJointTrajectoryPoint::ConstPtr& msg){
+void stateMessageCallback(const flypulator_common_msgs::UavStateStamped::ConstPtr& msg){
     // Tencode state message to PoseVelocityAcceleration object
-    encodeTrajectoryMsg(msg, g_currentPose);
+    encodeStateMsg(msg, g_currentPose);
 
-    ros::Duration duration = msg->time_from_start;
+    //ros::Duration duration = msg->time_from_start;
 
     ROS_DEBUG("Received state message: x_des = [%f, %f, %f], q_des = [%f, %f, %f, %f]", g_currentPose.p.x(), g_currentPose.p.y(), g_currentPose.p.z(), 
         g_currentPose.q.w(), g_currentPose.q.x(), g_currentPose.q.y(), g_currentPose.q.z());
-    ROS_DEBUG("    Time from start: %f s", duration.toSec());
+    //ROS_DEBUG("    Time from start: %f s", duration.toSec());
 
     // compute control output to updated state information
     computeControlOutputAndPublish();
