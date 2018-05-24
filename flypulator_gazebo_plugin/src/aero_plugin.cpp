@@ -98,6 +98,9 @@ class AeroPlugin : public ModelPlugin
   double Rm = 0.101; //resitance
                      
   Eigen::Matrix3d T_trans;  //transformation matrix from global coordinate to body coordinate
+
+  std::string RESULT_CSV_PATH = "/home/jinyao/ros_ws/flypulator/result.csv";
+
   /// \brief Constructor
 public:
   AeroPlugin() {}
@@ -116,6 +119,10 @@ public:
       ROS_ERROR("Invalid joint count, plugin not loaded");
       return;
     }
+
+    // save test data
+    // std::ofstream fout(RESULT_CSV_PATH, std::ios::out);
+    // fout.close();
 
     // Store the model pointer for convenience.
     this->model = _model;
@@ -175,12 +182,12 @@ public:
     this->pub_ratio = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/thrust_moment_ratio", 10);
     this->pub_joint_state = this->rosNode->advertise<sensor_msgs::JointState>("/drone/joint_states", 50);
 
-    // this->pub_link1_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_1_wrench", 100);
-    // this->pub_link2_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_2_wrench", 100);
-    // this->pub_link3_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_3_wrench", 100);
-    // this->pub_link4_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_4_wrench", 100);
-    // this->pub_link5_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_5_wrench", 100);
-    // this->pub_link6_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_6_wrench", 100);
+    this->pub_link1_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_1_wrench", 100);
+    this->pub_link2_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_2_wrench", 100);
+    this->pub_link3_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_3_wrench", 100);
+    this->pub_link4_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_4_wrench", 100);
+    this->pub_link5_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_5_wrench", 100);
+    this->pub_link6_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_6_wrench", 100);
 
     //Create a wind velocity topic and subscribe to it
     ros::SubscribeOptions s1 =
@@ -224,7 +231,7 @@ public:
     // publish tf base_link ---> world
     tfPublisher();
     jointStatePubliher();
-    // wrenchPublisher();
+    wrenchPublisher();
   }
 
   //calculate aerodynamic
@@ -274,7 +281,7 @@ public:
     }
     else if (C1 >= -2 && C1 < 0)
     {
-      Vi1 = Vi_h * (k0 + k1 * C1 + k2 * pow(C1, 2) + k3 * pow(C1, 3) + k4 * pow(C1, 4));
+      Vi1 = -Vi_h * (k0 + k1 * C1 + k2 * pow(C1, 2) + k3 * pow(C1, 3) + k4 * pow(C1, 4));
     }
     else
     {
@@ -759,6 +766,16 @@ public:
     }
     // ROS_INFO_STREAM("aero:"<<_msg->velocity[0]<<","<<_msg->velocity[1]<<","<<_msg->velocity[2]<<","<<_msg->velocity[3]<<","<<_msg->velocity[4]<<","<<_msg->velocity[5]);
     // ROS_INFO_STREAM("aero:"<<rotor_vel[0]<<","<<rotor_vel[1]<<","<<rotor_vel[2]<<","<<rotor_vel[3]<<","<<rotor_vel[4]<<","<<rotor_vel[5]);
+    // static double vel_temp = 100;
+    // for (int i=0; i<6; i++)
+    // {
+    //   rotor_vel[i] = vel_temp;
+    //   di_vel[i] = di_blade_rot[i];
+    //   di_force[i] = 1;
+    // }
+    // vel_temp += 10;
+    // if(vel_temp > 2500)
+    //   vel_temp = 2500;
   }    
     
 
@@ -786,12 +803,12 @@ public:
 public:
   void SetForce()
   {
-    // this->link1->AddRelativeForce(math::Vector3(0, 0, 26));
-    // this->link2->AddRelativeForce(math::Vector3(0, 0, 26));
-    // this->link3->AddRelativeForce(math::Vector3(0, 0, 26));
-    // this->link4->AddRelativeForce(math::Vector3(0, 0, 26));
-    // this->link5->AddRelativeForce(math::Vector3(0, 0, 26));
-    // this->link6->AddRelativeForce(math::Vector3(0, 0, 26));
+    // this->link1->AddRelativeForce(math::Vector3(0, 0, 0));
+    // this->link2->AddRelativeForce(math::Vector3(0, 0, 0));
+    // this->link3->AddRelativeForce(math::Vector3(0, 0, 0));
+    // this->link4->AddRelativeForce(math::Vector3(0, 0, 0));
+    // this->link5->AddRelativeForce(math::Vector3(0, 0, 0));
+    // this->link6->AddRelativeForce(math::Vector3(0, 0, 0));
     this->link1->AddRelativeForce(math::Vector3(fh_x1, fh_y1, force_1));
     this->link2->AddRelativeForce(math::Vector3(fh_x2, fh_y2, force_2));
     this->link3->AddRelativeForce(math::Vector3(fh_x3, fh_y3, force_3));
@@ -799,15 +816,35 @@ public:
     this->link5->AddRelativeForce(math::Vector3(fh_x5, fh_y5, force_5));
     this->link6->AddRelativeForce(math::Vector3(fh_x6, fh_y6, force_6));
     // ROS_INFO_STREAM("force:"<<force_1<<","<<force_2<<","<<force_3<<","<<force_4<<","<<force_5<<","<<force_6);
+
+    // if(rotor_vel[0] < 2500 && rotor_vel[0]>=100){
+    //   std::ofstream result_file(RESULT_CSV_PATH, std::ios::app);
+    //   result_file.setf(std::ios::fixed, std::ios::floatfield);
+    //   result_file.precision(5);
+    //   result_file  << rotor_vel[0] << ","
+    //         << rotor_vel[1] << ","
+    //         << rotor_vel[2] << ","
+    //         << rotor_vel[3] << ","
+    //         << rotor_vel[4] << ","
+    //         << rotor_vel[5] << ","
+    //         << force_1 << ","
+    //         << force_2 << ","
+    //         << force_3 << ","
+    //         << force_4 << ","
+    //         << force_5 << ","
+    //         << force_6 << ","
+    //         << std::endl;
+    //   result_file.close();
+    // }
   }
   //add torque to blade link
 public:
   void SetTorque()
   {
-    // this->link1->AddRelativeTorque(math::Vector3(0, 0, 10));
+    // this->link1->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link2->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link3->AddRelativeTorque(math::Vector3(0, 0, 0));
-    // this->link4->AddRelativeTorque(math::Vector3(0, 0, -10));
+    // this->link4->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link5->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link6->AddRelativeTorque(math::Vector3(0, 0, 0));
     this->link1->AddRelativeTorque(math::Vector3(moment_R1x, moment_R1y, moment_1));
@@ -816,6 +853,26 @@ public:
     this->link4->AddRelativeTorque(math::Vector3(moment_R4x, moment_R4y, moment_4));
     this->link5->AddRelativeTorque(math::Vector3(moment_R5x, moment_R5y, moment_5));
     this->link6->AddRelativeTorque(math::Vector3(moment_R6x, moment_R6y, moment_6));
+
+    // if(rotor_vel[0] < 2500 && rotor_vel[0]>=100){
+    //   std::ofstream result_file(RESULT_CSV_PATH, std::ios::app);
+    //   result_file.setf(std::ios::fixed, std::ios::floatfield);
+    //   result_file.precision(5);
+    //   result_file  << rotor_vel[0] << ","
+    //         << rotor_vel[1] << ","
+    //         << rotor_vel[2] << ","
+    //         << rotor_vel[3] << ","
+    //         << rotor_vel[4] << ","
+    //         << rotor_vel[5] << ","
+    //         << moment_1 << ","
+    //         << moment_2 << ","
+    //         << moment_3 << ","
+    //         << moment_4 << ","
+    //         << moment_5 << ","
+    //         << moment_6 << ","
+    //         << std::endl;
+    //   result_file.close();
+    // }
   }
 
   //apply velocity to joints with 3 metnods

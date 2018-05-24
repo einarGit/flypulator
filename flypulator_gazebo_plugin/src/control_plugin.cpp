@@ -323,7 +323,7 @@ class ControlPlugin : public ModelPlugin
             lastSimTime = curTime;
             if (dt < 0.002)
                 return;
-            ROS_INFO_STREAM("dt:" << dt);
+            // ROS_INFO_STREAM("dt:" << dt);
             //get inertial in body coordinate
             double Jxx = this->link0->GetInertial()->GetIXX();
             double Jyy = this->link0->GetInertial()->GetIYY();
@@ -877,16 +877,12 @@ class ControlPlugin : public ModelPlugin
 
             flypulator_common_msgs::RotorVelStamped _rotor_cmd;
 
-            vel_1 = vel_2 = vel_3 = vel_4 = vel_5 = vel_6 = 100;
+            static double vel_temp = 100;
+            vel_1 = vel_2 = vel_3 = vel_4 = vel_5 = vel_6 = vel_temp;
             di_vel1 = di_vel2 =di_vel3 = di_vel4 = di_vel5 = di_vel6 = 1;
-            // ROS_INFO_STREAM("org:"<<di_vel1);
-            // di_vel1 = -di_vel1;
-            // ROS_INFO_STREAM(di_vel1);
-            // di_vel2 = -di_vel2;
-            // di_vel3 = -di_vel3;
-            // di_vel4 = -di_vel4;
-            // di_vel5 = -di_vel5;
-            // di_vel6 = -di_vel6;
+            // vel_temp += 10;
+            // if(vel_temp > 2500)
+            //   vel_temp = 2500;
 
             _rotor_cmd.header.stamp = ros::Time::now();
             _rotor_cmd.name.resize(6);
