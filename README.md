@@ -47,7 +47,7 @@ To start both packages, controller and trajectory generator, and load the .yaml 
 ` roslaunch flypulator controller.launch `
 
 ### User Interface
-trajectory_generator can be applied via service call. It provides (atm) two services:
+The trajectory generator can be applied via service call. It provides (atm) two services:
     linear_trajectory
     polynomial_trajectory
 
