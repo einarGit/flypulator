@@ -10,3 +10,4 @@ uav/k: 0.000056 # [N/(rad/s)²] , f=k*omega_i²
 uav/b: 0.0000011 # [Nm/(rad/s)²] , tau = b * omega_i²
 uav/gravity: 9.81 # [m/s²]
 controller/type: "ism" #controller type, "ism" for integral sliding mode
+trajectory/update_rate: 10 # update rate for trajectory generator

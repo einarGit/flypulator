@@ -23,7 +23,7 @@ void SlidingModeController::configCallback(flypulator_control::control_parameter
 }
 
 // compute control force and torque from desired and current pose
-void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& controlForceAndTorque){
+void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& control_force_and_torque){
 
     ROS_DEBUG("Sliding Mode Controller calculates control force and torque..");
 
@@ -47,7 +47,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     u_T_I_ = - 2/M_PI * K_T_I_ * (atan(s_T_I_.array())).matrix(); 
 
     // provide output through pass by reference
-    controlForceAndTorque.block(0,0,3,1) = (u_T_ + u_T_I_) * mass_; // convert to force input by multiplying with mass (f=m*a)
+    control_force_and_torque.block(0,0,3,1) = (u_T_ + u_T_I_) * mass_; // convert to force input by multiplying with mass (f=m*a)
     ROS_DEBUG(".. translational output calculated...");
     //ROS_DEBUG("u_T = [%f, %f, %f], u_T_I = {%f, %f, %f]", u_T_.x(), u_T_.y(), u_T_.z(), u_T_I_.x(), u_T_I_.y(), u_T_I_.z());
     
@@ -110,7 +110,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     u_R_I_ = - K_R_I_ * 2.0f / M_PI * ( atan( ( 0.5f*inertia_inv_.transpose()*matrix_g_transposed_.transpose() * s_R_I_ ).array())).matrix();
     
     // output is the sum of both rotational outputs (with and without integral action)
-    controlForceAndTorque.block(3,0,3,1) = u_R_ + u_R_I_; // already torque dimension
+    control_force_and_torque.block(3,0,3,1) = u_R_ + u_R_I_; // already torque dimension
     ROS_DEBUG("..rotational output calculated!");
     
 };

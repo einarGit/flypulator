@@ -34,12 +34,12 @@ ControllerInterface::ControllerInterface(){
     }
 };
 
-// compute the control output from desired and current pose and save to spinningRates[6]
-void ControllerInterface::computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinningRates){
+// compute the control output from desired and current pose and save to spinning_rates[6]
+void ControllerInterface::computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinning_rates){
     // call controller to compute Force and Torque output
-    controller_->computeControlForceTorqueInput(x_des, x_current, controlForceAndTorque_);
+    controller_->computeControlForceTorqueInput(x_des, x_current, control_force_and_torque_);
     // map control force and torque to spinning velocities of the propellers resp. rotors
-    mapControlForceTorqueInputToPropellerRates(x_current, spinningRates);
+    mapControlForceTorqueInputToPropellerRates(x_current, spinning_rates);
 };
 
 void ControllerInterface::readDroneParameterFromServer(){
@@ -79,7 +79,7 @@ void ControllerInterface::readDroneParameterFromServer(){
 };
 
 // map control force and torques to propeller spinning rates
-void ControllerInterface::mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinningRates){
+void ControllerInterface::mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinning_rates){
     ROS_DEBUG("map control forces and torques to propeller rates...");
 
     // [force, torqe] = ^B M * omega_spin
@@ -88,14 +88,14 @@ void ControllerInterface::mapControlForceTorqueInputToPropellerRates(const PoseV
     // calculate inverse mapping matrix
     map_matrix_inverse_b_ = (convert_force_part_to_b_ * map_matrix_).inverse();
     // calculate square of spinning rates
-    spinningRates = map_matrix_inverse_b_ * controlForceAndTorque_;
+    spinning_rates = map_matrix_inverse_b_ * control_force_and_torque_;
     // calculate spinning rates with correct sign
     for (int i = 0; i<6; i++){
-        if (spinningRates(i,0)>=0){
-            spinningRates(i,0) = sqrt(spinningRates(i,0));
+        if (spinning_rates(i,0)>=0){
+            spinning_rates(i,0) = sqrt(spinning_rates(i,0));
         }
         else{
-            spinningRates(i,0) = - sqrt(-spinningRates(i,0));
+            spinning_rates(i,0) = - sqrt(-spinning_rates(i,0));
         }
     }
 };

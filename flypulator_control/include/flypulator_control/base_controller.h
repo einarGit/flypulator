@@ -24,7 +24,7 @@ class BaseController {
     public: 
         virtual ~BaseController(){}; 
         // compute Control Force and Torque
-        virtual void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& controlForceAndTorque) = 0;
+        virtual void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& control_force_and_torque) = 0;
         // callback for dynamic reconfigure, sets dynamic parameters (controller gains)
         virtual void configCallback(flypulator_control::control_parameterConfig& config, uint32_t level) = 0;
 };

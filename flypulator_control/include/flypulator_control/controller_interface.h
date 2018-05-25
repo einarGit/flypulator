@@ -26,7 +26,7 @@ class ControllerInterface {
         ControllerInterface(); // constructor implemented in .cpp file
 
         // compute spinning rates from current and desired pose
-        void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinningRates);
+        void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinning_rates);
 
         // return a reference to controller for dynamic reconfigure
         BaseController* getControllerReference(){
@@ -37,7 +37,7 @@ class ControllerInterface {
         // read uav parameter from ros parameter server
         void readDroneParameterFromServer();
         // map control forces and torques to propeller spinning rates
-        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinningRates);
+        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinning_rates);
         // compute mapping matrix from spinning rates to forces/torques
         void computeMappingMatrix();
 
@@ -46,7 +46,7 @@ class ControllerInterface {
         // controller type
         std::string controller_type_;
         // 6D- Vector of control force and torque (output of controller class)
-        Eigen::Matrix<float,6,1> controlForceAndTorque_;
+        Eigen::Matrix<float,6,1> control_force_and_torque_;
         // pointer to controller;
         BaseController* controller_;
         // mapping matrix

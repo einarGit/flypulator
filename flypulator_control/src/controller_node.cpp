@@ -4,23 +4,23 @@
 #include "flypulator_common_msgs/UavStateStamped.h"
 
 ControllerInterface* g_drone_controller_p;
-PoseVelocityAcceleration g_currentPose;
-PoseVelocityAcceleration g_desiredPose;
+PoseVelocityAcceleration g_current_pose;
+PoseVelocityAcceleration g_desired_pose;
 int g_rotor_vel_message_counter = 0;
 ros::Publisher* g_rotor_cmd_pub;
-Eigen::Matrix<float,6,1> g_spinningRates;
+Eigen::Matrix<float,6,1> g_spinning_rates;
 
 void computeControlOutputAndPublish(){
     
     // compute spinning rates
     ROS_DEBUG("Compute Control Output..");
-    g_drone_controller_p->computeControlOutput(g_desiredPose, g_currentPose, g_spinningRates);
+    g_drone_controller_p->computeControlOutput(g_desired_pose, g_current_pose, g_spinning_rates);
     ROS_DEBUG("Control Output computed! Prepare rotor cmd message...");
     // build message
     flypulator_common_msgs::RotorVelStamped msg;
     msg.header.stamp = ros::Time::now();
     for (int i = 0; i<6;i++){
-        msg.velocity.push_back(g_spinningRates(i,0));
+        msg.velocity.push_back(g_spinning_rates(i,0));
         msg.name.push_back(std::string("blade_joint") + std::to_string(i)); 
     }
     ROS_DEBUG("Send rotor cmd message..");
@@ -98,12 +98,12 @@ void encodeStateMsg(const flypulator_common_msgs::UavStateStamped::ConstPtr& msg
 // receive trajectory message
 void trajectoryMessageCallback(const trajectory_msgs::MultiDOFJointTrajectoryPoint::ConstPtr& msg){
     // encode trajectory message to PoseVelocityAcceleration object
-    encodeTrajectoryMsg(msg, g_desiredPose);
+    encodeTrajectoryMsg(msg, g_desired_pose);
 
     ros::Duration duration = msg->time_from_start;
 
-    ROS_DEBUG("Received trajectory message: x_des = [%f, %f, %f], q_des = [%f, %f, %f, %f]", g_desiredPose.p.x(), g_desiredPose.p.y(), g_desiredPose.p.z(),
-        g_desiredPose.q.w(), g_desiredPose.q.x(), g_desiredPose.q.y(), g_desiredPose.q.z());
+    ROS_DEBUG("Received trajectory message: x_des = [%f, %f, %f], q_des = [%f, %f, %f, %f]", g_desired_pose.p.x(), g_desired_pose.p.y(), g_desired_pose.p.z(),
+        g_desired_pose.q.w(), g_desired_pose.q.x(), g_desired_pose.q.y(), g_desired_pose.q.z());
     ROS_DEBUG("    Time from start: %f s", duration.toSec());
 }
 
@@ -111,12 +111,12 @@ void trajectoryMessageCallback(const trajectory_msgs::MultiDOFJointTrajectoryPoi
 // receive state estimation message
 void stateMessageCallback(const flypulator_common_msgs::UavStateStamped::ConstPtr& msg){
     // Tencode state message to PoseVelocityAcceleration object
-    encodeStateMsg(msg, g_currentPose);
+    encodeStateMsg(msg, g_current_pose);
 
     //ros::Duration duration = msg->time_from_start;
 
-    ROS_DEBUG("Received state message: x_des = [%f, %f, %f], q_des = [%f, %f, %f, %f]", g_currentPose.p.x(), g_currentPose.p.y(), g_currentPose.p.z(), 
-        g_currentPose.q.w(), g_currentPose.q.x(), g_currentPose.q.y(), g_currentPose.q.z());
+    ROS_DEBUG("Received state message: x_des = [%f, %f, %f], q_des = [%f, %f, %f, %f]", g_current_pose.p.x(), g_current_pose.p.y(), g_current_pose.p.z(), 
+        g_current_pose.q.w(), g_current_pose.q.x(), g_current_pose.q.y(), g_current_pose.q.z());
     //ROS_DEBUG("    Time from start: %f s", duration.toSec());
 
     // compute control output to updated state information
@@ -153,8 +153,8 @@ int main(int argc, char **argv)
     dr_srv.setCallback(cb);
 
     // set inital quaternions (default initialization zero)
-    g_desiredPose.q = Eigen::Quaternionf (1,0,0,0);
-    g_currentPose.q = Eigen::Quaternionf (1,0,0,0);
+    g_desired_pose.q = Eigen::Quaternionf (1,0,0,0);
+    g_current_pose.q = Eigen::Quaternionf (1,0,0,0);
 
     ros::spin();
 

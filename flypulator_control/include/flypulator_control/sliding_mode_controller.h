@@ -17,7 +17,7 @@ class SlidingModeController : public BaseController {
             integral_R_ = Eigen::Vector4f (0,0,0,0);
         };
         // compute Control Force and Torque
-        void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& controlForceAndTorque);
+        void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& control_force_and_torque);
 
         // callback for dynamic reconfigure, sets dynamic parameters (controller gains)
         void configCallback(flypulator_control::control_parameterConfig& config, uint32_t level);
