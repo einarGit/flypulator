@@ -8,14 +8,14 @@
 TrajectoryGenerator* g_generator_p;
 
 // create polynomial trajectory from request and give response
-bool createPolynomialTrajectory(flypulator_traj_generator::polynomial_trajectory::Request &req,
+bool createPolynomialTrajectoryCB(flypulator_traj_generator::polynomial_trajectory::Request &req,
                             flypulator_traj_generator::polynomial_trajectory::Response &res){
     res.finished = g_generator_p->createAndSendTrajectory(req.x_start, req.x_end, req.rpy_start, req.rpy_end, req.delta_t, trajectory_types::Polynomial);
     return true;
 }
 
 // create linear trajectory from request and give response
-bool createLinearTrajectory(flypulator_traj_generator::linear_trajectory::Request &req,
+bool createLinearTrajectoryCB(flypulator_traj_generator::linear_trajectory::Request &req,
                             flypulator_traj_generator::linear_trajectory::Response &res){
     res.finished = g_generator_p->createAndSendTrajectory(req.x_start, req.x_end, req.rpy_start, req.rpy_end, req.delta_t, trajectory_types::Linear);
     return true;
@@ -29,9 +29,9 @@ int main(int argc, char **argv)
     ros::Publisher trajectory_publisher;
 
     //register services
-    ros::ServiceServer serviceLinTraj = n.advertiseService("linear_trajectory",createLinearTrajectory);
+    ros::ServiceServer serviceLinTraj = n.advertiseService("linear_trajectory",createLinearTrajectoryCB);
     ROS_INFO("Service linear_trajectory ready");
-    ros::ServiceServer servicePolTraj = n.advertiseService("polynomial_trajectory",createPolynomialTrajectory);
+    ros::ServiceServer servicePolTraj = n.advertiseService("polynomial_trajectory",createPolynomialTrajectoryCB);
     ROS_INFO("Service polynomial_trajectory ready");
 
     //register publisher for output message
