@@ -36,6 +36,8 @@
 #include <flypulator_common_msgs/Vector6dMsg.h>
 #include <flypulator_common_msgs/RotorVelStamped.h>
 
+#include <motor_model.hpp>
+
 #define PI (M_PI) 
 
 namespace gazebo
@@ -43,18 +45,21 @@ namespace gazebo
 /// \brief A plugin to control drone
 class AeroPlugin : public ModelPlugin
 {
-  int N = 6;                     //number of energie
-  double c = 0.016;              //blade chord width
-  double R = 0.15;               //blade radius
-  double a = 5.7;                //2D_lift_curve_slope
-  double th0 = 0.7;              //Profile inclination angle
-  double thtw = 0.5;             //Inclination change along radius
-  double pa;                     //blade pitch angle 
-  double B = 0.98;               //tip loss factor
-  double pho = 1.2;              //air density
-  double A;                      //wing area 
-  double ki = 1.15;              //factor to calculate torque
-  double k = 4.65;               //factor to calculate torque
+  double test_data[12];
+  bool WRITE_CSV_FILE = false;
+
+  int N = 6;         //number of energie
+  double c = 0.016;  //blade chord width
+  double R = 0.15;   //blade radius
+  double a = 5.7;    //2D_lift_curve_slope
+  double th0 = 0.7;  //Profile inclination angle
+  double thtw = 0.5; //Inclination change along radius
+  double pa;         //blade pitch angle
+  double B = 0.98;   //tip loss factor
+  double pho = 1.2;  //air density
+  double A;          //wing area
+  double ki = 1.15;  //factor to calculate torque
+  double k = 4.65;   //factor to calculate torque
   //coefficients to calculate induced velocity Vi in vortex ring state
   double k0 = 1.15;
   double k1 = -1.125;
@@ -76,20 +81,23 @@ class AeroPlugin : public ModelPlugin
   double Vy = 1e-20;      //air velocity in global y
   double Vz = 1e-20;      //air velocity in global z
   double Vi_h;            //induced velocity in the hovering case
-  double force_1, force_2, force_3, force_4, force_5, force_6;                                                                                           //thrust
-  double moment_1, moment_2, moment_3, moment_4, moment_5, moment_6;                                                                                     //torque
-  double fh_x1, fh_x2, fh_x3, fh_x4, fh_x5, fh_x6, fh_y1, fh_y2, fh_y3, fh_y4, fh_y5, fh_y6;                                                             //H Force
-  double moment_R1x, moment_R1y, moment_R2x, moment_R2y, moment_R3x, moment_R3y, moment_R4x, moment_R4y, moment_R5x, moment_R5y, moment_R6x, moment_R6y; //roll moment
+  double force_1, force_2, force_3, force_4, force_5, force_6;//thrust
+  double moment_1, moment_2, moment_3, moment_4, moment_5, moment_6;//torque
+  double fh_x1, fh_x2, fh_x3, fh_x4, fh_x5, fh_x6;
+  double fh_y1, fh_y2, fh_y3, fh_y4, fh_y5, fh_y6;//H Force
+  double moment_R1x, moment_R1y, moment_R2x, moment_R2y, moment_R3x, moment_R3y;
+  double moment_R4x, moment_R4y, moment_R5x, moment_R5y, moment_R6x, moment_R6y; //roll moment
   double force_x, force_y, force_z, torque_x, torque_y, torque_z; //input wrench
   
-  double rotor_vel[6] ={0}; // blade spinning velocity
-  int di_blade_rot[6]= {1,-1,1,-1,1,-1}; //default blade rotating direction 1 counterclockwise; -1 clockwise
-  int di_force[6]={1,1,1,1,1,1}; //thrust force direction
-  int di_vel[6]={1,1,1,1,1,1}; //real rotate direction
+  double rotor_vel_cmd[6] = {0};               // blade spinning velocity commands
+  double rotor_vel[6] = {0};                   // blade spinning velocity
+  int di_blade_rot[6] = {1, -1, 1, -1, 1, -1}; //default blade rotating direction 1 counterclockwise; -1 clockwise
+  int di_force[6] = {1, 1, 1, 1, 1, 1};        //thrust force direction
+  int di_vel[6] = {1, 1, 1, 1, 1, 1};          //real rotate direction
 
-  bool bidirectional = false;            //bidirectional option
-  double vel_min = 1e-6; //min rotor speed
-  double vel_max = 2500; //max rotor speed
+  bool bidirectional = false; //bidirectional option
+  double vel_min = 1e-6;      //min rotor speed
+  double vel_max = 2500;      //max rotor speed
   //input control signal in velocity DOF 6, unused
   //double Vx_input, Vy_input, Vz_input, Wx_input, Wy_input, Wz_input;
   double Kv0 = 890;  //KV Value of the BLDC motor
@@ -97,7 +105,7 @@ class AeroPlugin : public ModelPlugin
   double Im0 = 0.5;  //nominal no-load current
   double Rm = 0.101; //resitance
                      
-  Eigen::Matrix3d T_trans;  //transformation matrix from global coordinate to body coordinate
+  Eigen::Matrix3d T_trans; //transformation matrix from global coordinate to body coordinate
 
   std::string RESULT_CSV_PATH = "/home/jinyao/ros_ws/flypulator/result.csv";
 
@@ -121,8 +129,11 @@ public:
     }
 
     // save test data
-    // std::ofstream fout(RESULT_CSV_PATH, std::ios::out);
-    // fout.close();
+    if (WRITE_CSV_FILE)
+    {
+      std::ofstream fout(RESULT_CSV_PATH, std::ios::out);
+      fout.close();
+    }
 
     // Store the model pointer for convenience.
     this->model = _model;
@@ -232,6 +243,31 @@ public:
     tfPublisher();
     jointStatePubliher();
     wrenchPublisher();
+
+    if (WRITE_CSV_FILE)
+    {
+      // if (rotor_vel[0] < 2500 && rotor_vel[0] >= 100)
+      {
+        std::ofstream result_file(RESULT_CSV_PATH, std::ios::app);
+        result_file.setf(std::ios::fixed, std::ios::floatfield);
+        result_file.precision(5);
+        result_file << this->model->GetWorld()->GetSimTime().Double() << ","
+                    << test_data[0] << ","
+                    << test_data[1] << ","
+                    << test_data[2] << ","
+                    << test_data[3] << ","
+                    << test_data[4] << ","
+                    << test_data[5] << ","
+                    << test_data[6] << ","
+                    << test_data[7] << ","
+                    << test_data[8] << ","
+                    << test_data[9] << ","
+                    << test_data[10] << ","
+                    << test_data[11] << ","
+                    << std::endl;
+        result_file.close();
+  }
+    }
   }
 
   //calculate aerodynamic
@@ -241,6 +277,33 @@ public:
     // ROS_INFO_STREAM("aero_plugin: get LinkStatesMsg!");
 
     // ROS_INFO_STREAM(Vx<<","<<Vx<<","<<Vx);
+
+    double curr_time = this->model->GetWorld()->GetSimTime().Double();
+    static double last_time = curr_time;
+    double dt = curr_time - last_time;
+    last_time = curr_time;
+    // ROS_ERROR_STREAM("dt:"<<dt);
+    if (dt < 0)
+    {
+      ROS_WARN_STREAM("Reset Motor!");
+      motor1.reset();
+      motor2.reset();
+      motor3.reset();
+      motor4.reset();
+      motor5.reset();
+      motor6.reset();
+      return;
+    }
+
+    // motors dynamic
+    rotor_vel[0] = motor1.update(rotor_vel_cmd[0], dt);
+    rotor_vel[1] = motor2.update(rotor_vel_cmd[1], dt);
+    rotor_vel[2] = motor3.update(rotor_vel_cmd[2], dt);
+    rotor_vel[3] = motor4.update(rotor_vel_cmd[3], dt);
+    rotor_vel[4] = motor5.update(rotor_vel_cmd[4], dt);
+    rotor_vel[5] = motor6.update(rotor_vel_cmd[5], dt);
+
+    // ROS_INFO_STREAM("k:"<<motor1.getK()<<","<<"T:"<<motor1.getT()<<","<<"omega:"<<motor1.getOmega());
 
     //blade1 aero dynamic,Vxx1,Vyy1...airflow velocity in blade local coordinate
     double q1_1, q1_2, q1_3, q1_4, Vxx1, Vyy1, Vzz1, Vxy1, C1, Vi1;
@@ -315,10 +378,10 @@ public:
       a1 = PI + atan(Vyy1 / Vxx1);
     }
     fh1 = 0.25 * s * pho * rotor_vel[0] * R * A * CD0 * Vxy1; //H-force
-    fh_x1 = fh1 * cos(a1);                             //H-force in x direction
-    fh_y1 = fh1 * sin(a1);                             //H-force in y direction
-    moment_R1x = momentR1 * cos(a1);                   //roll moment in x direction
-    moment_R1y = momentR1 * sin(a1);                   //roll moment in y direction
+    fh_x1 = fh1 * cos(a1);                                    //H-force in x direction
+    fh_y1 = fh1 * sin(a1);                                    //H-force in y direction
+    moment_R1x = momentR1 * cos(a1);                          //roll moment in x direction
+    moment_R1y = momentR1 * sin(a1);                          //roll moment in y direction
     //blade2 aerodynamic
     double q2_1, q2_2, q2_3, q2_4, Vxx2, Vyy2, Vzz2, Vxy2, C2, Vi2;
     double CT2, l2, u2, CQ2;
@@ -702,6 +765,21 @@ public:
     _msg.x5 = ratio5;
     _msg.x6 = ratio6;
     this->pub_ratio.publish(_msg);
+
+    // save data for csv output
+    test_data[0] = rotor_vel_cmd[0];
+    test_data[1] = rotor_vel_cmd[1];
+    test_data[2] = rotor_vel_cmd[2];
+    test_data[3] = rotor_vel_cmd[3];
+    test_data[4] = rotor_vel_cmd[4];
+    test_data[5] = rotor_vel_cmd[5];
+    test_data[6] = rotor_vel[0];
+    test_data[7] = rotor_vel[1];
+    test_data[8] = rotor_vel[2];
+    test_data[9] = rotor_vel[3];
+    test_data[10] = rotor_vel[4];
+    test_data[11] = rotor_vel[5];
+
     ros::spinOnce();
   }
 
@@ -723,42 +801,43 @@ public:
   void OnControlMsg(const flypulator_common_msgs::RotorVelStampedConstPtr &_msg)
   {
     // ROS_INFO_STREAM("aero plugin: get control message!");
-    if (_msg->velocity.size() !=6)
+    if (_msg->velocity.size() != 6)
     {
       ROS_ERROR("Dimention of rotor cmd does not match joint number!");
       return;
     }
 
 //TODO: add limitation of maximum rotor velocity
-    if (bidirectional)  //bi-directional rotors
+    //TODO: di_vel and di_force should change after motor dynamic, not here
+    if (bidirectional) //bi-directional rotors
     {
-      for (int i=0; i<6;i++)
+      for (int i = 0; i < 6; i++)
       {
         if (_msg->velocity[i] < 0)
         {
-          rotor_vel[i] = abs(_msg->velocity[i]);
-          di_vel[i] = -di_blade_rot[i];    //inverse rotating direction
+          rotor_vel_cmd[i] = abs(_msg->velocity[i]);
+          di_vel[i] = -di_blade_rot[i]; //inverse rotating direction
           di_force[i] = -1;
         }
         else
         {
-          rotor_vel[i] = _msg->velocity[i];
-          di_vel[i] = di_blade_rot[i];    //keep default rotating direction
+          rotor_vel_cmd[i] = _msg->velocity[i];
+          di_vel[i] = di_blade_rot[i]; //keep default rotating direction
           di_force[i] = 1;
         }
       }
     }
-    else      //uni-directional rotors
+    else //uni-directional rotors
     {
-      for (int i=0; i<6; i++)
+      for (int i = 0; i < 6; i++)
       {
         if (_msg->velocity[i] < 0)
         {
-          rotor_vel[i] = 0;  //lower boundary
+          rotor_vel_cmd[i] = 0; //lower boundary
         }
         else
         {
-          rotor_vel[i] = _msg->velocity[i];
+          rotor_vel_cmd[i] = _msg->velocity[i];
         }
         di_vel[i] = di_blade_rot[i];
         di_force[i] = 1;
@@ -778,7 +857,6 @@ public:
     //   vel_temp = 2500;
   }    
     
-
 private:
   void QueueThread()
   {
@@ -809,12 +887,12 @@ public:
     // this->link4->AddRelativeForce(math::Vector3(0, 0, 0));
     // this->link5->AddRelativeForce(math::Vector3(0, 0, 0));
     // this->link6->AddRelativeForce(math::Vector3(0, 0, 0));
-    this->link1->AddRelativeForce(math::Vector3(fh_x1, fh_y1, force_1));
-    this->link2->AddRelativeForce(math::Vector3(fh_x2, fh_y2, force_2));
-    this->link3->AddRelativeForce(math::Vector3(fh_x3, fh_y3, force_3));
-    this->link4->AddRelativeForce(math::Vector3(fh_x4, fh_y4, force_4));
-    this->link5->AddRelativeForce(math::Vector3(fh_x5, fh_y5, force_5));
-    this->link6->AddRelativeForce(math::Vector3(fh_x6, fh_y6, force_6));
+    // this->link1->AddRelativeForce(math::Vector3(fh_x1, fh_y1, force_1));
+    // this->link2->AddRelativeForce(math::Vector3(fh_x2, fh_y2, force_2));
+    // this->link3->AddRelativeForce(math::Vector3(fh_x3, fh_y3, force_3));
+    // this->link4->AddRelativeForce(math::Vector3(fh_x4, fh_y4, force_4));
+    // this->link5->AddRelativeForce(math::Vector3(fh_x5, fh_y5, force_5));
+    // this->link6->AddRelativeForce(math::Vector3(fh_x6, fh_y6, force_6));
     // ROS_INFO_STREAM("force:"<<force_1<<","<<force_2<<","<<force_3<<","<<force_4<<","<<force_5<<","<<force_6);
 
     // if(rotor_vel[0] < 2500 && rotor_vel[0]>=100){
@@ -847,32 +925,12 @@ public:
     // this->link4->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link5->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link6->AddRelativeTorque(math::Vector3(0, 0, 0));
-    this->link1->AddRelativeTorque(math::Vector3(moment_R1x, moment_R1y, moment_1));
-    this->link2->AddRelativeTorque(math::Vector3(moment_R2x, moment_R2y, moment_2));
-    this->link3->AddRelativeTorque(math::Vector3(moment_R3x, moment_R3y, moment_3));
-    this->link4->AddRelativeTorque(math::Vector3(moment_R4x, moment_R4y, moment_4));
-    this->link5->AddRelativeTorque(math::Vector3(moment_R5x, moment_R5y, moment_5));
-    this->link6->AddRelativeTorque(math::Vector3(moment_R6x, moment_R6y, moment_6));
-
-    // if(rotor_vel[0] < 2500 && rotor_vel[0]>=100){
-    //   std::ofstream result_file(RESULT_CSV_PATH, std::ios::app);
-    //   result_file.setf(std::ios::fixed, std::ios::floatfield);
-    //   result_file.precision(5);
-    //   result_file  << rotor_vel[0] << ","
-    //         << rotor_vel[1] << ","
-    //         << rotor_vel[2] << ","
-    //         << rotor_vel[3] << ","
-    //         << rotor_vel[4] << ","
-    //         << rotor_vel[5] << ","
-    //         << moment_1 << ","
-    //         << moment_2 << ","
-    //         << moment_3 << ","
-    //         << moment_4 << ","
-    //         << moment_5 << ","
-    //         << moment_6 << ","
-    //         << std::endl;
-    //   result_file.close();
-    // }
+    // this->link1->AddRelativeTorque(math::Vector3(moment_R1x, moment_R1y, moment_1));
+    // this->link2->AddRelativeTorque(math::Vector3(moment_R2x, moment_R2y, moment_2));
+    // this->link3->AddRelativeTorque(math::Vector3(moment_R3x, moment_R3y, moment_3));
+    // this->link4->AddRelativeTorque(math::Vector3(moment_R4x, moment_R4y, moment_4));
+    // this->link5->AddRelativeTorque(math::Vector3(moment_R5x, moment_R5y, moment_5));
+    // this->link6->AddRelativeTorque(math::Vector3(moment_R6x, moment_R6y, moment_6));
   }
 
   //apply velocity to joints with 3 metnods
@@ -930,7 +988,7 @@ private:
 
     pose_tmp = this->link0->GetWorldPose();
     T_tmp.setOrigin(tf::Vector3(pose_tmp.pos.x, pose_tmp.pos.y, pose_tmp.pos.z));
-    T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x,pose_tmp.rot.y,pose_tmp.rot.z,pose_tmp.rot.w));
+    T_tmp.setRotation(tf::Quaternion(pose_tmp.rot.x, pose_tmp.rot.y, pose_tmp.rot.z, pose_tmp.rot.w));
     T_br.sendTransform(tf::StampedTransform(T_tmp, ros::Time::now(), "world", "base_link"));
 
     // pose_tmp = this->link1->GetRelativePose();
@@ -1003,7 +1061,7 @@ private:
     wrench_msg_tmp.wrench.force.z = force_1;
     wrench_msg_tmp.wrench.torque.x = moment_R1x;
     wrench_msg_tmp.wrench.torque.y = moment_R1y;
-    wrench_msg_tmp.wrench.torque.z =  moment_1;
+    wrench_msg_tmp.wrench.torque.z = moment_1;
     this->pub_link1_wrench.publish(wrench_msg_tmp);
     wrench_msg_tmp.header.frame_id = "motor_link_2";
     wrench_msg_tmp.wrench.force.x = fh_x2;
@@ -1011,7 +1069,7 @@ private:
     wrench_msg_tmp.wrench.force.z = force_2;
     wrench_msg_tmp.wrench.torque.x = moment_R2x;
     wrench_msg_tmp.wrench.torque.y = moment_R2y;
-    wrench_msg_tmp.wrench.torque.z =  moment_2;
+    wrench_msg_tmp.wrench.torque.z = moment_2;
     this->pub_link2_wrench.publish(wrench_msg_tmp);
     wrench_msg_tmp.header.frame_id = "motor_link_3";
     wrench_msg_tmp.wrench.force.x = fh_x3;
@@ -1019,7 +1077,7 @@ private:
     wrench_msg_tmp.wrench.force.z = force_3;
     wrench_msg_tmp.wrench.torque.x = moment_R3x;
     wrench_msg_tmp.wrench.torque.y = moment_R3y;
-    wrench_msg_tmp.wrench.torque.z =  moment_3;
+    wrench_msg_tmp.wrench.torque.z = moment_3;
     this->pub_link3_wrench.publish(wrench_msg_tmp);
     wrench_msg_tmp.header.frame_id = "motor_link_4";
     wrench_msg_tmp.wrench.force.x = fh_x4;
@@ -1027,7 +1085,7 @@ private:
     wrench_msg_tmp.wrench.force.z = force_4;
     wrench_msg_tmp.wrench.torque.x = moment_R4x;
     wrench_msg_tmp.wrench.torque.y = moment_R4y;
-    wrench_msg_tmp.wrench.torque.z =  moment_4;
+    wrench_msg_tmp.wrench.torque.z = moment_4;
     this->pub_link4_wrench.publish(wrench_msg_tmp);
     wrench_msg_tmp.header.frame_id = "motor_link_5";
     wrench_msg_tmp.wrench.force.x = fh_x5;
@@ -1035,7 +1093,7 @@ private:
     wrench_msg_tmp.wrench.force.z = force_5;
     wrench_msg_tmp.wrench.torque.x = moment_R5x;
     wrench_msg_tmp.wrench.torque.y = moment_R5y;
-    wrench_msg_tmp.wrench.torque.z =  moment_5;
+    wrench_msg_tmp.wrench.torque.z = moment_5;
     this->pub_link5_wrench.publish(wrench_msg_tmp);
     wrench_msg_tmp.header.frame_id = "motor_link_6";
     wrench_msg_tmp.wrench.force.x = fh_x6;
@@ -1043,9 +1101,18 @@ private:
     wrench_msg_tmp.wrench.force.z = force_6;
     wrench_msg_tmp.wrench.torque.x = moment_R6x;
     wrench_msg_tmp.wrench.torque.y = moment_R6y;
-    wrench_msg_tmp.wrench.torque.z =  moment_6;
+    wrench_msg_tmp.wrench.torque.z = moment_6;
     this->pub_link6_wrench.publish(wrench_msg_tmp);
   }
+
+  // dynamic model of the motors
+private:
+  flypulator::MotorModel motor1;
+  flypulator::MotorModel motor2;
+  flypulator::MotorModel motor3;
+  flypulator::MotorModel motor4;
+  flypulator::MotorModel motor5;
+  flypulator::MotorModel motor6;
 
   /// \brief Pointer to the model.
 private:

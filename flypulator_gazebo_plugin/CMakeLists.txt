@@ -30,7 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package()
 
-include_directories(${GAZEBO_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+include_directories(${GAZEBO_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} include)
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 add_library(aero_plugin SHARED src/aero_plugin.cpp)
