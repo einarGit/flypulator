@@ -104,6 +104,11 @@ class PropulsionPlugin : public ModelPlugin
   double Um0 = 10;   //nominal no-load voltage
   double Im0 = 0.5;  //nominal no-load current
   double Rm = 0.101; //resitance
+
+  // ground effect coefficient
+  double ground_effect_coeff;
+  // if enable ground effect
+  bool use_ground_effect = false;
                      
   Eigen::Matrix3d T_trans; //transformation matrix from global coordinate to body coordinate
 
@@ -235,9 +240,9 @@ public:
   void OnUpdate(const common::UpdateInfo &_info)
   {
     // ROS_INFO_STREAM("propulsion plugin: OnUpdate()!");
-    this->SetVelocity();
-    this->SetForce();
-    this->SetTorque();
+    // this->SetVelocity();
+    // this->SetForce();
+    // this->SetTorque();
 
     // publish tf base_link ---> world
     tfPublisher();
@@ -285,7 +290,7 @@ public:
     // ROS_ERROR_STREAM("dt:"<<dt);
     if (dt < 0)
     {
-      ROS_WARN_STREAM("Reset Motor!");
+      ROS_WARN_STREAM("Move backward in time, reset Motor!");
       motor1.reset();
       motor2.reset();
       motor3.reset();
@@ -302,6 +307,20 @@ public:
     rotor_vel[3] = motor4.update(rotor_vel_cmd[3], dt);
     rotor_vel[4] = motor5.update(rotor_vel_cmd[4], dt);
     rotor_vel[5] = motor6.update(rotor_vel_cmd[5], dt);
+
+    // altitude/height of the drone to the gorund
+    double drone_height = this->link0->GetWorldPose().pos.z; 
+  
+    // TODO: only approximate ground effect, neglect the tilting angle of the drone and propeller
+    // calculate ground effect coefficient, T_eff = T_nom/ground_effect_coeff
+    if(drone_height > 0.35*R) // R = blade radius
+      ground_effect_coeff = 1.0 - pow(R/(4*drone_height),2); // min.~0.5
+    else
+      ground_effect_coeff = 0.5;
+
+    // if not using ground effect reset the coeff
+    if(!use_ground_effect)
+      ground_effect_coeff = 1.0;
 
     // ROS_INFO_STREAM("k:"<<motor1.getK()<<","<<"T:"<<motor1.getT()<<","<<"omega:"<<motor1.getOmega());
 
@@ -766,6 +785,10 @@ public:
     _msg.x6 = ratio6;
     this->pub_ratio.publish(_msg);
 
+    this->SetVelocity();
+    this->SetForce();
+    this->SetTorque();
+
     // save data for csv output
     test_data[0] = rotor_vel[0]* di_vel[0];
     test_data[1] = rotor_vel[1]* di_vel[1];
@@ -887,12 +910,12 @@ public:
     // this->link4->AddRelativeForce(math::Vector3(0, 0, 0));
     // this->link5->AddRelativeForce(math::Vector3(0, 0, 0));
     // this->link6->AddRelativeForce(math::Vector3(0, 0, 0));
-    // this->link1->AddRelativeForce(math::Vector3(fh_x1, fh_y1, force_1));
-    // this->link2->AddRelativeForce(math::Vector3(fh_x2, fh_y2, force_2));
-    // this->link3->AddRelativeForce(math::Vector3(fh_x3, fh_y3, force_3));
-    // this->link4->AddRelativeForce(math::Vector3(fh_x4, fh_y4, force_4));
-    // this->link5->AddRelativeForce(math::Vector3(fh_x5, fh_y5, force_5));
-    // this->link6->AddRelativeForce(math::Vector3(fh_x6, fh_y6, force_6));
+    this->link1->AddRelativeForce(math::Vector3(fh_x1, fh_y1, force_1/ground_effect_coeff));
+    this->link2->AddRelativeForce(math::Vector3(fh_x2, fh_y2, force_2/ground_effect_coeff));
+    this->link3->AddRelativeForce(math::Vector3(fh_x3, fh_y3, force_3/ground_effect_coeff));
+    this->link4->AddRelativeForce(math::Vector3(fh_x4, fh_y4, force_4/ground_effect_coeff));
+    this->link5->AddRelativeForce(math::Vector3(fh_x5, fh_y5, force_5/ground_effect_coeff));
+    this->link6->AddRelativeForce(math::Vector3(fh_x6, fh_y6, force_6/ground_effect_coeff));
     // ROS_INFO_STREAM("force:"<<force_1<<","<<force_2<<","<<force_3<<","<<force_4<<","<<force_5<<","<<force_6);
 
     // if(rotor_vel[0] < 2500 && rotor_vel[0]>=100){

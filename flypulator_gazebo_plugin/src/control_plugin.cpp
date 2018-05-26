@@ -877,7 +877,7 @@ class ControlPlugin : public ModelPlugin
 
             flypulator_common_msgs::RotorVelStamped _rotor_cmd;
 
-            static double vel_temp = 100;
+            static double vel_temp = 1000;
             vel_1 = vel_2 = vel_3 = vel_4 = vel_5 = vel_6 = vel_temp;
             di_vel1 = di_vel2 =di_vel3 = di_vel4 = di_vel5 = di_vel6 = 1;
             // vel_temp += 10;
