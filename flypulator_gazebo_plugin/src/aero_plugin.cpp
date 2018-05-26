@@ -46,7 +46,7 @@ namespace gazebo
 class AeroPlugin : public ModelPlugin
 {
   double test_data[12];
-  bool WRITE_CSV_FILE = false;
+  bool WRITE_CSV_FILE = true;
 
   int N = 6;         //number of energie
   double c = 0.016;  //blade chord width
@@ -367,7 +367,7 @@ public:
     l1 = (-Vi1 - Vzz1) / (rotor_vel[0] * R); // inflow rate
     u1 = Vxy1 / (rotor_vel[0] * R);
     CQ1 = ki * l1 * CT1 + 0.25 * s * CD0 * (1 + k * pow(u1, 2));
-    moment_1 = -0.5 * pho * pow((rotor_vel[0] * R), 2) * A * R * CQ1 * Sgn(this->link1->GetRelativeAngularVel().z);
+    moment_1 = 0.5 * pho * pow((rotor_vel[0] * R), 2) * A * R * CQ1 * di_blade_rot[0];
     momentR1 = 0.125 * s * a * pho * R * A * Vxy1 * (((4 / 3) * th0 - thtw) * rotor_vel[0] * R + Vi1 + Vzz1);
     if (Vxx1 >= 0)
     {
@@ -449,7 +449,7 @@ public:
     l2 = (-Vi2 - Vzz2) / (rotor_vel[1] * R);
     u2 = Vxy2 / (rotor_vel[1] * R);
     CQ2 = ki * l2 * CT2 + 0.25 * s * CD0 * (1 + k * pow(u2, 2));
-    moment_2 = -0.5 * pho * pow((rotor_vel[1] * R), 2) * A * R * CQ2 * Sgn(this->link2->GetRelativeAngularVel().z);
+    moment_2 = 0.5 * pho * pow((rotor_vel[1] * R), 2) * A * R * CQ2 * di_blade_rot[1];
     momentR2 = 0.125 * s * a * pho * R * A * Vxy2 * (((4 / 3) * th0 - thtw) * rotor_vel[1] * R + Vi2 + Vzz2);
 
     moment_R2x = momentR2 * cos(a2);
@@ -525,7 +525,7 @@ public:
     l3 = (-Vi3 - Vzz3) / (rotor_vel[2] * R);
     u3 = Vxy3 / (rotor_vel[2] * R);
     CQ3 = ki * l3 * CT3 + 0.25 * s * CD0 * (1 + k * pow(u3, 2));
-    moment_3 = -0.5 * pho * pow((rotor_vel[2] * R), 2) * A * R * CQ3 * Sgn(this->link3->GetRelativeAngularVel().z);
+    moment_3 = 0.5 * pho * pow((rotor_vel[2] * R), 2) * A * R * CQ3 * di_blade_rot[2];
     momentR3 = 0.125 * s * a * pho * R * A * Vxy3 * (((4 / 3) * th0 - thtw) * rotor_vel[2] * R + Vi3 + Vzz3);
 
     moment_R3x = momentR3 * cos(a3);
@@ -587,7 +587,7 @@ public:
     l4 = (-Vi4 - Vzz4) / (rotor_vel[3] * R);
     u4 = Vxy4 / (rotor_vel[3] * R);
     CQ4 = ki * l4 * CT4 + 0.25 * s * CD0 * (1 + k * pow(u4, 2));
-    moment_4 = -0.5 * pho * pow((rotor_vel[3] * R), 2) * A * R * CQ4 * Sgn(this->link4->GetRelativeAngularVel().z);
+    moment_4 = 0.5 * pho * pow((rotor_vel[3] * R), 2) * A * R * CQ4 * di_blade_rot[3];
     momentR4 = 0.125 * s * a * pho * R * A * Vxy4 * (((4 / 3) * th0 - thtw) * rotor_vel[3] * R + Vi4 + Vzz4);
     if (Vxx4 >= 0)
     {
@@ -660,7 +660,7 @@ public:
     l5 = (-Vi5 - Vzz5) / (rotor_vel[4] * R);
     u5 = Vxy5 / (rotor_vel[4] * R);
     CQ5 = ki * l5 * CT5 + 0.25 * s * CD0 * (1 + k * pow(u5, 2));
-    moment_5 = -0.5 * pho * pow((rotor_vel[4] * R), 2) * A * R * CQ5 * Sgn(this->link5->GetRelativeAngularVel().z);
+    moment_5 = 0.5 * pho * pow((rotor_vel[4] * R), 2) * A * R * CQ5 * di_blade_rot[4];
     momentR5 = 0.125 * s * a * pho * R * A * Vxy5 * (((4 / 3) * th0 - thtw) * rotor_vel[4] * R + Vi5 + Vzz5);
     if (Vxx5 >= 0)
     {
@@ -733,7 +733,7 @@ public:
     l6 = (-Vi6 - Vzz6) / (rotor_vel[5] * R);
     u6 = Vxy6 / (rotor_vel[5] * R);
     CQ6 = ki * l6 * CT6 + 0.25 * s * CD0 * (1 + k * pow(u6, 2));
-    moment_6 = -0.5 * pho * pow((rotor_vel[5] * R), 2) * A * R * CQ6 * Sgn(this->link6->GetRelativeAngularVel().z);
+    moment_6 = 0.5 * pho * pow((rotor_vel[5] * R), 2) * A * R * CQ6 * di_blade_rot[5];
     momentR6 = 0.125 * s * a * pho * R * A * Vxy6 * (((4 / 3) * th0 - thtw) * rotor_vel[5] * R + Vi6 + Vzz6);
     if (Vxx6 >= 0)
     {
@@ -767,18 +767,18 @@ public:
     this->pub_ratio.publish(_msg);
 
     // save data for csv output
-    test_data[0] = rotor_vel_cmd[0];
-    test_data[1] = rotor_vel_cmd[1];
-    test_data[2] = rotor_vel_cmd[2];
-    test_data[3] = rotor_vel_cmd[3];
-    test_data[4] = rotor_vel_cmd[4];
-    test_data[5] = rotor_vel_cmd[5];
-    test_data[6] = rotor_vel[0];
-    test_data[7] = rotor_vel[1];
-    test_data[8] = rotor_vel[2];
-    test_data[9] = rotor_vel[3];
-    test_data[10] = rotor_vel[4];
-    test_data[11] = rotor_vel[5];
+    test_data[0] = rotor_vel[0]* di_vel[0];
+    test_data[1] = rotor_vel[1]* di_vel[1];
+    test_data[2] = rotor_vel[2]* di_vel[2];
+    test_data[3] = rotor_vel[3]* di_vel[3];
+    test_data[4] = rotor_vel[4]* di_vel[4];
+    test_data[5] = rotor_vel[5]* di_vel[5];
+    test_data[6] = moment_1;
+    test_data[7] = moment_2;
+    test_data[8] = moment_3;
+    test_data[9] = moment_4;
+    test_data[10] = moment_5;
+    test_data[11] = moment_6;
 
     ros::spinOnce();
   }
@@ -925,12 +925,12 @@ public:
     // this->link4->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link5->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link6->AddRelativeTorque(math::Vector3(0, 0, 0));
-    // this->link1->AddRelativeTorque(math::Vector3(moment_R1x, moment_R1y, moment_1));
-    // this->link2->AddRelativeTorque(math::Vector3(moment_R2x, moment_R2y, moment_2));
-    // this->link3->AddRelativeTorque(math::Vector3(moment_R3x, moment_R3y, moment_3));
-    // this->link4->AddRelativeTorque(math::Vector3(moment_R4x, moment_R4y, moment_4));
-    // this->link5->AddRelativeTorque(math::Vector3(moment_R5x, moment_R5y, moment_5));
-    // this->link6->AddRelativeTorque(math::Vector3(moment_R6x, moment_R6y, moment_6));
+    this->link1->AddRelativeTorque(math::Vector3(moment_R1x, moment_R1y, moment_1));
+    this->link2->AddRelativeTorque(math::Vector3(moment_R2x, moment_R2y, moment_2));
+    this->link3->AddRelativeTorque(math::Vector3(moment_R3x, moment_R3y, moment_3));
+    this->link4->AddRelativeTorque(math::Vector3(moment_R4x, moment_R4y, moment_4));
+    this->link5->AddRelativeTorque(math::Vector3(moment_R5x, moment_R5y, moment_5));
+    this->link6->AddRelativeTorque(math::Vector3(moment_R6x, moment_R6y, moment_6));
   }
 
   //apply velocity to joints with 3 metnods
