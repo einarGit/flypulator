@@ -1,5 +1,5 @@
-#ifndef _AERO_PLUGIN_HH_
-#define _AERO_PLUGIN_HH_
+#ifndef _PROPULSION_PLUGIN_HH_
+#define _PROPULSION_PLUGIN_HH_
 
 #include <vector>
 #include <iostream>
@@ -43,7 +43,7 @@
 namespace gazebo
 {
 /// \brief A plugin to control drone
-class AeroPlugin : public ModelPlugin
+class PropulsionPlugin : public ModelPlugin
 {
   double test_data[12];
   bool WRITE_CSV_FILE = true;
@@ -111,7 +111,7 @@ class AeroPlugin : public ModelPlugin
 
   /// \brief Constructor
 public:
-  AeroPlugin() {}
+  PropulsionPlugin() {}
 
   /// \brief The load function is called by Gazebo when the plugin is
   /// inserted into simulation
@@ -121,7 +121,7 @@ public:
 public:
   virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   {
-    ROS_INFO_STREAM("Loading AeroPlugin ...");
+    ROS_INFO_STREAM("Loading PropulsionPlugin ...");
     if (_model->GetJointCount() == 0)
     {
       ROS_ERROR("Invalid joint count, plugin not loaded");
@@ -188,7 +188,7 @@ public:
     }
     // Create our ROS node.
     this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
-    ROS_INFO_STREAM("aero_plugin get node:" << this->rosNode->getNamespace());
+    ROS_INFO_STREAM("propulsion_plugin get node:" << this->rosNode->getNamespace());
 
     this->pub_ratio = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/thrust_moment_ratio", 10);
     this->pub_joint_state = this->rosNode->advertise<sensor_msgs::JointState>("/drone/joint_states", 50);
@@ -203,38 +203,38 @@ public:
     //Create a wind velocity topic and subscribe to it
     ros::SubscribeOptions s1 =
         ros::SubscribeOptions::create<geometry_msgs::Vector3>(
-            "/drone/wind_cmd", 100, boost::bind(&AeroPlugin::OnRosWindMsg, this, _1),
+            "/drone/wind_cmd", 100, boost::bind(&PropulsionPlugin::OnRosWindMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubWind = this->rosNode->subscribe(s1);
 
     //subscribe to model link states to get position and orientation for coordinate transformation
     ros::SubscribeOptions s2 =
         ros::SubscribeOptions::create<gazebo_msgs::LinkStates>(
-            "/gazebo/link_states", 100, boost::bind(&AeroPlugin::OnlinkMsg, this, _1),
+            "/gazebo/link_states", 100, boost::bind(&PropulsionPlugin::OnlinkMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubLink = this->rosNode->subscribe(s2);
 
     //subscribe to control signal,six global velocity for drone
     ros::SubscribeOptions s3 =
         ros::SubscribeOptions::create<flypulator_common_msgs::RotorVelStamped>(
-            "/drone/rotor_cmd", 100, boost::bind(&AeroPlugin::OnControlMsg, this, _1),
+            "/drone/rotor_cmd", 100, boost::bind(&PropulsionPlugin::OnControlMsg, this, _1),
             ros::VoidPtr(), &this->rosQueue);
     this->rosSubControl = this->rosNode->subscribe(s3);
 
     // Spin up the queue helper thread.
-    this->rosQueueThread = std::thread(std::bind(&AeroPlugin::QueueThread, this));
+    this->rosQueueThread = std::thread(std::bind(&PropulsionPlugin::QueueThread, this));
 
     //update world to apply constant force
     this->updateConnection = event::Events::ConnectWorldUpdateBegin(
-        boost::bind(&AeroPlugin::OnUpdate, this, _1));
+        boost::bind(&PropulsionPlugin::OnUpdate, this, _1));
 
-    ROS_INFO_STREAM("AeroPlugin Loaded !");
+    ROS_INFO_STREAM("PropulsionPlugin Loaded !");
   }
 
 public:
   void OnUpdate(const common::UpdateInfo &_info)
   {
-    // ROS_INFO_STREAM("aero plugin: OnUpdate()!");
+    // ROS_INFO_STREAM("propulsion plugin: OnUpdate()!");
     this->SetVelocity();
     this->SetForce();
     this->SetTorque();
@@ -274,7 +274,7 @@ public:
 public:
   void OnlinkMsg(const gazebo_msgs::LinkStatesConstPtr &msg)
   {
-    // ROS_INFO_STREAM("aero_plugin: get LinkStatesMsg!");
+    // ROS_INFO_STREAM("propulsion_plugin: get LinkStatesMsg!");
 
     // ROS_INFO_STREAM(Vx<<","<<Vx<<","<<Vx);
 
@@ -800,7 +800,7 @@ public:
 public:
   void OnControlMsg(const flypulator_common_msgs::RotorVelStampedConstPtr &_msg)
   {
-    // ROS_INFO_STREAM("aero plugin: get control message!");
+    // ROS_INFO_STREAM("propulsion plugin: get control message!");
     if (_msg->velocity.size() != 6)
     {
       ROS_ERROR("Dimention of rotor cmd does not match joint number!");
@@ -951,7 +951,7 @@ public:
 private:
   void readParamsFromServer()
   {
-    ROS_INFO_STREAM("aero_plugin: loading aerodynamic parameters...");
+    ROS_INFO_STREAM("propulsion_plugin: loading aerodynamic parameters...");
     this->rosNode->param("rotor_number", N, N);
     this->rosNode->param("blade_chord_width", c, c);
     this->rosNode->param("blade_radius", R, R);
@@ -975,7 +975,7 @@ private:
     this->rosNode->param("nominal_no_load_voltage", Um0, Um0);
     this->rosNode->param("nominal_no_load_current", Im0, Im0);
     this->rosNode->param("motor_resitance", Rm, Rm);
-    ROS_INFO_STREAM("aero_plugin: aerodynamic parameters loaded!");
+    ROS_INFO_STREAM("propulsion_plugin: aerodynamic parameters loaded!");
   }
 
 private:
@@ -1205,7 +1205,7 @@ private:
 };
 
 // Tell Gazebo about this plugin, so that Gazebo can call Load on this plugin.
-GZ_REGISTER_MODEL_PLUGIN(AeroPlugin)
+GZ_REGISTER_MODEL_PLUGIN(PropulsionPlugin)
 } // namespace gazebo
 
-#endif /*_AERO_PLUGIN_HH_*/
+#endif /*_PROPULSION_PLUGIN_HH_*/

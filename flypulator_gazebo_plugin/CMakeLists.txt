@@ -33,9 +33,9 @@ catkin_package()
 include_directories(${GAZEBO_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} include)
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
-add_library(aero_plugin SHARED src/aero_plugin.cpp)
-target_link_libraries(aero_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
-add_dependencies(aero_plugin ${catkin_EXPORTED_TARGETS})
+add_library(propulsion_plugin SHARED src/propulsion_plugin.cpp)
+target_link_libraries(propulsion_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})
+add_dependencies(propulsion_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(control_plugin SHARED src/control_plugin.cpp)
 target_link_libraries(control_plugin ${GAZEBO_libraries} ${catkin_LIBRARIES})

@@ -3,7 +3,7 @@
   name="drone">
   
   <gazebo>
-    <plugin name="aero_plugin" filename="libaero_plugin.so">
+    <plugin name="propulsion_plugin" filename="libpropulsion_plugin.so">
     </plugin>
   </gazebo>
 
