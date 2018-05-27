@@ -303,7 +303,7 @@ public:
       motor6.reset();
       return;
     }
-
+    
     // motors dynamic
     if(use_motor_dynamic){
       rotor_vel[0] = motor1.update(rotor_vel_cmd[0], dt);
@@ -317,6 +317,10 @@ public:
       for(int i=0; i<6; i++)
         rotor_vel[i] = rotor_vel_cmd[i];
     }
+
+    // clamp rotors angular velocity
+    for(int i=0; i<6; i++)
+      rotor_vel[i] = clamp(rotor_vel[i], vel_min, vel_max);
 
     // altitude/height of the drone to the gorund
     double drone_height = this->link0->GetWorldPose().pos.z; 
@@ -388,11 +392,7 @@ public:
       Vi1 = -Vzz1 / 2 - sqrt(pow((Vzz1 / 2), 2) - pow(Vi_h, 2));
     }
 
-    // constrain the rotor spinning vel
-    rotor_vel[0] = clamp(rotor_vel[0], vel_min, vel_max);
 
-    // force_1 = di_force[0] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[0] * R), 2) + (pa / 2) * B * pow(Vxy1, 2) - (Vi1 + Vzz1) * pow(B, 2) * rotor_vel[0] * R / 2);
-    // CT1 = abs(force_1) / (0.5 * pho * pow((rotor_vel[0] * R), 2) * A);
     l1 = (Vi1 + Vzz1) / (rotor_vel[0] * R); // inflow rate
     u1 = Vxy1 / (rotor_vel[0] * R);
     CT1 = s*a*((pa/3)*(pow(B,3)+3*u1*u1*B/2.0)-l1*B*B/2.0); // Hiller's (4.57)
@@ -456,9 +456,6 @@ public:
       Vi2 = -Vzz2 / 2 - sqrt(pow((Vzz2 / 2), 2) - pow(Vi_h, 2));
     }
 
-    // constrain the rotor spinning vel
-    rotor_vel[1] = clamp(rotor_vel[1], vel_min, vel_max);
-
     if (Vxx2 >= 0)
     {
       a2 = atan(Vyy2 / Vxx2);
@@ -470,8 +467,7 @@ public:
     fh2 = 0.25 * s * pho * rotor_vel[1] * R * A * CD0 * Vxy2;
     fh_x2 = fh2 * cos(a2);
     fh_y2 = fh2 * sin(a2);
-    // force_2 = di_force[1] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[1] * R), 2) + (pa / 2) * B * pow(Vxy2, 2) - (-Vi2 - Vzz2) * pow(B, 2) * rotor_vel[1] * R / 2);
-    // CT2 = abs(force_2) / (0.5 * pho * pow((rotor_vel[1] * R), 2) * A);
+
     l2 = (Vi2 + Vzz2) / (rotor_vel[1] * R);
     u2 = Vxy2 / (rotor_vel[1] * R);
     CT2 = s*a*((pa/3)*(pow(B,3)+3*u2*u2*B/2.0)-l2*B*B/2.0);
@@ -527,7 +523,7 @@ public:
     }
 
     // constrain the rotor spinning vel
-    rotor_vel[2] = clamp(rotor_vel[2], vel_min, vel_max);
+    // rotor_vel[2] = clamp(rotor_vel[2], vel_min, vel_max);
 
     if (Vxx3 >= 0)
     {
@@ -542,8 +538,6 @@ public:
     fh_x3 = fh3 * cos(a3);
     fh_y3 = fh3 * sin(a3);
 
-    // force_3 = di_force[2] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[2] * R), 2) + (pa / 2) * B * pow(Vxy3, 2) - (-Vi3 - Vzz3) * pow(B, 2) * rotor_vel[2] * R / 2);
-    // CT3 = abs(force_3) / (0.5 * pho * pow((rotor_vel[2] * R), 2) * A);
     l3 = (Vi3 + Vzz3) / (rotor_vel[2] * R);
     u3 = Vxy3 / (rotor_vel[2] * R);
     CT3 = s*a*((pa/3)*(pow(B,3)+3*u3*u3*B/2.0)-l3*B*B/2.0);
@@ -598,11 +592,6 @@ public:
       Vi4 = -Vzz4 / 2 - sqrt(pow((Vzz4 / 2), 2) - pow(Vi_h, 2));
     }
     
-    // constrain the rotor spinning vel
-    rotor_vel[3] = clamp(rotor_vel[3], vel_min, vel_max);
-
-    // force_4 = di_force[3] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[3] * R), 2) + (pa / 2) * B * pow(Vxy4, 2) - (-Vi4 - Vzz4) * pow(B, 2) * rotor_vel[3] * R / 2);
-    // CT4 = abs(force_4) / (0.5 * pho * pow((rotor_vel[3] * R), 2) * A);
     l4 = (Vi4 + Vzz4) / (rotor_vel[3] * R);
     u4 = Vxy4 / (rotor_vel[3] * R);
     CT4 = s*a*((pa/3)*(pow(B,3)+3*u4*u4*B/2.0)-l4*B*B/2.0);
@@ -668,11 +657,6 @@ public:
       Vi5 = -Vzz5 / 2 - sqrt(pow((Vzz5 / 2), 2) - pow(Vi_h, 2));
     }
     
-    // constrain the rotor spinning vel
-    rotor_vel[4] = clamp(rotor_vel[4], vel_min, vel_max);
-
-    // force_5 = di_force[4] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[4] * R), 2) + (pa / 2) * B * pow(Vxy5, 2) - (-Vi5 - Vzz5) * pow(B, 2) * rotor_vel[4] * R / 2);
-    // CT5 = abs(force_5) / (0.5 * pho * pow((rotor_vel[4] * R), 2) * A);
     l5 = (Vi5 + Vzz5) / (rotor_vel[4] * R);
     u5 = Vxy5 / (rotor_vel[4] * R);
     CT5 = s*a*((pa/3)*(pow(B,3)+3*u5*u5*B/2.0)-l5*B*B/2.0);
@@ -738,11 +722,6 @@ public:
       Vi6 = -Vzz6 / 2 - sqrt(pow((Vzz6 / 2), 2) - pow(Vi_h, 2));
     }
     
-    // constrain the rotor spinning vel
-    rotor_vel[5] = clamp(rotor_vel[5], vel_min, vel_max);
-
-    // force_6 = di_force[5] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[5] * R), 2) + (pa / 2) * B * pow(Vxy6, 2) - (-Vi6 - Vzz6) * pow(B, 2) * rotor_vel[5] * R / 2);
-    // CT6 = abs(force_6) / (0.5 * pho * pow((rotor_vel[5] * R), 2) * A);
     l6 = (Vi6 + Vzz6) / (rotor_vel[5] * R);
     u6 = Vxy6 / (rotor_vel[5] * R);
     CT6 = s*a*((pa/3)*(pow(B,3)+3*u6*u6*B/2.0)-l6*B*B/2.0);
@@ -834,7 +813,6 @@ public:
       return;
     }
 
-//TODO: add limitation of maximum rotor velocity
     //TODO: di_vel and di_force should change after motor dynamic, not here
     if (bidirectional) //bi-directional rotors
     {
