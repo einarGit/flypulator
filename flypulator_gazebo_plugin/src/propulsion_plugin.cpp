@@ -6,6 +6,7 @@
 #include <math.h>
 #include <thread>
 #include <fstream>
+#include <algorithm>
 
 #include <gazebo/gazebo.hh>
 #include <gazebo/transport/transport.hh>
@@ -45,8 +46,13 @@ namespace gazebo
 /// \brief A plugin to control drone
 class PropulsionPlugin : public ModelPlugin
 {
-  double test_data[12];
-  bool WRITE_CSV_FILE = false;
+  bool WRITE_CSV_FILE = false; // if save the test_data to .csv
+  bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
+  bool use_ground_effect = true; // if enable ground effect
+  bool use_motor_dynamic = true; // if enable motor dynamic
+
+  double test_data[12]; // test data for debug
+  double ground_effect_coeff; // ground effect coefficient
 
   int N = 6;         //number of energie
   double c = 0.016;  //blade chord width
@@ -96,7 +102,7 @@ class PropulsionPlugin : public ModelPlugin
   int di_vel[6] = {1, 1, 1, 1, 1, 1};          //real rotate direction
 
   bool bidirectional = false; //bidirectional option
-  double vel_min = 1e-6;      //min rotor speed
+  double vel_min = 50;      //min rotor speed
   double vel_max = 2500;      //max rotor speed
   //input control signal in velocity DOF 6, unused
   //double Vx_input, Vy_input, Vz_input, Wx_input, Wy_input, Wz_input;
@@ -104,11 +110,6 @@ class PropulsionPlugin : public ModelPlugin
   double Um0 = 10;   //nominal no-load voltage
   double Im0 = 0.5;  //nominal no-load current
   double Rm = 0.101; //resitance
-
-  // ground effect coefficient
-  double ground_effect_coeff;
-  // if enable ground effect
-  bool use_ground_effect = true;
                      
   Eigen::Matrix3d T_trans; //transformation matrix from global coordinate to body coordinate
 
@@ -157,12 +158,12 @@ public:
     this->joint4->SetParam("fmax", 0, 1000000.0);
     this->joint5->SetParam("fmax", 0, 1000000.0);
     this->joint6->SetParam("fmax", 0, 1000000.0);
-    this->joint1->SetParam("vel", 0, 0.0);
-    this->joint2->SetParam("vel", 0, 0.0);
-    this->joint3->SetParam("vel", 0, 0.0);
-    this->joint4->SetParam("vel", 0, 0.0);
-    this->joint5->SetParam("vel", 0, 0.0);
-    this->joint6->SetParam("vel", 0, 0.0);
+    this->joint1->SetParam("vel", 0, 0);
+    this->joint2->SetParam("vel", 0, 0);
+    this->joint3->SetParam("vel", 0, 0);
+    this->joint4->SetParam("vel", 0, 0);
+    this->joint5->SetParam("vel", 0, 0);
+    this->joint6->SetParam("vel", 0, 0);
     //get the six blade link
     this->link0 = _model->GetChildLink("base_link");
     this->link1 = _model->GetChildLink("blade_link_1");
@@ -171,7 +172,7 @@ public:
     this->link4 = _model->GetChildLink("blade_link_4");
     this->link5 = _model->GetChildLink("blade_link_5");
     this->link6 = _model->GetChildLink("blade_link_6");
-    
+
     //load aerodynamic parameters
     // this->readParamsFromServer();    
     
@@ -301,12 +302,18 @@ public:
     }
 
     // motors dynamic
-    rotor_vel[0] = motor1.update(rotor_vel_cmd[0], dt);
-    rotor_vel[1] = motor2.update(rotor_vel_cmd[1], dt);
-    rotor_vel[2] = motor3.update(rotor_vel_cmd[2], dt);
-    rotor_vel[3] = motor4.update(rotor_vel_cmd[3], dt);
-    rotor_vel[4] = motor5.update(rotor_vel_cmd[4], dt);
-    rotor_vel[5] = motor6.update(rotor_vel_cmd[5], dt);
+    if(use_motor_dynamic){
+      rotor_vel[0] = motor1.update(rotor_vel_cmd[0], dt);
+      rotor_vel[1] = motor2.update(rotor_vel_cmd[1], dt);
+      rotor_vel[2] = motor3.update(rotor_vel_cmd[2], dt);
+      rotor_vel[3] = motor4.update(rotor_vel_cmd[3], dt);
+      rotor_vel[4] = motor5.update(rotor_vel_cmd[4], dt);
+      rotor_vel[5] = motor6.update(rotor_vel_cmd[5], dt);
+    }
+    else{
+      for(int i=0; i<6; i++)
+        rotor_vel[i] = rotor_vel_cmd[i];
+    }
 
     // altitude/height of the drone to the gorund
     double drone_height = this->link0->GetWorldPose().pos.z; 
@@ -323,6 +330,13 @@ public:
       ground_effect_coeff = 1.0;
 
     // ROS_INFO_STREAM("k:"<<motor1.getK()<<","<<"T:"<<motor1.getT()<<","<<"omega:"<<motor1.getOmega());
+
+    Vdrone_x = this->model->GetRelativeLinearVel().x;
+    Vdrone_y = this->model->GetRelativeLinearVel().y;
+    Vdrone_z = this->model->GetRelativeLinearVel().z;
+    Vx = Vwind_x - Vdrone_x;
+    Vy = Vwind_y - Vdrone_y;
+    Vz = Vwind_z - Vdrone_z;
 
     //blade1 aero dynamic,Vxx1,Vyy1...airflow velocity in blade local coordinate
     double q1_1, q1_2, q1_3, q1_4, Vxx1, Vyy1, Vzz1, Vxy1, C1, Vi1;
@@ -359,7 +373,8 @@ public:
     C1 = Vzz1 / Vi_h;
     if (C1 >= 0)
     {
-      Vi1 = -(sqrt(pow((Vzz1 / 2), 2) + pow(Vi_h, 2)) + Vzz1 / 2); //Vi induced airflow velocity
+      // Vi1 = -(sqrt(pow((Vzz1 / 2), 2) + pow(Vi_h, 2)) + Vzz1 / 2); //Vi induced airflow velocity
+      Vi1 =  - Vzz1/2.0 + sqrt(pow((Vzz1 / 2), 2) + pow(Vi_h, 2));
     }
     else if (C1 >= -2 && C1 < 0)
     {
@@ -367,24 +382,17 @@ public:
     }
     else
     {
-      Vi1 = -Vzz1 / 2 + sqrt(pow((Vzz1 / 2), 2) - pow(Vi_h, 2));
+      Vi1 = -Vzz1 / 2 - sqrt(pow((Vzz1 / 2), 2) - pow(Vi_h, 2));
     }
 
-    if (rotor_vel[0] <= vel_min)
-    {
-      rotor_vel[0] = vel_min;
-      //std::cout<<"Warning! Velocity of blade1 under limit"<<std::endl;  //TODO: replace with ros warning
-    }
-    else if (rotor_vel[0] >= vel_max)
-    {
-      rotor_vel[0] = vel_max;
-      //std::cout<<"Warning! Velocity of blade1 over limit"<<std::endl;
-    }
+    // constrain the rotor spinning vel
+    rotor_vel[0] = clamp(rotor_vel[0], vel_min, vel_max);
 
     force_1 = di_force[0] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[0] * R), 2) + (pa / 2) * B * pow(Vxy1, 2) - (-Vi1 - Vzz1) * pow(B, 2) * rotor_vel[0] * R / 2);
     CT1 = abs(force_1) / (0.5 * pho * pow((rotor_vel[0] * R), 2) * A);
-    l1 = (-Vi1 - Vzz1) / (rotor_vel[0] * R); // inflow rate
+    l1 = (Vi1 + Vzz1) / (rotor_vel[0] * R); // inflow rate
     u1 = Vxy1 / (rotor_vel[0] * R);
+    // CT1 = s*a*((pa/3)*(pow(B,3)+3*u1*u1*B/2.0)-l1*B*B/2.0);
     CQ1 = ki * l1 * CT1 + 0.25 * s * CD0 * (1 + k * pow(u1, 2));
     moment_1 = 0.5 * pho * pow((rotor_vel[0] * R), 2) * A * R * CQ1 * di_blade_rot[0];
     momentR1 = 0.125 * s * a * pho * R * A * Vxy1 * (((4 / 3) * th0 - thtw) * rotor_vel[0] * R + Vi1 + Vzz1);
@@ -431,7 +439,8 @@ public:
     C2 = Vzz2 / Vi_h;
     if (C2 >= 0)
     {
-      Vi2 = -(sqrt(pow((Vzz2 / 2), 2) + pow(Vi_h, 2)) + Vzz2 / 2);
+      // Vi2 = -(sqrt(pow((Vzz2 / 2), 2) + pow(Vi_h, 2)) + Vzz2 / 2);
+      Vi2 = -Vzz2 / 2 + sqrt(pow((Vzz2 / 2), 2) + pow(Vi_h, 2)) ;
     }
     else if (C2 >= -2 && C2 < 0)
     {
@@ -439,19 +448,13 @@ public:
     }
     else
     {
-      Vi2 = -Vzz2 / 2 + sqrt(pow((Vzz2 / 2), 2) - pow(Vi_h, 2));
+      // Vi2 = -Vzz2 / 2 + sqrt(pow((Vzz2 / 2), 2) - pow(Vi_h, 2));
+      Vi2 = -Vzz2 / 2 - sqrt(pow((Vzz2 / 2), 2) - pow(Vi_h, 2));
     }
 
-    if (rotor_vel[1] <= vel_min)
-    {
-      rotor_vel[1] = vel_min;
-      //std::cout<<"Warning! Velocity of blade2 under limit"<<std::endl;
-    }
-    else if (rotor_vel[1] >= vel_max)
-    {
-      rotor_vel[1] = vel_max;
-      //std::cout<<"Warning! Velocity of blade 2 over limit"<<std::endl;
-    }
+    // constrain the rotor spinning vel
+    rotor_vel[1] = clamp(rotor_vel[1], vel_min, vel_max);
+
     if (Vxx2 >= 0)
     {
       a2 = atan(Vyy2 / Vxx2);
@@ -465,7 +468,7 @@ public:
     fh_y2 = fh2 * sin(a2);
     force_2 = di_force[1] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[1] * R), 2) + (pa / 2) * B * pow(Vxy2, 2) - (-Vi2 - Vzz2) * pow(B, 2) * rotor_vel[1] * R / 2);
     CT2 = abs(force_2) / (0.5 * pho * pow((rotor_vel[1] * R), 2) * A);
-    l2 = (-Vi2 - Vzz2) / (rotor_vel[1] * R);
+    l2 = (Vi2 + Vzz2) / (rotor_vel[1] * R);
     u2 = Vxy2 / (rotor_vel[1] * R);
     CQ2 = ki * l2 * CT2 + 0.25 * s * CD0 * (1 + k * pow(u2, 2));
     moment_2 = 0.5 * pho * pow((rotor_vel[1] * R), 2) * A * R * CQ2 * di_blade_rot[1];
@@ -504,7 +507,8 @@ public:
     C3 = Vzz3 / Vi_h;
     if (C3 >= 0)
     {
-      Vi3 = -(sqrt(pow((Vzz3 / 2), 2) + pow(Vi_h, 2)) + Vzz3 / 2);
+      // Vi3 = -(sqrt(pow((Vzz3 / 2), 2) + pow(Vi_h, 2)) + Vzz3 / 2);
+      Vi3 = -Vzz3/2 + sqrt(pow((Vzz3 / 2), 2) + pow(Vi_h, 2));
     }
     else if (C3 >= -2 && C3 < 0)
     {
@@ -512,19 +516,12 @@ public:
     }
     else
     {
-      Vi3 = -Vzz3 / 2 + sqrt(pow((Vzz3 / 2), 2) - pow(Vi_h, 2));
+      // Vi3 = -Vzz3 / 2 + sqrt(pow((Vzz3 / 2), 2) - pow(Vi_h, 2));
+      Vi3 = -Vzz3 / 2 - sqrt(pow((Vzz3 / 2), 2) - pow(Vi_h, 2));
     }
 
-    if (rotor_vel[2] <= vel_min)
-    {
-      rotor_vel[2] = vel_min;
-      //std::cout<<"Warning! Velocity of blade3 under limit"<<std::endl;
-    }
-    else if (rotor_vel[2] >= vel_max)
-    {
-      rotor_vel[2] = vel_max;
-      //std::cout<<"Warning! Velocity of blade3 over limit"<<std::endl;
-    }
+    // constrain the rotor spinning vel
+    rotor_vel[2] = clamp(rotor_vel[2], vel_min, vel_max);
 
     if (Vxx3 >= 0)
     {
@@ -541,7 +538,7 @@ public:
 
     force_3 = di_force[2] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[2] * R), 2) + (pa / 2) * B * pow(Vxy3, 2) - (-Vi3 - Vzz3) * pow(B, 2) * rotor_vel[2] * R / 2);
     CT3 = abs(force_3) / (0.5 * pho * pow((rotor_vel[2] * R), 2) * A);
-    l3 = (-Vi3 - Vzz3) / (rotor_vel[2] * R);
+    l3 = (Vi3 + Vzz3) / (rotor_vel[2] * R);
     u3 = Vxy3 / (rotor_vel[2] * R);
     CQ3 = ki * l3 * CT3 + 0.25 * s * CD0 * (1 + k * pow(u3, 2));
     moment_3 = 0.5 * pho * pow((rotor_vel[2] * R), 2) * A * R * CQ3 * di_blade_rot[2];
@@ -580,7 +577,8 @@ public:
     C4 = Vzz4 / Vi_h;
     if (C4 >= 0)
     {
-      Vi4 = -(sqrt(pow((Vzz4 / 2), 2) + pow(Vi_h, 2)) + Vzz4 / 2);
+      // Vi4 = -(sqrt(pow((Vzz4 / 2), 2) + pow(Vi_h, 2)) + Vzz4 / 2);
+      Vi4 = -Vzz4/2+sqrt(pow((Vzz4 / 2), 2) + pow(Vi_h, 2));
     }
     else if (C4 >= -2 && C4 < 0)
     {
@@ -588,22 +586,16 @@ public:
     }
     else
     {
-      Vi4 = -Vzz4 / 2 + sqrt(pow((Vzz4 / 2), 2) - pow(Vi_h, 2));
+      // Vi4 = -Vzz4 / 2 + sqrt(pow((Vzz4 / 2), 2) - pow(Vi_h, 2));
+      Vi4 = -Vzz4 / 2 - sqrt(pow((Vzz4 / 2), 2) - pow(Vi_h, 2));
     }
-    if (rotor_vel[3] <= vel_min)
-    {
-      rotor_vel[3] = vel_min;
-      //std::cout<<"Warning! Velocity of blade4 under limit"<<std::endl;
-    }
-    else if (rotor_vel[3] >= vel_max)
-    {
-      rotor_vel[3] = vel_max;
-      //std::cout<<"Warning! Velocity of blade4 over limit"<<std::endl;
-    }
+    
+    // constrain the rotor spinning vel
+    rotor_vel[3] = clamp(rotor_vel[3], vel_min, vel_max);
 
     force_4 = di_force[3] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[3] * R), 2) + (pa / 2) * B * pow(Vxy4, 2) - (-Vi4 - Vzz4) * pow(B, 2) * rotor_vel[3] * R / 2);
     CT4 = abs(force_4) / (0.5 * pho * pow((rotor_vel[3] * R), 2) * A);
-    l4 = (-Vi4 - Vzz4) / (rotor_vel[3] * R);
+    l4 = (Vi4 + Vzz4) / (rotor_vel[3] * R);
     u4 = Vxy4 / (rotor_vel[3] * R);
     CQ4 = ki * l4 * CT4 + 0.25 * s * CD0 * (1 + k * pow(u4, 2));
     moment_4 = 0.5 * pho * pow((rotor_vel[3] * R), 2) * A * R * CQ4 * di_blade_rot[3];
@@ -653,7 +645,8 @@ public:
     C5 = Vzz5 / Vi_h;
     if (C5 >= 0)
     {
-      Vi5 = -(sqrt(pow((Vzz5 / 2), 2) + pow(Vi_h, 2)) + Vzz5 / 2);
+      // Vi5 = -(sqrt(pow((Vzz5 / 2), 2) + pow(Vi_h, 2)) + Vzz5 / 2);
+      Vi5 = -Vzz5/2 + sqrt(pow((Vzz5 / 2), 2) + pow(Vi_h, 2)) ;
     }
     else if (C5 >= -2 && C5 < 0)
     {
@@ -661,22 +654,16 @@ public:
     }
     else
     {
-      Vi5 = -Vzz5 / 2 + sqrt(pow((Vzz5 / 2), 2) - pow(Vi_h, 2));
+      // Vi5 = -Vzz5 / 2 + sqrt(pow((Vzz5 / 2), 2) - pow(Vi_h, 2));
+      Vi5 = -Vzz5 / 2 - sqrt(pow((Vzz5 / 2), 2) - pow(Vi_h, 2));
     }
-    if (rotor_vel[4] <= vel_min)
-    {
-      rotor_vel[4] = vel_min;
-      //std::cout<<"Warning! Velocity of blade5 under limit"<<std::endl;
-    }
-    else if (rotor_vel[4] >= vel_max)
-    {
-      rotor_vel[4] = vel_max;
-      //std::cout<<"Warning! Velocity of blade5 over limit"<<std::endl;
-    }
+    
+    // constrain the rotor spinning vel
+    rotor_vel[4] = clamp(rotor_vel[4], vel_min, vel_max);
 
     force_5 = di_force[4] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[4] * R), 2) + (pa / 2) * B * pow(Vxy5, 2) - (-Vi5 - Vzz5) * pow(B, 2) * rotor_vel[4] * R / 2);
     CT5 = abs(force_5) / (0.5 * pho * pow((rotor_vel[4] * R), 2) * A);
-    l5 = (-Vi5 - Vzz5) / (rotor_vel[4] * R);
+    l5 = (Vi5 + Vzz5) / (rotor_vel[4] * R);
     u5 = Vxy5 / (rotor_vel[4] * R);
     CQ5 = ki * l5 * CT5 + 0.25 * s * CD0 * (1 + k * pow(u5, 2));
     moment_5 = 0.5 * pho * pow((rotor_vel[4] * R), 2) * A * R * CQ5 * di_blade_rot[4];
@@ -726,7 +713,8 @@ public:
     C6 = Vzz6 / Vi_h;
     if (C6 >= 0)
     {
-      Vi6 = -(sqrt(pow((Vzz6 / 2), 2) + pow(Vi_h, 2)) + Vzz6 / 2);
+      // Vi6 = -(sqrt(pow((Vzz6 / 2), 2) + pow(Vi_h, 2)) + Vzz6 / 2);
+      Vi6 = -Vzz6/2 + sqrt(pow((Vzz6 / 2), 2) + pow(Vi_h, 2));
     }
     else if (C6 >= -2 && C6 < 0)
     {
@@ -734,22 +722,16 @@ public:
     }
     else
     {
-      Vi6 = -Vzz6 / 2 + sqrt(pow((Vzz6 / 2), 2) - pow(Vi_h, 2));
+      // Vi6 = -Vzz6 / 2 + sqrt(pow((Vzz6 / 2), 2) - pow(Vi_h, 2));
+      Vi6 = -Vzz6 / 2 - sqrt(pow((Vzz6 / 2), 2) - pow(Vi_h, 2));
     }
-    if (rotor_vel[5] <= vel_min)
-    {
-      rotor_vel[5] = vel_min;
-      //std::cout<<"Warning! Velocity of blade6 under limit"<<std::endl;
-    }
-    else if (rotor_vel[5] >= vel_max)
-    {
-      rotor_vel[5] = vel_max;
-      //std::cout<<"Warning! Velocity of blade6 over limit"<<std::endl;
-    }
+    
+    // constrain the rotor spinning vel
+    rotor_vel[5] = clamp(rotor_vel[5], vel_min, vel_max);
 
     force_6 = di_force[5] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[5] * R), 2) + (pa / 2) * B * pow(Vxy6, 2) - (-Vi6 - Vzz6) * pow(B, 2) * rotor_vel[5] * R / 2);
     CT6 = abs(force_6) / (0.5 * pho * pow((rotor_vel[5] * R), 2) * A);
-    l6 = (-Vi6 - Vzz6) / (rotor_vel[5] * R);
+    l6 = (Vi6 + Vzz6) / (rotor_vel[5] * R);
     u6 = Vxy6 / (rotor_vel[5] * R);
     CQ6 = ki * l6 * CT6 + 0.25 * s * CD0 * (1 + k * pow(u6, 2));
     moment_6 = 0.5 * pho * pow((rotor_vel[5] * R), 2) * A * R * CQ6 * di_blade_rot[5];
@@ -785,9 +767,11 @@ public:
     _msg.x6 = ratio6;
     this->pub_ratio.publish(_msg);
 
+    if(add_wrench_to_drone){
+      this->SetForce();
+      this->SetTorque();
+    }
     this->SetVelocity();
-    this->SetForce();
-    this->SetTorque();
 
     // save data for csv output
     test_data[0] = rotor_vel[0]* di_vel[0];
@@ -803,6 +787,12 @@ public:
     test_data[10] = moment_5;
     test_data[11] = moment_6;
 
+    // test_data[0] = CT1;
+    // test_data[1] = CT2;
+    // test_data[2] = CT3;
+    // test_data[3] = CT4;
+    // test_data[4] = CT5;
+    // test_data[5] = CT6;
     ros::spinOnce();
   }
 
@@ -812,12 +802,12 @@ public:
     Vwind_x = _wind_msg->x;
     Vwind_y = _wind_msg->y;
     Vwind_z = _wind_msg->z;
-    Vdrone_x = this->model->GetRelativeLinearVel().x;
-    Vdrone_y = this->model->GetRelativeLinearVel().y;
-    Vdrone_z = this->model->GetRelativeLinearVel().z;
-    Vx = Vwind_x - Vdrone_x;
-    Vy = Vwind_y - Vdrone_y;
-    Vz = Vwind_z - Vdrone_z;
+    // Vdrone_x = this->model->GetRelativeLinearVel().x;
+    // Vdrone_y = this->model->GetRelativeLinearVel().y;
+    // Vdrone_z = this->model->GetRelativeLinearVel().z;
+    // Vx = Vwind_x - Vdrone_x;
+    // Vy = Vwind_y - Vdrone_y;
+    // Vz = Vwind_z - Vdrone_z;
   }
 
 public:
@@ -900,6 +890,16 @@ public:
     else
       return 0;
   }
+
+public:
+  double clamp(double x, double low, double high)
+  {
+    if(x > high)
+      return high;
+    if(x < low)
+      return low;
+    return x;
+  }
   //add force to blade link
 public:
   void SetForce()
@@ -917,26 +917,6 @@ public:
     this->link5->AddRelativeForce(math::Vector3(fh_x5, fh_y5, force_5/ground_effect_coeff));
     this->link6->AddRelativeForce(math::Vector3(fh_x6, fh_y6, force_6/ground_effect_coeff));
     // ROS_INFO_STREAM("force:"<<force_1<<","<<force_2<<","<<force_3<<","<<force_4<<","<<force_5<<","<<force_6);
-
-    // if(rotor_vel[0] < 2500 && rotor_vel[0]>=100){
-    //   std::ofstream result_file(RESULT_CSV_PATH, std::ios::app);
-    //   result_file.setf(std::ios::fixed, std::ios::floatfield);
-    //   result_file.precision(5);
-    //   result_file  << rotor_vel[0] << ","
-    //         << rotor_vel[1] << ","
-    //         << rotor_vel[2] << ","
-    //         << rotor_vel[3] << ","
-    //         << rotor_vel[4] << ","
-    //         << rotor_vel[5] << ","
-    //         << force_1 << ","
-    //         << force_2 << ","
-    //         << force_3 << ","
-    //         << force_4 << ","
-    //         << force_5 << ","
-    //         << force_6 << ","
-    //         << std::endl;
-    //   result_file.close();
-    // }
   }
   //add torque to blade link
 public:

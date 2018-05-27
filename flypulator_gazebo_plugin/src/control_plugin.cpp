@@ -875,10 +875,10 @@ class ControlPlugin : public ModelPlugin
                 vel_4 = -b4 / (2 * a0) + sqrt(pow(b4, 2) - 4 * a0 * (c4 - Thrust_ist(3))) / (2 * a0);
             }
 
-/***********************************************************************/
-/* stabilize the drone with simple PID controller, 
-/* only for validation of the propulsion plugin.
-/***********************************************************************/
+/***********************************************************************
+         stabilize the drone with simple PID controller,                     
+        only for validation of the propulsion plugin.                       
+***********************************************************************/
             double arm_L = 0.35;
             Eigen::Matrix<double,4,1> Cmd;
             Cmd(0,0) = Jxx * (angle_acc_body(0) - 1.0*lin_acc_body(1));
@@ -895,21 +895,19 @@ class ControlPlugin : public ModelPlugin
 
             Eigen::Matrix<double,6,1> M_f = (1/arm_L)*Map*Cmd;
 
-            static double vel_temp = 1000;
-            vel_1 = vel_2 = vel_3 = vel_4 = vel_5 = vel_6 = vel_temp;
-            di_vel1 = di_vel2 =di_vel3 = di_vel4 = di_vel5 = di_vel6 = 1;
-            // vel_temp += 10;
-            // if(vel_temp > 2500)
-            //   vel_temp = 2500;
-
-            // ROS_INFO_STREAM("\n"<<Map);
-
             vel_1 = M_f(0,0);
             vel_2 = M_f(1,0);
             vel_3 = M_f(2,0);
             vel_4 = M_f(3,0);
             vel_5 = M_f(4,0);
             vel_6 = M_f(5,0);
+
+            di_vel1 = di_vel2 =di_vel3 = di_vel4 = di_vel5 = di_vel6 = 1;
+            // static double vel_temp = 50;
+            // vel_1 = vel_2 = vel_3 = vel_4 = vel_5 = vel_6 = vel_temp;
+            // vel_temp += 10;
+            // if(vel_temp > 2500)
+            //   vel_temp = 2500;
 
             flypulator_common_msgs::RotorVelStamped _rotor_cmd;
             _rotor_cmd.header.stamp = ros::Time::now();
