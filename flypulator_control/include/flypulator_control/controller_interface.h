@@ -37,9 +37,11 @@ class ControllerInterface {
         // read uav parameter from ros parameter server
         void readDroneParameterFromServer();
         // map control forces and torques to propeller spinning rates
-        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinning_rates);
+        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current);
         // compute mapping matrix from spinning rates to forces/torques
         void computeMappingMatrix();
+        // perform feedforward-control
+        void motorFeedForwardControl(Eigen::Matrix<float,6,1>& spinning_rates);
 
         // map of drone parameters 
         std::map<std::string,double> drone_parameter_;
@@ -55,6 +57,15 @@ class ControllerInterface {
         Eigen::Matrix<float, 6, 6> convert_force_part_to_b_;
         // inverse of mapping matrix
         Eigen::Matrix<float, 6, 6> map_matrix_inverse_b_;
+        // spinning rates of last calculation, auto zero initialization
+        Eigen::Matrix<float, 6, 1> spinning_rates_last_;
+        // spinning rates of current calculation,
+        Eigen::Matrix<float, 6, 1> spinning_rates_current_;
+        // feedforward control parameters, set in constructor
+        float k_ff_;
+        float z_p_ff_;
+        // use feedforward control parameter
+        bool use_motor_ff_control_;
 };
 
 #endif // CONTROLLER_INTERFACE_H

@@ -68,7 +68,7 @@ bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& 
         ROS_DEBUG("Update Rate = %f from parameter server",update_rate);
     } else
     {
-        ROS_DEBUG("Update Rate = 10, default value (/trajectory/update_rate not available on parameter server)",update_rate);
+        ROS_DEBUG("Update Rate = 10, default value (/trajectory/update_rate not available on parameter server)");
         update_rate = 10.0f;
     }
 
