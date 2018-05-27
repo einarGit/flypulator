@@ -102,7 +102,10 @@ class PropulsionPlugin : public ModelPlugin
   int di_vel[6] = {1, 1, 1, 1, 1, 1};          //real rotate direction
 
   bool bidirectional = false; //bidirectional option
-  double vel_min = 50;      //min rotor speed
+  
+  // if the rotor vel smaller than 325, we will get negativ CT and moment,
+  // caused by the aero dynamic eq.(Hiller's 4.57)
+  double vel_min = 350;      // min rotor speed
   double vel_max = 2500;      //max rotor speed
   //input control signal in velocity DOF 6, unused
   //double Vx_input, Vy_input, Vz_input, Wx_input, Wy_input, Wz_input;
@@ -392,10 +395,10 @@ public:
     // CT1 = abs(force_1) / (0.5 * pho * pow((rotor_vel[0] * R), 2) * A);
     l1 = (Vi1 + Vzz1) / (rotor_vel[0] * R); // inflow rate
     u1 = Vxy1 / (rotor_vel[0] * R);
-    CT1 = s*a*((pa/3)*(pow(B,3)+3*u1*u1*B/2.0)-l1*B*B/2.0);
+    CT1 = s*a*((pa/3)*(pow(B,3)+3*u1*u1*B/2.0)-l1*B*B/2.0); // Hiller's (4.57)
     force_1 = di_force[0]*0.5* pho * CT1 * A *pow(rotor_vel[0]*R,2);
-    CQ1 = ki * l1 * CT1 + 0.25 * s * CD0 * (1 + k * pow(u1, 2));
-    moment_1 = 0.5 * pho * pow((rotor_vel[0] * R), 2) * A * R * CQ1 * di_blade_rot[0];
+    CQ1 = ki * l1 * CT1 + 0.25 * s * CD0 * (1 + k * pow(u1, 2)); // Hiller's (4.62)
+    moment_1 = 0.5 * pho * pow((rotor_vel[0] * R), 2) * A * R * CQ1 * di_blade_rot[0]; // Hiller's (4.60)
     momentR1 = 0.125 * s * a * pho * R * A * Vxy1 * (((4 / 3) * th0 - thtw) * rotor_vel[0] * R + Vi1 + Vzz1);
     if (Vxx1 >= 0)
     {
@@ -474,7 +477,7 @@ public:
     CT2 = s*a*((pa/3)*(pow(B,3)+3*u2*u2*B/2.0)-l2*B*B/2.0);
     force_2 = di_force[1]*0.5* pho * CT2 * A *pow(rotor_vel[1]*R,2);
     CQ2 = ki * l2 * CT2 + 0.25 * s * CD0 * (1 + k * pow(u2, 2));
-    moment_2 = 0.5 * pho * pow((rotor_vel[1] * R), 2) * A * R * CQ2 * di_blade_rot[1];
+    moment_2 = 0.5 * pho * pow((rotor_vel[1] * R), 2) * A * R * CQ2 * di_blade_rot[1]; 
     momentR2 = 0.125 * s * a * pho * R * A * Vxy2 * (((4 / 3) * th0 - thtw) * rotor_vel[1] * R + Vi2 + Vzz2);
 
     moment_R2x = momentR2 * cos(a2);
@@ -791,12 +794,12 @@ public:
     test_data[3] = rotor_vel[3]* di_vel[3];
     test_data[4] = rotor_vel[4]* di_vel[4];
     test_data[5] = rotor_vel[5]* di_vel[5];
-    test_data[6] = force_1;
-    test_data[7] = force_2;
-    test_data[8] = force_3;
-    test_data[9] = force_4;
-    test_data[10] = force_5;
-    test_data[11] = force_6;
+    test_data[6] = moment_1;
+    test_data[7] = moment_2;
+    test_data[8] = moment_3;
+    test_data[9] = moment_4;
+    test_data[10] = moment_5;
+    test_data[11] = moment_6;
 
     // test_data[0] = CT1;
     // test_data[1] = CT2;
