@@ -103,15 +103,15 @@ class ControlPlugin : public ModelPlugin
 
     //PID controller parameters
     //PID for line velocity
-    double linear_p = 2.0;     //The proportional gain 3.0
-    double linear_i = 0.0;     //The integral gain 0.4
-    double linear_d = 0.00300;   //The derivative gain 0.011
-    double linear_imax = 50.0; //The integral upper limit
+    double linear_p = 500.0;     //The proportional gain 3.0
+    double linear_i = 20.0;     //The integral gain 0.4
+    double linear_d = 10.00;   //The derivative gain 0.011
+    double linear_imax = 500.0; //The integral upper limit
     //PID for angular velocity
-    double angular_p = 3.00; //5.00
+    double angular_p = 400.00; //5.00
     double angular_i = 0.0;
-    double angular_d = 0.00300; //0.01
-    double angular_imax = 50.0;
+    double angular_d = 50; //0.01
+    double angular_imax = 500.0;
     double _maxForce = 1000;  //Output max value
     double _maxTorque = 1000; //Output max value
                               //transformation matrix from global coordinate to body coordinate
@@ -185,7 +185,7 @@ class ControlPlugin : public ModelPlugin
 
         common::PID controller_translation_z(linear_p, linear_i, linear_d,
                                              linear_imax, -linear_imax, _maxForce, -_maxForce);
-        common::PID controller_rotation_z(angular_p, angular_i, angular_d,
+        common::PID controller_rotation_z(angular_p*2.0, angular_i*2.0, angular_d*2.0,
                                           angular_imax, -angular_imax, _maxTorque, -_maxTorque);
         this->controllers.push_back(controller_translation_z);
         this->controllers.push_back(controller_rotation_z);
@@ -866,16 +866,34 @@ class ControlPlugin : public ModelPlugin
                 vel_5 = -b5 / (2 * a0) + sqrt(pow(b5, 2) - 4 * a0 * (c5 - Thrust_ist(4))) / (2 * a0);
             }
 
-            if (pow(b6, 2) - 4 * a0 * (c6 - Thrust_ist(5)) < 0)
+            if (pow(b4, 2) - 4 * a0 * (c4 - Thrust_ist(3)) < 0)
             {
-                vel_6 = vel_6;
+                vel_4 = vel_4;
             }
             else
             {
-                vel_6 = -b6 / (2 * a0) + sqrt(pow(b6, 2) - 4 * a0 * (c6 - Thrust_ist(5))) / (2 * a0);
+                vel_4 = -b4 / (2 * a0) + sqrt(pow(b4, 2) - 4 * a0 * (c4 - Thrust_ist(3))) / (2 * a0);
             }
 
-            flypulator_common_msgs::RotorVelStamped _rotor_cmd;
+/***********************************************************************/
+/* stabilize the drone with simple PID controller, 
+/* only for validation of the propulsion plugin.
+/***********************************************************************/
+            double arm_L = 0.35;
+            Eigen::Matrix<double,4,1> Cmd;
+            Cmd(0,0) = Jxx * (angle_acc_body(0) - 1.0*lin_acc_body(1));
+            Cmd(1,0) = Jyy * (angle_acc_body(1) + 1.0*lin_acc_body(0));
+            Cmd(2,0) = Jzz * angle_acc_body(2);
+            Cmd(3,0) = m*lin_acc_body(2);
+            Eigen::Matrix<double,6,4> Map;
+            Map(0,0) = -1.0/6; Map(0,1) = -125.0/433; Map(0,2) = -1.0/6; Map(0,3) = 1.0/6;
+            Map(1,0) =  1.0/6; Map(1,1) = -125.0/433; Map(1,2) =  1.0/6; Map(1,3) = 1.0/6;
+            Map(2,0) =  1.0/3; Map(2,1) =        0.0; Map(2,2) = -1.0/6; Map(2,3) = 1.0/6;
+            Map(3,0) =  1.0/6; Map(3,1) =  125.0/433; Map(3,2) =  1.0/6; Map(3,3) = 1.0/6;
+            Map(4,0) = -1.0/6; Map(4,1) =  125.0/433; Map(4,2) = -1.0/6; Map(4,3) = 1.0/6;
+            Map(5,0) = -1.0/3; Map(5,1) =        0.0; Map(5,2) =  1.0/6; Map(5,3) = 1.0/6;
+
+            Eigen::Matrix<double,6,1> M_f = (1/arm_L)*Map*Cmd;
 
             static double vel_temp = 1000;
             vel_1 = vel_2 = vel_3 = vel_4 = vel_5 = vel_6 = vel_temp;
@@ -884,6 +902,16 @@ class ControlPlugin : public ModelPlugin
             // if(vel_temp > 2500)
             //   vel_temp = 2500;
 
+            // ROS_INFO_STREAM("\n"<<Map);
+
+            vel_1 = M_f(0,0);
+            vel_2 = M_f(1,0);
+            vel_3 = M_f(2,0);
+            vel_4 = M_f(3,0);
+            vel_5 = M_f(4,0);
+            vel_6 = M_f(5,0);
+
+            flypulator_common_msgs::RotorVelStamped _rotor_cmd;
             _rotor_cmd.header.stamp = ros::Time::now();
             _rotor_cmd.name.resize(6);
             _rotor_cmd.velocity.resize(6);

@@ -108,7 +108,7 @@ class PropulsionPlugin : public ModelPlugin
   // ground effect coefficient
   double ground_effect_coeff;
   // if enable ground effect
-  bool use_ground_effect = false;
+  bool use_ground_effect = true;
                      
   Eigen::Matrix3d T_trans; //transformation matrix from global coordinate to body coordinate
 
