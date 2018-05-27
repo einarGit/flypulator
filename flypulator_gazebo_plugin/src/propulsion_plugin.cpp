@@ -388,11 +388,12 @@ public:
     // constrain the rotor spinning vel
     rotor_vel[0] = clamp(rotor_vel[0], vel_min, vel_max);
 
-    force_1 = di_force[0] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[0] * R), 2) + (pa / 2) * B * pow(Vxy1, 2) - (-Vi1 - Vzz1) * pow(B, 2) * rotor_vel[0] * R / 2);
-    CT1 = abs(force_1) / (0.5 * pho * pow((rotor_vel[0] * R), 2) * A);
+    // force_1 = di_force[0] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[0] * R), 2) + (pa / 2) * B * pow(Vxy1, 2) - (Vi1 + Vzz1) * pow(B, 2) * rotor_vel[0] * R / 2);
+    // CT1 = abs(force_1) / (0.5 * pho * pow((rotor_vel[0] * R), 2) * A);
     l1 = (Vi1 + Vzz1) / (rotor_vel[0] * R); // inflow rate
     u1 = Vxy1 / (rotor_vel[0] * R);
-    // CT1 = s*a*((pa/3)*(pow(B,3)+3*u1*u1*B/2.0)-l1*B*B/2.0);
+    CT1 = s*a*((pa/3)*(pow(B,3)+3*u1*u1*B/2.0)-l1*B*B/2.0);
+    force_1 = di_force[0]*0.5* pho * CT1 * A *pow(rotor_vel[0]*R,2);
     CQ1 = ki * l1 * CT1 + 0.25 * s * CD0 * (1 + k * pow(u1, 2));
     moment_1 = 0.5 * pho * pow((rotor_vel[0] * R), 2) * A * R * CQ1 * di_blade_rot[0];
     momentR1 = 0.125 * s * a * pho * R * A * Vxy1 * (((4 / 3) * th0 - thtw) * rotor_vel[0] * R + Vi1 + Vzz1);
@@ -466,10 +467,12 @@ public:
     fh2 = 0.25 * s * pho * rotor_vel[1] * R * A * CD0 * Vxy2;
     fh_x2 = fh2 * cos(a2);
     fh_y2 = fh2 * sin(a2);
-    force_2 = di_force[1] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[1] * R), 2) + (pa / 2) * B * pow(Vxy2, 2) - (-Vi2 - Vzz2) * pow(B, 2) * rotor_vel[1] * R / 2);
-    CT2 = abs(force_2) / (0.5 * pho * pow((rotor_vel[1] * R), 2) * A);
+    // force_2 = di_force[1] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[1] * R), 2) + (pa / 2) * B * pow(Vxy2, 2) - (-Vi2 - Vzz2) * pow(B, 2) * rotor_vel[1] * R / 2);
+    // CT2 = abs(force_2) / (0.5 * pho * pow((rotor_vel[1] * R), 2) * A);
     l2 = (Vi2 + Vzz2) / (rotor_vel[1] * R);
     u2 = Vxy2 / (rotor_vel[1] * R);
+    CT2 = s*a*((pa/3)*(pow(B,3)+3*u2*u2*B/2.0)-l2*B*B/2.0);
+    force_2 = di_force[1]*0.5* pho * CT2 * A *pow(rotor_vel[1]*R,2);
     CQ2 = ki * l2 * CT2 + 0.25 * s * CD0 * (1 + k * pow(u2, 2));
     moment_2 = 0.5 * pho * pow((rotor_vel[1] * R), 2) * A * R * CQ2 * di_blade_rot[1];
     momentR2 = 0.125 * s * a * pho * R * A * Vxy2 * (((4 / 3) * th0 - thtw) * rotor_vel[1] * R + Vi2 + Vzz2);
@@ -536,10 +539,12 @@ public:
     fh_x3 = fh3 * cos(a3);
     fh_y3 = fh3 * sin(a3);
 
-    force_3 = di_force[2] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[2] * R), 2) + (pa / 2) * B * pow(Vxy3, 2) - (-Vi3 - Vzz3) * pow(B, 2) * rotor_vel[2] * R / 2);
-    CT3 = abs(force_3) / (0.5 * pho * pow((rotor_vel[2] * R), 2) * A);
+    // force_3 = di_force[2] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[2] * R), 2) + (pa / 2) * B * pow(Vxy3, 2) - (-Vi3 - Vzz3) * pow(B, 2) * rotor_vel[2] * R / 2);
+    // CT3 = abs(force_3) / (0.5 * pho * pow((rotor_vel[2] * R), 2) * A);
     l3 = (Vi3 + Vzz3) / (rotor_vel[2] * R);
     u3 = Vxy3 / (rotor_vel[2] * R);
+    CT3 = s*a*((pa/3)*(pow(B,3)+3*u3*u3*B/2.0)-l3*B*B/2.0);
+    force_3 = di_force[2]*0.5* pho * CT3 * A *pow(rotor_vel[2]*R,2);
     CQ3 = ki * l3 * CT3 + 0.25 * s * CD0 * (1 + k * pow(u3, 2));
     moment_3 = 0.5 * pho * pow((rotor_vel[2] * R), 2) * A * R * CQ3 * di_blade_rot[2];
     momentR3 = 0.125 * s * a * pho * R * A * Vxy3 * (((4 / 3) * th0 - thtw) * rotor_vel[2] * R + Vi3 + Vzz3);
@@ -593,10 +598,12 @@ public:
     // constrain the rotor spinning vel
     rotor_vel[3] = clamp(rotor_vel[3], vel_min, vel_max);
 
-    force_4 = di_force[3] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[3] * R), 2) + (pa / 2) * B * pow(Vxy4, 2) - (-Vi4 - Vzz4) * pow(B, 2) * rotor_vel[3] * R / 2);
-    CT4 = abs(force_4) / (0.5 * pho * pow((rotor_vel[3] * R), 2) * A);
+    // force_4 = di_force[3] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[3] * R), 2) + (pa / 2) * B * pow(Vxy4, 2) - (-Vi4 - Vzz4) * pow(B, 2) * rotor_vel[3] * R / 2);
+    // CT4 = abs(force_4) / (0.5 * pho * pow((rotor_vel[3] * R), 2) * A);
     l4 = (Vi4 + Vzz4) / (rotor_vel[3] * R);
     u4 = Vxy4 / (rotor_vel[3] * R);
+    CT4 = s*a*((pa/3)*(pow(B,3)+3*u4*u4*B/2.0)-l4*B*B/2.0);
+    force_4 = di_force[3]*0.5* pho * CT4 * A *pow(rotor_vel[3]*R,2);
     CQ4 = ki * l4 * CT4 + 0.25 * s * CD0 * (1 + k * pow(u4, 2));
     moment_4 = 0.5 * pho * pow((rotor_vel[3] * R), 2) * A * R * CQ4 * di_blade_rot[3];
     momentR4 = 0.125 * s * a * pho * R * A * Vxy4 * (((4 / 3) * th0 - thtw) * rotor_vel[3] * R + Vi4 + Vzz4);
@@ -661,10 +668,12 @@ public:
     // constrain the rotor spinning vel
     rotor_vel[4] = clamp(rotor_vel[4], vel_min, vel_max);
 
-    force_5 = di_force[4] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[4] * R), 2) + (pa / 2) * B * pow(Vxy5, 2) - (-Vi5 - Vzz5) * pow(B, 2) * rotor_vel[4] * R / 2);
-    CT5 = abs(force_5) / (0.5 * pho * pow((rotor_vel[4] * R), 2) * A);
+    // force_5 = di_force[4] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[4] * R), 2) + (pa / 2) * B * pow(Vxy5, 2) - (-Vi5 - Vzz5) * pow(B, 2) * rotor_vel[4] * R / 2);
+    // CT5 = abs(force_5) / (0.5 * pho * pow((rotor_vel[4] * R), 2) * A);
     l5 = (Vi5 + Vzz5) / (rotor_vel[4] * R);
     u5 = Vxy5 / (rotor_vel[4] * R);
+    CT5 = s*a*((pa/3)*(pow(B,3)+3*u5*u5*B/2.0)-l5*B*B/2.0);
+    force_5 = di_force[4]*0.5* pho * CT5 * A *pow(rotor_vel[4]*R,2);
     CQ5 = ki * l5 * CT5 + 0.25 * s * CD0 * (1 + k * pow(u5, 2));
     moment_5 = 0.5 * pho * pow((rotor_vel[4] * R), 2) * A * R * CQ5 * di_blade_rot[4];
     momentR5 = 0.125 * s * a * pho * R * A * Vxy5 * (((4 / 3) * th0 - thtw) * rotor_vel[4] * R + Vi5 + Vzz5);
@@ -729,10 +738,12 @@ public:
     // constrain the rotor spinning vel
     rotor_vel[5] = clamp(rotor_vel[5], vel_min, vel_max);
 
-    force_6 = di_force[5] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[5] * R), 2) + (pa / 2) * B * pow(Vxy6, 2) - (-Vi6 - Vzz6) * pow(B, 2) * rotor_vel[5] * R / 2);
-    CT6 = abs(force_6) / (0.5 * pho * pow((rotor_vel[5] * R), 2) * A);
+    // force_6 = di_force[5] * 0.5 * pho * s * a * A * ((pa / 3) * pow(B, 3) * pow((rotor_vel[5] * R), 2) + (pa / 2) * B * pow(Vxy6, 2) - (-Vi6 - Vzz6) * pow(B, 2) * rotor_vel[5] * R / 2);
+    // CT6 = abs(force_6) / (0.5 * pho * pow((rotor_vel[5] * R), 2) * A);
     l6 = (Vi6 + Vzz6) / (rotor_vel[5] * R);
     u6 = Vxy6 / (rotor_vel[5] * R);
+    CT6 = s*a*((pa/3)*(pow(B,3)+3*u6*u6*B/2.0)-l6*B*B/2.0);
+    force_6 = di_force[5]*0.5* pho * CT6 * A *pow(rotor_vel[5]*R,2);
     CQ6 = ki * l6 * CT6 + 0.25 * s * CD0 * (1 + k * pow(u6, 2));
     moment_6 = 0.5 * pho * pow((rotor_vel[5] * R), 2) * A * R * CQ6 * di_blade_rot[5];
     momentR6 = 0.125 * s * a * pho * R * A * Vxy6 * (((4 / 3) * th0 - thtw) * rotor_vel[5] * R + Vi6 + Vzz6);
@@ -780,12 +791,12 @@ public:
     test_data[3] = rotor_vel[3]* di_vel[3];
     test_data[4] = rotor_vel[4]* di_vel[4];
     test_data[5] = rotor_vel[5]* di_vel[5];
-    test_data[6] = moment_1;
-    test_data[7] = moment_2;
-    test_data[8] = moment_3;
-    test_data[9] = moment_4;
-    test_data[10] = moment_5;
-    test_data[11] = moment_6;
+    test_data[6] = force_1;
+    test_data[7] = force_2;
+    test_data[8] = force_3;
+    test_data[9] = force_4;
+    test_data[10] = force_5;
+    test_data[11] = force_6;
 
     // test_data[0] = CT1;
     // test_data[1] = CT2;
