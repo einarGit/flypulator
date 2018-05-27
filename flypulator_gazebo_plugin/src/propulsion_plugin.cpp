@@ -46,7 +46,7 @@ namespace gazebo
 class PropulsionPlugin : public ModelPlugin
 {
   double test_data[12];
-  bool WRITE_CSV_FILE = true;
+  bool WRITE_CSV_FILE = false;
 
   int N = 6;         //number of energie
   double c = 0.016;  //blade chord width
