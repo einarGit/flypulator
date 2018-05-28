@@ -42,6 +42,9 @@ ControllerInterface::ControllerInterface(){
     convert_force_part_to_b_.block(3,3,3,3) << 1,0,0,
                                                 0,1,0,
                                                 0,0,1;
+    convert_force_part_to_b_.block(0,0,3,3) << 1,0,0,
+    0,1,0,
+    0,0,1;
 
     // create controller object depending on desired controller type (in controller_type_, read from parameter in readDroneParameterFromServer())
     if (controller_type_.compare("ism") == 0) // controller type ISM, create object of ism class

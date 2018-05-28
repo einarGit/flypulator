@@ -46,6 +46,7 @@ namespace gazebo
 /// \brief A plugin to control drone
 class PropulsionPlugin : public ModelPlugin
 {
+  bool write_data_2_file = false; // new version with more data (contains also hub force and roll moment)
   bool WRITE_CSV_FILE = false; // if save the test_data to .csv
   bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
   bool use_ground_effect = true; // if enable ground effect
@@ -108,6 +109,9 @@ class PropulsionPlugin : public ModelPlugin
 
   std::string RESULT_CSV_PATH = "/home/jinyao/ros_ws/flypulator/result.csv";
 
+
+  std::string file_path = "/home/jan/flypulator_ws/src/flypulator/flypulator_gazebo_plugin/rotor_data.csv";
+
   gazebo::physics::LinkPtr rotor_link_ptr[6]; // pointer to rotor links
 
 
@@ -136,6 +140,11 @@ public:
     {
       std::ofstream fout(RESULT_CSV_PATH, std::ios::out);
       fout.close();
+    }
+
+    if (write_data_2_file){
+      result_file.open(file_path);
+      result_file << "time,rotor,omega,force_x,force_y,force_z,torque_x,torque_y,torque_z" << std::endl;
     }
 
     // Store the model pointer for convenience.
@@ -390,8 +399,12 @@ public:
            rotor_link_ptr[i]->AddRelativeForce(math::Vector3(force_rotor[i].x(), force_rotor[i].y(), force_rotor[i].z()/ground_effect_coeff));
            rotor_link_ptr[i]->AddRelativeTorque(math::Vector3(torque_rotor[i].x(), torque_rotor[i].y(), torque_rotor[i].z()));
         }
-
        
+    }
+
+        //print to file
+    if (write_data_2_file){
+        streamDataToFile();
     }
 
     this->SetVelocity();
@@ -831,12 +844,21 @@ public:
     _msg.x3 = ratio3;
     _msg.x4 = ratio4;
     _msg.x5 = ratio5;
-    _msg.x6 = ratio6;*/
+    _msg.x6 = ratio6;
+    
+    */
 
     //this->pub_ratio.publish(_msg);
 
     
   }
+
+
+
+
+
+
+
 
 public:
   void OnRosWindMsg(const geometry_msgs::Vector3ConstPtr &_wind_msg)
@@ -1065,6 +1087,30 @@ private:
 
   }
 
+  void streamDataToFile(){
+      if (write_data_2_file)
+      {
+        {
+          result_file.setf(std::ios::fixed, std::ios::floatfield);
+          result_file.precision(5);
+          result_file << this->model->GetWorld()->GetSimTime().Double() << ",";
+          for (int i = 0; i<6; i++){
+            result_file << "rotor" << i << "," << rotor_vel[i]* di_vel[i] << ","
+                        << force_rotor[i].x() << "," 
+                        << force_rotor[i].y() << "," 
+                        << force_rotor[i].z() << ","
+                        << torque_rotor[i].x() << ","
+                        << torque_rotor[i].y() << ","
+                        << torque_rotor[i].z() << ",";
+          }
+          result_file << std::endl;            
+                      
+          //result_file.close();
+        }
+      }
+
+  }
+
   // dynamic model of the motors
 private:
   flypulator::MotorModel motor1;
@@ -1140,7 +1186,11 @@ private:
   ros::Publisher pub_ratio;
   ros::Publisher pub_joint_state;
   ros::Publisher pub_link_wrench [6];
+
+  std::ofstream result_file; 
 };
+
+
 
 // Tell Gazebo about this plugin, so that Gazebo can call Load on this plugin.
 GZ_REGISTER_MODEL_PLUGIN(PropulsionPlugin)
