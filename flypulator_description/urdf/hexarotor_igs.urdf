@@ -1,15 +1,9 @@
 <?xml version="1.0"?>
 <robot
   name="drone">
-<<<<<<< HEAD
   
   <gazebo>
     <plugin name="propulsion_plugin" filename="libpropulsion_plugin.so">
-=======
-
-  <gazebo>
-    <plugin name="aero_plugin" filename="libaero_plugin.so">
->>>>>>> ctrl-devel
     </plugin>
   </gazebo>
 
