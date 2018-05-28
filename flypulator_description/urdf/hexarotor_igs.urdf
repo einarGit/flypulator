@@ -7,10 +7,10 @@
     </plugin>
   </gazebo>
 
-  <gazebo>
+  <!--<gazebo>
     <plugin name="control_plugin" filename="libcontrol_plugin.so">
     </plugin>
-  </gazebo>
+  </gazebo>-->
 
   <gazebo>
     <plugin name="fake_sensor_plugin" filename="libfake_sensor_plugin.so">
