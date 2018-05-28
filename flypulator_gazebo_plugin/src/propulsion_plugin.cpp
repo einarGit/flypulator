@@ -94,12 +94,12 @@ class PropulsionPlugin : public ModelPlugin
   int di_force[6] = {1, 1, 1, 1, 1, 1};        //thrust force direction
   int di_vel[6] = {1, 1, 1, 1, 1, 1};          //real rotate direction
 
-  bool bidirectional = false; //bidirectional option
+  bool bidirectional = true; //bidirectional option
   
   // if the rotor vel smaller than 325, we will get negativ CT and moment,
   // caused by the aero dynamic eq.(Hiller's 4.57)
-  double vel_min = 350;      // min rotor speed
-  double vel_max = 2500;      //max rotor speed
+  double vel_min = 0.01;      // min rotor speed
+  double vel_max = 10000;      //max rotor speed
                      
   Eigen::Matrix3d T_trans; //transformation matrix from global coordinate to body coordinate
 
