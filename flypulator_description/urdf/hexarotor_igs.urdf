@@ -1,9 +1,15 @@
 <?xml version="1.0"?>
 <robot
   name="drone">
+<<<<<<< HEAD
   
   <gazebo>
     <plugin name="propulsion_plugin" filename="libpropulsion_plugin.so">
+=======
+
+  <gazebo>
+    <plugin name="aero_plugin" filename="libaero_plugin.so">
+>>>>>>> ctrl-devel
     </plugin>
   </gazebo>
 
@@ -25,7 +31,10 @@
 
   <gazebo>
     <plugin name="drone_internal_imu_plugin" filename="libhector_gazebo_ros_imu.so" >
+<<<<<<< HEAD
       <robotNamespace>/drone</robotNamespace>
+=======
+>>>>>>> ctrl-devel
       <alwaysOn>true</alwaysOn>
       <bodyName>base_link</bodyName>
       <frameName>base_link</frameName>
@@ -48,7 +57,10 @@
 
   <gazebo>
     <plugin name="drone_internal_magnetic_sim" filename="libhector_gazebo_ros_magnetic.so">
+<<<<<<< HEAD
       <robotNamespace>/drone</robotNamespace>
+=======
+>>>>>>> ctrl-devel
       <updateRate>100.0</updateRate>
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
@@ -59,9 +71,15 @@
     </plugin>
   </gazebo>
 
+<<<<<<< HEAD
   <gazebo>
     <plugin name="drone_internal_gps_sim" filename="libhector_gazebo_ros_gps.so">
       <robotNamespace>/drone</robotNamespace>
+=======
+  <!--
+  <gazebo>
+    <plugin name="drone_internal_gps_sim" filename="libhector_gazebo_ros_gps.so">
+>>>>>>> ctrl-devel
       <updateRate>4.0</updateRate>
       <bodyName>base_link</bodyName>
       <frameId>base_link</frameId>
@@ -75,7 +93,13 @@
       <velocityGaussianNoise>0.01 0.01 0.01</velocityGaussianNoise>
     </plugin>
   </gazebo>
+<<<<<<< HEAD
 
+=======
+  -->
+
+   <!-- 
+>>>>>>> ctrl-devel
   <gazebo reference="base_link">
     <sensor type="camera" name="camera1">
       <update_rate>30.0</update_rate>
@@ -94,13 +118,20 @@
           <type>gaussian</type>  -->
           <!-- Noise is sampled independently per pixel on each frame.
                That pixel's noise value is added to each of its color
+<<<<<<< HEAD
                channels, which at that point lie in the range [0,1]. -->
+=======
+               channels, which at that point lie in the range [0,1]. --> <!--
+>>>>>>> ctrl-devel
           <mean>0.0</mean>
           <stddev>0.007</stddev>
         </noise>
       </camera>
       <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+<<<<<<< HEAD
         <robotNamespace>/drone</robotNamespace>
+=======
+>>>>>>> ctrl-devel
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
         <cameraName>camera1</cameraName>
@@ -116,6 +147,7 @@
       </plugin>
     </sensor>
   </gazebo>
+<<<<<<< HEAD
 
 
   <!-- <link
@@ -158,6 +190,10 @@
       </geometry>
     </collision>
   </link> -->
+=======
+  -->
+
+>>>>>>> ctrl-devel
   <link
     name="base_link">
     <inertial>
@@ -1183,6 +1219,7 @@
       effort="0"
       velocity="630" />
   </joint>
+<<<<<<< HEAD
   <link
     name="foot_link_left">
     <inertial>
@@ -1289,4 +1326,68 @@
     <axis
       xyz="0 0 0" />
   </joint>
+=======
+
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_1">
+    <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_2">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor2">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran3">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_3">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor3">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran4">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_4">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor4">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran5">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_5">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor5">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran6">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="blade_joint_6">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor6">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+>>>>>>> ctrl-devel
 </robot>

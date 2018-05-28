@@ -54,7 +54,7 @@ class TrajectoryGenerator {
         // convert Euler angles to quaternions using roll-pitch-yaw sequence
         void euler2Quaternion(const float roll, const float pitch, const float yaw, Eigen::Quaternionf& q);
         // convert 2 messages of Vector3 type to 6D float array
-        void convertTo6DArray(const geometry_msgs::Vector3& x1, const geometry_msgs::Vector3& x2, float destination[]);
+        void convertTo6DArray(const geometry_msgs::Vector3& x_1, const geometry_msgs::Vector3& x_2, float destination[]);
 
 };
 

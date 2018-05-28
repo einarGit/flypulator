@@ -18,29 +18,54 @@
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/Vector3.h"
 #include "geometry_msgs/Quaternion.h"
-#include "trajectory_msgs/MultiDOFJointTrajectoryPoint.h"
 #include "flypulator_common_msgs/RotorVelStamped.h"
-#include "sensor_msgs/MultiDOFJointState.h"
 
 
 class ControllerInterface {
     public:
-        ControllerInterface();
+        ControllerInterface(); // constructor implemented in .cpp file
 
-        void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, float spinningRates[6]);
+        // compute spinning rates from current and desired pose
+        void computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinning_rates);
 
+        // return a reference to controller for dynamic reconfigure
         BaseController* getControllerReference(){
             return controller_;
         }
        
     private:
+        // read uav parameter from ros parameter server
         void readDroneParameterFromServer();
-        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, float spinningRates[6]);
+        // map control forces and torques to propeller spinning rates
+        void mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current);
+        // compute mapping matrix from spinning rates to forces/torques
+        void computeMappingMatrix();
+        // perform feedforward-control
+        void motorFeedForwardControl(Eigen::Matrix<float,6,1>& spinning_rates);
 
+        // map of drone parameters 
         std::map<std::string,double> drone_parameter_;
+        // controller type
         std::string controller_type_;
-        ForceTorqueInput controlForceAndTorque_;
+        // 6D- Vector of control force and torque (output of controller class)
+        Eigen::Matrix<float,6,1> control_force_and_torque_;
+        // pointer to controller;
         BaseController* controller_;
+        // mapping matrix
+        Eigen::Matrix<float, 6,6> map_matrix_;
+        // matrix containing R_BtoI matrix to convert body forces to inertal frame 
+        Eigen::Matrix<float, 6, 6> convert_force_part_to_b_;
+        // inverse of mapping matrix
+        Eigen::Matrix<float, 6, 6> map_matrix_inverse_b_;
+        // spinning rates of last calculation, auto zero initialization
+        Eigen::Matrix<float, 6, 1> spinning_rates_last_;
+        // spinning rates of current calculation,
+        Eigen::Matrix<float, 6, 1> spinning_rates_current_;
+        // feedforward control parameters, set in constructor
+        float k_ff_;
+        float z_p_ff_;
+        // use feedforward control parameter
+        bool use_motor_ff_control_;
 };
 
 #endif // CONTROLLER_INTERFACE_H

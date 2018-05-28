@@ -6,7 +6,29 @@ ControllerInterface::ControllerInterface(){
     // read drone parameters from ros parameter server
     readDroneParameterFromServer();
 
-    // provide mass, inertia and gravity for controller
+    // read motor feedforward bool variable (use feedforward/dont use it)
+    use_motor_ff_control_ = false;
+    if (ros::param::get("/controller/use_motor_ff", use_motor_ff_control_)){
+        ROS_DEBUG("Feedforward control read boolean read from file");
+    } else
+    {
+        ROS_DEBUG("Feedforward control cannot be read boolean from file, take false");
+    }
+
+    // read state estimation update rate, also do if boolean false to allow future dynamic reconfiguring of boolean
+    float state_estimation_update_rate = 10.0f;
+    if (ros::param::get("/state/update_rate", state_estimation_update_rate)){
+        ROS_DEBUG("State estimation update rate load successfully from parameter server, rate = %f", state_estimation_update_rate);
+    } else
+    {
+        ROS_DEBUG("State estimation update rate load from parameter server failed, take default value 10 Hz");
+    }
+    // calculate k_ff and z_p_ff, k_ff = Ts / (Ts + T_motor), z_p = T_motor / (Ts + T_motor)
+    k_ff_ = 1/state_estimation_update_rate / (1/state_estimation_update_rate + drone_parameter_["t_motor"]);
+    z_p_ff_ = drone_parameter_["t_motor"] / (1/state_estimation_update_rate + drone_parameter_["t_motor"]);
+
+
+        // provide mass, inertia and gravity for controller
     float mass = (float) (drone_parameter_["mass"]);
     Eigen::Matrix3f inertia;
     inertia << (float) drone_parameter_["i_xx"], 0 ,0,
@@ -14,6 +36,12 @@ ControllerInterface::ControllerInterface(){
                 0, 0, (float) drone_parameter_["i_zz"];
 
     float gravity = (float) drone_parameter_["gravity"];
+
+    // precompute mapping matrix M 
+    computeMappingMatrix();
+    convert_force_part_to_b_.block(3,3,3,3) << 1,0,0,
+                                                0,1,0,
+                                                0,0,1;
 
     // create controller object depending on desired controller type (in controller_type_, read from parameter in readDroneParameterFromServer())
     if (controller_type_.compare("ism") == 0) // controller type ISM, create object of ism class
@@ -28,12 +56,14 @@ ControllerInterface::ControllerInterface(){
     }
 };
 
-// compute the control output from desired and current pose and save to spinningRates[6]
-void ControllerInterface::computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, float spinningRates[6]){
+// compute the control output from desired and current pose and save to spinning_rates[6]
+void ControllerInterface::computeControlOutput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& spinning_rates){
     // call controller to compute Force and Torque output
-    controller_->computeControlForceTorqueInput(x_des, x_current, controlForceAndTorque_);
+    controller_->computeControlForceTorqueInput(x_des, x_current, control_force_and_torque_);
     // map control force and torque to spinning velocities of the propellers resp. rotors
-    mapControlForceTorqueInputToPropellerRates(x_current, spinningRates);
+    mapControlForceTorqueInputToPropellerRates(x_current);
+    // perform feedforward control
+    motorFeedForwardControl(spinning_rates);
 };
 
 void ControllerInterface::readDroneParameterFromServer(){
@@ -54,6 +84,7 @@ void ControllerInterface::readDroneParameterFromServer(){
         drone_parameter_["gravity"] = 9.81;
         drone_parameter_["k"] = 0.000056;
         drone_parameter_["b"] = 0.0000011;
+        drone_parameter_["t_motor"] = 0.05;
     }
     
     // get controller type and ensure valid type ("ism" or ...)
@@ -73,10 +104,70 @@ void ControllerInterface::readDroneParameterFromServer(){
 };
 
 // map control force and torques to propeller spinning rates
-// TODO implement
-void ControllerInterface::mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current, float spinningRates[6]){
-    ROS_DEBUG("map control forces and torques to propellor rates...");
+void ControllerInterface::mapControlForceTorqueInputToPropellerRates(const PoseVelocityAcceleration& x_current){
+    ROS_DEBUG("map control forces and torques to propeller rates...");
+
+    // [force, torqe] = ^B M * omega_spin
+    // convert forces to body frame
+    convert_force_part_to_b_.block(0,0,3,3) = x_current.q.toRotationMatrix();
+    // calculate inverse mapping matrix
+    map_matrix_inverse_b_ = (convert_force_part_to_b_ * map_matrix_).inverse();
+    // calculate square of spinning rates
+    spinning_rates_current_ = map_matrix_inverse_b_ * control_force_and_torque_;
+    // calculate spinning rates with correct sign
     for (int i = 0; i<6; i++){
-        spinningRates[i] = 100 + (float) i;
+        if (spinning_rates_current_(i,0)>=0){
+            spinning_rates_current_(i,0) = sqrt(spinning_rates_current_(i,0));
+        }
+        else{
+            spinning_rates_current_(i,0) = - sqrt(-spinning_rates_current_(i,0));
+        }
     }
 };
+
+// perform feedforward control if boolean class variable use_motor_ff_control_ is true
+void ControllerInterface::motorFeedForwardControl(Eigen::Matrix<float,6,1>& spinning_rates){
+    // Y(z) / U(z) = k_ff * z / (z - z_p_ff); Y.. output, u.. input; -> y[k] = z_p_ff*y[k-1] + k_ff * u[k]
+    for (int i = 0; i<6; i++){
+        if (use_motor_ff_control_)
+        {
+            spinning_rates_current_(i,0) = z_p_ff_* spinning_rates_last_(i,0) + k_ff_ * spinning_rates_current_(i,0);
+        }
+        // save spinning rates in both cases for probable future dynamic reconfigure of feedforward control
+        spinning_rates_last_(i,0) = spinning_rates_current_(i,0); // save last value
+        // save to output variable
+        spinning_rates(i,0) = spinning_rates_current_(i,0);
+    }
+}
+
+// computes mapping matrix of spinning rates to forces/torques
+void ControllerInterface::computeMappingMatrix(){
+    // compute thrust directions
+    float alpha;
+    float beta;
+    float gamma;
+    Eigen::Vector3f e_r; // thrust direction
+    Eigen::Vector3f mom; // drag + thrust torque
+    Eigen::Vector3f r_ti; // vector from COM to i-th rotor
+    float k = (float) drone_parameter_["k"];
+    float b = (float) drone_parameter_["b"];
+    float l = (float) drone_parameter_["length"];
+    float dh = (float) drone_parameter_["delta_h"];
+    // compute matrix
+    for (int i = 0; i<6; i++){
+        alpha = (float) drone_parameter_["alpha"] * pow(-1,i);
+        beta = (float) drone_parameter_["beta"] * pow(-1,i);;
+        gamma = ((float) i) * M_PI / 3.0f;
+        // compute thrust direction
+        e_r = Eigen::Vector3f (cos(alpha) * sin(beta) * cos(gamma) + sin(alpha)*sin(gamma),
+                                  cos(alpha) * sin(beta) * sin(gamma) - sin(alpha)*cos(gamma),
+                                  cos(alpha) * cos(beta));
+        // compute r_ti vector;
+        r_ti << l * cos(gamma), l*sin(gamma), dh ;
+        // compute thrust and drag torque
+        mom = k * r_ti.cross(e_r) + b * pow(-1,i+1) * e_r; 
+        // save to class variable map_matrix
+        map_matrix_.block(0,i,3,1) = k * e_r;   
+        map_matrix_.block(3,i,3,1) = mom;
+    }
+}

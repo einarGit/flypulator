@@ -62,7 +62,17 @@ bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& 
 
     ROS_DEBUG("Start Time: %f", t.toSec());
 
-    ros::Rate r(10); //TODO: take Frequency of state estimation
+    // take update rate from parameter file
+    float update_rate;
+    if (ros::param::get("/trajectory/update_rate", update_rate)){
+        ROS_DEBUG("Update Rate = %f from parameter server",update_rate);
+    } else
+    {
+        ROS_DEBUG("Update Rate = 10, default value (/trajectory/update_rate not available on parameter server)");
+        update_rate = 10.0f;
+    }
+
+    ros::Rate r(update_rate); 
 
     // start continous message publishing 
     while ( t <= t_start + trajDuration ){
@@ -106,13 +116,13 @@ bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& 
 }
 
 // convert 2 messages of Vector3 type to 6D float array
-void TrajectoryGenerator::convertTo6DArray(const geometry_msgs::Vector3& x1, const geometry_msgs::Vector3& x2, float destination[]){
-    destination[0] = x1.x;
-    destination[1] = x1.y;
-    destination[2] = x1.z;
-    destination[3] = x2.x * M_PI / 180.0f; // convert to rad!
-    destination[4] = x2.y * M_PI / 180.0f; // convert to rad!
-    destination[5] = x2.z * M_PI / 180.0f; // convert to rad!
+void TrajectoryGenerator::convertTo6DArray(const geometry_msgs::Vector3& x_1, const geometry_msgs::Vector3& x_2, float destination[]){
+    destination[0] = x_1.x;
+    destination[1] = x_1.y;
+    destination[2] = x_1.z;
+    destination[3] = x_2.x * M_PI / 180.0f; // convert to rad!
+    destination[4] = x_2.y * M_PI / 180.0f; // convert to rad!
+    destination[5] = x_2.z * M_PI / 180.0f; // convert to rad!
 }
 
 // convert Euler angles to quaternions using roll-pitch-yaw sequence
