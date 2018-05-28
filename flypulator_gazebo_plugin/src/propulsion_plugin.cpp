@@ -87,13 +87,6 @@ class PropulsionPlugin : public ModelPlugin
   double Vy = 1e-20;      //air velocity in global y
   double Vz = 1e-20;      //air velocity in global z
   double Vi_h;            //induced velocity in the hovering case
-  double force_1, force_2, force_3, force_4, force_5, force_6;//thrust
-  double moment_1, moment_2, moment_3, moment_4, moment_5, moment_6;//torque
-  double fh_x1, fh_x2, fh_x3, fh_x4, fh_x5, fh_x6;
-  double fh_y1, fh_y2, fh_y3, fh_y4, fh_y5, fh_y6;//H Force
-  double moment_R1x, moment_R1y, moment_R2x, moment_R2y, moment_R3x, moment_R3y;
-  double moment_R4x, moment_R4y, moment_R5x, moment_R5y, moment_R6x, moment_R6y; //roll moment
-  double force_x, force_y, force_z, torque_x, torque_y, torque_z; //input wrench
   
   double rotor_vel_cmd[6] = {0};               // blade spinning velocity commands
   double rotor_vel[6] = {0};                   // blade spinning velocity
@@ -107,12 +100,6 @@ class PropulsionPlugin : public ModelPlugin
   // caused by the aero dynamic eq.(Hiller's 4.57)
   double vel_min = 350;      // min rotor speed
   double vel_max = 2500;      //max rotor speed
-  //input control signal in velocity DOF 6, unused
-  //double Vx_input, Vy_input, Vz_input, Wx_input, Wy_input, Wz_input;
-  double Kv0 = 890;  //KV Value of the BLDC motor
-  double Um0 = 10;   //nominal no-load voltage
-  double Im0 = 0.5;  //nominal no-load current
-  double Rm = 0.101; //resitance
                      
   Eigen::Matrix3d T_trans; //transformation matrix from global coordinate to body coordinate
 
@@ -985,10 +972,6 @@ private:
     this->rosNode->param("default_blade5_rotation_direction", di_blade_rot[4], di_blade_rot[4]);
     this->rosNode->param("default_blade6_rotation_direction", di_blade_rot[5], di_blade_rot[5]);
     this->rosNode->param("bidirectional_optional", bidirectional, bidirectional);
-    this->rosNode->param("KV_value", Kv0, Kv0);
-    this->rosNode->param("nominal_no_load_voltage", Um0, Um0);
-    this->rosNode->param("nominal_no_load_current", Im0, Im0);
-    this->rosNode->param("motor_resitance", Rm, Rm);
     ROS_INFO_STREAM("propulsion_plugin: aerodynamic parameters loaded!");
   }
 
