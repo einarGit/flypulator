@@ -121,6 +121,10 @@ class PropulsionPlugin : public ModelPlugin
 
   std::string RESULT_CSV_PATH = "/home/jinyao/ros_ws/flypulator/result.csv";
 
+  gazebo::physics::LinkPtr rotor_link_ptr[6]; // pointer to rotor links
+
+
+
   /// \brief Constructor
 public:
   PropulsionPlugin() {}
@@ -171,13 +175,11 @@ public:
     this->joint5->SetParam("vel", 0, 0);
     this->joint6->SetParam("vel", 0, 0);
     //get the six blade link
+    
     this->link0 = _model->GetChildLink("base_link");
-    this->link1 = _model->GetChildLink("blade_link_1");
-    this->link2 = _model->GetChildLink("blade_link_2");
-    this->link3 = _model->GetChildLink("blade_link_3");
-    this->link4 = _model->GetChildLink("blade_link_4");
-    this->link5 = _model->GetChildLink("blade_link_5");
-    this->link6 = _model->GetChildLink("blade_link_6");
+    for (int i = 0; i<6; i++){
+        rotor_link_ptr[i] = _model->GetChildLink(std::string("blade_link_") + std::to_string(i+1));
+    }
 
     //load aerodynamic parameters
     // this->readParamsFromServer();    
@@ -205,12 +207,10 @@ public:
     this->pub_ratio = this->rosNode->advertise<flypulator_common_msgs::Vector6dMsg>("/drone/thrust_moment_ratio", 10);
     this->pub_joint_state = this->rosNode->advertise<sensor_msgs::JointState>("/drone/joint_states", 50);
 
-    this->pub_link1_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_1_wrench", 100);
-    this->pub_link2_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_2_wrench", 100);
-    this->pub_link3_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_3_wrench", 100);
-    this->pub_link4_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_4_wrench", 100);
-    this->pub_link5_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_5_wrench", 100);
-    this->pub_link6_wrench = this->rosNode->advertise<geometry_msgs::WrenchStamped>("/drone/blade_6_wrench", 100);
+    for (int i = 0; i<6; i++){
+        this->pub_link_wrench[i] = this->rosNode->advertise<geometry_msgs::WrenchStamped>(std::string("/drone/blade_") + std::to_string(i+1) + std::string("_wrench"), 100);
+    }
+    
 
     //Create a wind velocity topic and subscribe to it
     ros::SubscribeOptions s1 =
@@ -397,9 +397,39 @@ public:
         double moment_roll = 0.125 * s * a * pho * R * A * mu * ((4 / 3) * th0 - thtw - lambda) * pow((rotor_vel[i] * R), 2); // Hiller eq. 4.65 and 4.66
         torque_rotor[i].x() = moment_roll * cos(alpha);
         torque_rotor[i].y() = moment_roll * sin(alpha);
+
+        // apply to uav
+        if(add_wrench_to_drone){
+           rotor_link_ptr[i]->AddRelativeForce(math::Vector3(force_rotor[i].x(), force_rotor[i].y(), force_rotor[i].z()/ground_effect_coeff));
+           rotor_link_ptr[i]->AddRelativeTorque(math::Vector3(torque_rotor[i].x(), torque_rotor[i].y(), torque_rotor[i].z()));
+        }
+
+       
     }
 
+    this->SetVelocity();
 
+    // save data for csv output
+    test_data[0] = rotor_vel[0]* di_vel[0];
+    test_data[1] = rotor_vel[1]* di_vel[1];
+    test_data[2] = rotor_vel[2]* di_vel[2];
+    test_data[3] = rotor_vel[3]* di_vel[3];
+    test_data[4] = rotor_vel[4]* di_vel[4];
+    test_data[5] = rotor_vel[5]* di_vel[5];
+    test_data[6] = torque_rotor[0].z();
+    test_data[7] = torque_rotor[1].z();
+    test_data[8] = torque_rotor[2].z();
+    test_data[9] = torque_rotor[3].z();
+    test_data[10] = torque_rotor[4].z();
+    test_data[11] = torque_rotor[5].z();
+
+    // test_data[0] = CT1;
+    // test_data[1] = CT2;
+    // test_data[2] = CT3;
+    // test_data[3] = CT4;
+    // test_data[4] = CT5;
+    // test_data[5] = CT6;
+    ros::spinOnce();
 
 
 /*    //blade1 aero dynamic,Vxx1,Vyy1...airflow velocity in blade local coordinate
@@ -818,33 +848,7 @@ public:
 
     //this->pub_ratio.publish(_msg);
 
-    if(add_wrench_to_drone){
-      this->SetForce();
-      this->SetTorque();
-    }
-    this->SetVelocity();
-
-    // save data for csv output
-    test_data[0] = rotor_vel[0]* di_vel[0];
-    test_data[1] = rotor_vel[1]* di_vel[1];
-    test_data[2] = rotor_vel[2]* di_vel[2];
-    test_data[3] = rotor_vel[3]* di_vel[3];
-    test_data[4] = rotor_vel[4]* di_vel[4];
-    test_data[5] = rotor_vel[5]* di_vel[5];
-    test_data[6] = torque_rotor[0].z();
-    test_data[7] = torque_rotor[1].z();
-    test_data[8] = torque_rotor[2].z();
-    test_data[9] = torque_rotor[3].z();
-    test_data[10] = torque_rotor[4].z();
-    test_data[11] = torque_rotor[5].z();
-
-    // test_data[0] = CT1;
-    // test_data[1] = CT2;
-    // test_data[2] = CT3;
-    // test_data[3] = CT4;
-    // test_data[4] = CT5;
-    // test_data[5] = CT6;
-    ros::spinOnce();
+    
   }
 
 public:
@@ -865,41 +869,39 @@ public:
       return;
     }
 
-    //TODO: di_vel and di_force should change after motor dynamic, not here
-    if (bidirectional) //bi-directional rotors
+    for (int i = 0; i < 6; i++)
     {
-      for (int i = 0; i < 6; i++)
+        //TODO: di_vel and di_force should change after motor dynamic, not here
+      if (bidirectional) //bi-directional rotors
       {
-        if (_msg->velocity[i] < 0)
-        {
-          rotor_vel_cmd[i] = abs(_msg->velocity[i]);
-          di_vel[i] = -di_blade_rot[i]; //inverse rotating direction
-          di_force[i] = -1;
-        }
-        else
-        {
-          rotor_vel_cmd[i] = _msg->velocity[i];
-          di_vel[i] = di_blade_rot[i]; //keep default rotating direction
+          if (_msg->velocity[i] < 0)
+          {
+            rotor_vel_cmd[i] = abs(_msg->velocity[i]);
+            di_vel[i] = -di_blade_rot[i]; //inverse rotating direction
+            di_force[i] = -1;
+          }
+          else
+          {
+            rotor_vel_cmd[i] = _msg->velocity[i];
+            di_vel[i] = di_blade_rot[i]; //keep default rotating direction
+            di_force[i] = 1;
+          }
+      } else
+      {
+          if (_msg->velocity[i] < 0)
+          {
+            rotor_vel_cmd[i] = 0; //lower boundary
+          }
+          else
+          {
+            rotor_vel_cmd[i] = _msg->velocity[i];
+          }
+          di_vel[i] = di_blade_rot[i];
           di_force[i] = 1;
-        }
       }
+
     }
-    else //uni-directional rotors
-    {
-      for (int i = 0; i < 6; i++)
-      {
-        if (_msg->velocity[i] < 0)
-        {
-          rotor_vel_cmd[i] = 0; //lower boundary
-        }
-        else
-        {
-          rotor_vel_cmd[i] = _msg->velocity[i];
-        }
-        di_vel[i] = di_blade_rot[i];
-        di_force[i] = 1;
-      }
-    }
+    
     // ROS_INFO_STREAM("aero:"<<_msg->velocity[0]<<","<<_msg->velocity[1]<<","<<_msg->velocity[2]<<","<<_msg->velocity[3]<<","<<_msg->velocity[4]<<","<<_msg->velocity[5]);
     // ROS_INFO_STREAM("aero:"<<rotor_vel[0]<<","<<rotor_vel[1]<<","<<rotor_vel[2]<<","<<rotor_vel[3]<<","<<rotor_vel[4]<<","<<rotor_vel[5]);
     // static double vel_temp = 100;
@@ -943,42 +945,6 @@ public:
     if(x < low)
       return low;
     return x;
-  }
-  //add force to blade link
-public:
-  void SetForce()
-  {
-    // this->link1->AddRelativeForce(math::Vector3(0, 0, 0));
-    // this->link2->AddRelativeForce(math::Vector3(0, 0, 0));
-    // this->link3->AddRelativeForce(math::Vector3(0, 0, 0));
-    // this->link4->AddRelativeForce(math::Vector3(0, 0, 0));
-    // this->link5->AddRelativeForce(math::Vector3(0, 0, 0));
-    // this->link6->AddRelativeForce(math::Vector3(0, 0, 0));
-    // TODO: replace by for loop
-    this->link1->AddRelativeForce(math::Vector3(force_rotor[0].x(), force_rotor[0].y(), force_rotor[0].z()/ground_effect_coeff));
-    this->link2->AddRelativeForce(math::Vector3(force_rotor[1].x(), force_rotor[1].y(), force_rotor[1].z()/ground_effect_coeff));
-    this->link3->AddRelativeForce(math::Vector3(force_rotor[2].x(), force_rotor[2].y(), force_rotor[2].z()/ground_effect_coeff));
-    this->link4->AddRelativeForce(math::Vector3(force_rotor[3].x(), force_rotor[3].y(), force_rotor[3].z()/ground_effect_coeff));
-    this->link5->AddRelativeForce(math::Vector3(force_rotor[4].x(), force_rotor[4].y(), force_rotor[4].z()/ground_effect_coeff));
-    this->link6->AddRelativeForce(math::Vector3(force_rotor[5].x(), force_rotor[5].y(), force_rotor[5].z()/ground_effect_coeff));
-    // ROS_INFO_STREAM("force:"<<force_1<<","<<force_2<<","<<force_3<<","<<force_4<<","<<force_5<<","<<force_6);
-  }
-  //add torque to blade link
-public:
-  void SetTorque()
-  {
-    // this->link1->AddRelativeTorque(math::Vector3(0, 0, 0));
-    // this->link2->AddRelativeTorque(math::Vector3(0, 0, 0));
-    // this->link3->AddRelativeTorque(math::Vector3(0, 0, 0));
-    // this->link4->AddRelativeTorque(math::Vector3(0, 0, 0));
-    // this->link5->AddRelativeTorque(math::Vector3(0, 0, 0));
-    // this->link6->AddRelativeTorque(math::Vector3(0, 0, 0));
-    this->link1->AddRelativeTorque(math::Vector3(torque_rotor[0].x(), torque_rotor[0].y(), torque_rotor[0].z()));
-    this->link2->AddRelativeTorque(math::Vector3(torque_rotor[1].x(), torque_rotor[1].y(), torque_rotor[1].z()));
-    this->link3->AddRelativeTorque(math::Vector3(torque_rotor[2].x(), torque_rotor[2].y(), torque_rotor[2].z()));
-    this->link4->AddRelativeTorque(math::Vector3(torque_rotor[3].x(), torque_rotor[3].y(), torque_rotor[3].z()));
-    this->link5->AddRelativeTorque(math::Vector3(torque_rotor[4].x(), torque_rotor[4].y(), torque_rotor[4].z()));
-    this->link6->AddRelativeTorque(math::Vector3(torque_rotor[5].x(), torque_rotor[5].y(), torque_rotor[5].z()));
   }
 
   //apply velocity to joints with 3 metnods
@@ -1103,54 +1069,17 @@ private:
     geometry_msgs::WrenchStamped wrench_msg_tmp;
     wrench_msg_tmp.header.stamp = ros::Time::now();
 
-    wrench_msg_tmp.header.frame_id = "motor_link_1";
-    wrench_msg_tmp.wrench.force.x = fh_x1;
-    wrench_msg_tmp.wrench.force.y = fh_y1;
-    wrench_msg_tmp.wrench.force.z = force_1;
-    wrench_msg_tmp.wrench.torque.x = moment_R1x;
-    wrench_msg_tmp.wrench.torque.y = moment_R1y;
-    wrench_msg_tmp.wrench.torque.z = moment_1;
-    this->pub_link1_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_link_2";
-    wrench_msg_tmp.wrench.force.x = fh_x2;
-    wrench_msg_tmp.wrench.force.y = fh_y2;
-    wrench_msg_tmp.wrench.force.z = force_2;
-    wrench_msg_tmp.wrench.torque.x = moment_R2x;
-    wrench_msg_tmp.wrench.torque.y = moment_R2y;
-    wrench_msg_tmp.wrench.torque.z = moment_2;
-    this->pub_link2_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_link_3";
-    wrench_msg_tmp.wrench.force.x = fh_x3;
-    wrench_msg_tmp.wrench.force.y = fh_y3;
-    wrench_msg_tmp.wrench.force.z = force_3;
-    wrench_msg_tmp.wrench.torque.x = moment_R3x;
-    wrench_msg_tmp.wrench.torque.y = moment_R3y;
-    wrench_msg_tmp.wrench.torque.z = moment_3;
-    this->pub_link3_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_link_4";
-    wrench_msg_tmp.wrench.force.x = fh_x4;
-    wrench_msg_tmp.wrench.force.y = fh_y4;
-    wrench_msg_tmp.wrench.force.z = force_4;
-    wrench_msg_tmp.wrench.torque.x = moment_R4x;
-    wrench_msg_tmp.wrench.torque.y = moment_R4y;
-    wrench_msg_tmp.wrench.torque.z = moment_4;
-    this->pub_link4_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_link_5";
-    wrench_msg_tmp.wrench.force.x = fh_x5;
-    wrench_msg_tmp.wrench.force.y = fh_y5;
-    wrench_msg_tmp.wrench.force.z = force_5;
-    wrench_msg_tmp.wrench.torque.x = moment_R5x;
-    wrench_msg_tmp.wrench.torque.y = moment_R5y;
-    wrench_msg_tmp.wrench.torque.z = moment_5;
-    this->pub_link5_wrench.publish(wrench_msg_tmp);
-    wrench_msg_tmp.header.frame_id = "motor_link_6";
-    wrench_msg_tmp.wrench.force.x = fh_x6;
-    wrench_msg_tmp.wrench.force.y = fh_y6;
-    wrench_msg_tmp.wrench.force.z = force_6;
-    wrench_msg_tmp.wrench.torque.x = moment_R6x;
-    wrench_msg_tmp.wrench.torque.y = moment_R6y;
-    wrench_msg_tmp.wrench.torque.z = moment_6;
-    this->pub_link6_wrench.publish(wrench_msg_tmp);
+    for (int i = 0; i<6; i++){
+        wrench_msg_tmp.header.frame_id = std::string("motor_link_") + std::to_string(i+1);
+        wrench_msg_tmp.wrench.force.x = force_rotor[i].x();
+        wrench_msg_tmp.wrench.force.y = force_rotor[i].y();
+        wrench_msg_tmp.wrench.force.z = force_rotor[i].z();
+        wrench_msg_tmp.wrench.torque.x = torque_rotor[i].x();
+        wrench_msg_tmp.wrench.torque.y = torque_rotor[i].y();
+        wrench_msg_tmp.wrench.torque.z = torque_rotor[i].z();
+        this->pub_link_wrench[i].publish(wrench_msg_tmp);
+    }
+
   }
 
   // dynamic model of the motors
@@ -1197,23 +1126,6 @@ private:
 private:
   physics::LinkPtr link0;
 
-private:
-  physics::LinkPtr link1;
-
-private:
-  physics::LinkPtr link2;
-
-private:
-  physics::LinkPtr link3;
-
-private:
-  physics::LinkPtr link4;
-
-private:
-  physics::LinkPtr link5;
-
-private:
-  physics::LinkPtr link6;
   /// \brief A node use for ROS transport
 private:
   std::unique_ptr<ros::NodeHandle> rosNode;
@@ -1244,12 +1156,7 @@ private:
 private:
   ros::Publisher pub_ratio;
   ros::Publisher pub_joint_state;
-  ros::Publisher pub_link1_wrench;
-  ros::Publisher pub_link2_wrench;
-  ros::Publisher pub_link3_wrench;
-  ros::Publisher pub_link4_wrench;
-  ros::Publisher pub_link5_wrench;
-  ros::Publisher pub_link6_wrench;
+  ros::Publisher pub_link_wrench [6];
 };
 
 // Tell Gazebo about this plugin, so that Gazebo can call Load on this plugin.
