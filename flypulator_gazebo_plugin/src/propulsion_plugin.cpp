@@ -116,6 +116,9 @@ class PropulsionPlugin : public ModelPlugin
                      
   Eigen::Matrix3d T_trans; //transformation matrix from global coordinate to body coordinate
 
+  Eigen::Vector3d force_rotor [6]; // aerodynamic forces
+  Eigen::Vector3d torque_rotor [6]; // aerodynamic torques
+
   std::string RESULT_CSV_PATH = "/home/jinyao/ros_ws/flypulator/result.csv";
 
   /// \brief Constructor
@@ -344,8 +347,62 @@ public:
     Vx = Vwind_x - Vdrone_x;
     Vy = Vwind_y - Vdrone_y;
     Vz = Vwind_z - Vdrone_z;
+    Eigen::Vector3d V_airflow (Vx, Vy, Vz);
 
-    //blade1 aero dynamic,Vxx1,Vyy1...airflow velocity in blade local coordinate
+
+
+    for (int i = 0; i < 6; i++){
+        Eigen::Quaterniond q (msg->pose[2+i].orientation.w, msg->pose[2+i].orientation.x, msg->pose[2+i].orientation.y, msg->pose[2+i].orientation.z);
+        Eigen::Matrix3d t_matrix = q.toRotationMatrix();
+        Eigen::Matrix3d t_matrix_trans = t_matrix.transpose();
+        Eigen::Vector3d v_local = t_matrix_trans * V_airflow;
+
+        // now we are in local rotor frame {R}_i
+        double v_z = v_local.z();
+        double v_xy = sqrt(pow(v_local.x(), 2) + pow(v_local.y(), 2));
+        double C = v_z / Vi_h;
+        double v_i = 0;
+
+        // calculate induced velocity, depends on climb ratio C 
+        // TODO fix discontinuity with Bezier Spline (Hiller, App. A.1.2)
+        if (C >= 0)
+        {
+          // Vi1 = -(sqrt(pow((Vzz1 / 2), 2) + pow(Vi_h, 2)) + Vzz1 / 2); //Vi induced airflow velocity
+          v_i =  - v_z/2.0f + sqrt(pow((v_z / 2.0f), 2) + pow(Vi_h, 2));
+        }
+        else if (C >= -2 && C < 0)
+        {
+          v_i = - Vi_h * (k0 + k1 * C + k2 * pow(C, 2) + k3 * pow(C, 3) + k4 * pow(C, 4));
+        }
+        else
+        {
+          v_i = - v_z / 2 - sqrt(pow((v_z / 2), 2) - pow(Vi_h, 2));
+        }
+
+        double lambda = ( v_i + v_z ) / (rotor_vel[i] * R); // Hiller, eq. 4.27
+        double mu = v_xy / (rotor_vel[i] * R); // Hiller, eq. 4.40
+        double CT = s * a * ( (pa/3) * (pow(B,3) + 3*mu*mu*B/2.0 ) - lambda*B*B/2.0); // Hiller's (4.57)
+
+        force_rotor[i].z() = di_force[i] * 0.5 * pho * CT * A * pow( rotor_vel[i] * R , 2 );
+
+        double alpha = atan2(v_local.y(), v_local.x()); //orientation of Vxy in blade coordinate
+        double f_hub = 0.25 * s * pho * A * CD0 * pow(rotor_vel[i]* R, 2) * v_xy; //H-force, Hiller eq. 4.63 & 4.64
+        force_rotor[i].x() = f_hub * cos(alpha);                                    //H-force in x direction
+        force_rotor[i].y() = f_hub * sin(alpha);                                    //H-force in y direction
+
+        double CQ = ki * lambda * CT + 0.25 * s * CD0 * (1 + k * pow(mu, 2)); // Hiller's (4.62)
+
+        torque_rotor[i].z() = 0.5 * pho * pow((rotor_vel[i] * R), 2) * A * R * CQ * di_blade_rot[i]; // Hiller's (4.60)
+
+        double moment_roll = 0.125 * s * a * pho * R * A * mu * ((4 / 3) * th0 - thtw - lambda) * pow((rotor_vel[i] * R), 2); // Hiller eq. 4.65 and 4.66
+        torque_rotor[i].x() = moment_roll * cos(alpha);
+        torque_rotor[i].y() = moment_roll * sin(alpha);
+    }
+
+
+
+
+/*    //blade1 aero dynamic,Vxx1,Vyy1...airflow velocity in blade local coordinate
     double q1_1, q1_2, q1_3, q1_4, Vxx1, Vyy1, Vzz1, Vxy1, C1, Vi1;
     double CT1, l1, u1, CQ1; //aerodynamic coefficient
     double fh1, a1;          //H-force and its orientation in blade rotate xy plane
@@ -757,8 +814,9 @@ public:
     _msg.x3 = ratio3;
     _msg.x4 = ratio4;
     _msg.x5 = ratio5;
-    _msg.x6 = ratio6;
-    this->pub_ratio.publish(_msg);
+    _msg.x6 = ratio6;*/
+
+    //this->pub_ratio.publish(_msg);
 
     if(add_wrench_to_drone){
       this->SetForce();
@@ -773,12 +831,12 @@ public:
     test_data[3] = rotor_vel[3]* di_vel[3];
     test_data[4] = rotor_vel[4]* di_vel[4];
     test_data[5] = rotor_vel[5]* di_vel[5];
-    test_data[6] = moment_1;
-    test_data[7] = moment_2;
-    test_data[8] = moment_3;
-    test_data[9] = moment_4;
-    test_data[10] = moment_5;
-    test_data[11] = moment_6;
+    test_data[6] = torque_rotor[0].z();
+    test_data[7] = torque_rotor[1].z();
+    test_data[8] = torque_rotor[2].z();
+    test_data[9] = torque_rotor[3].z();
+    test_data[10] = torque_rotor[4].z();
+    test_data[11] = torque_rotor[5].z();
 
     // test_data[0] = CT1;
     // test_data[1] = CT2;
@@ -795,12 +853,6 @@ public:
     Vwind_x = _wind_msg->x;
     Vwind_y = _wind_msg->y;
     Vwind_z = _wind_msg->z;
-    // Vdrone_x = this->model->GetRelativeLinearVel().x;
-    // Vdrone_y = this->model->GetRelativeLinearVel().y;
-    // Vdrone_z = this->model->GetRelativeLinearVel().z;
-    // Vx = Vwind_x - Vdrone_x;
-    // Vy = Vwind_y - Vdrone_y;
-    // Vz = Vwind_z - Vdrone_z;
   }
 
 public:
@@ -902,12 +954,13 @@ public:
     // this->link4->AddRelativeForce(math::Vector3(0, 0, 0));
     // this->link5->AddRelativeForce(math::Vector3(0, 0, 0));
     // this->link6->AddRelativeForce(math::Vector3(0, 0, 0));
-    this->link1->AddRelativeForce(math::Vector3(fh_x1, fh_y1, force_1/ground_effect_coeff));
-    this->link2->AddRelativeForce(math::Vector3(fh_x2, fh_y2, force_2/ground_effect_coeff));
-    this->link3->AddRelativeForce(math::Vector3(fh_x3, fh_y3, force_3/ground_effect_coeff));
-    this->link4->AddRelativeForce(math::Vector3(fh_x4, fh_y4, force_4/ground_effect_coeff));
-    this->link5->AddRelativeForce(math::Vector3(fh_x5, fh_y5, force_5/ground_effect_coeff));
-    this->link6->AddRelativeForce(math::Vector3(fh_x6, fh_y6, force_6/ground_effect_coeff));
+    // TODO: replace by for loop
+    this->link1->AddRelativeForce(math::Vector3(force_rotor[0].x(), force_rotor[0].y(), force_rotor[0].z()/ground_effect_coeff));
+    this->link2->AddRelativeForce(math::Vector3(force_rotor[1].x(), force_rotor[1].y(), force_rotor[1].z()/ground_effect_coeff));
+    this->link3->AddRelativeForce(math::Vector3(force_rotor[2].x(), force_rotor[2].y(), force_rotor[2].z()/ground_effect_coeff));
+    this->link4->AddRelativeForce(math::Vector3(force_rotor[3].x(), force_rotor[3].y(), force_rotor[3].z()/ground_effect_coeff));
+    this->link5->AddRelativeForce(math::Vector3(force_rotor[4].x(), force_rotor[4].y(), force_rotor[4].z()/ground_effect_coeff));
+    this->link6->AddRelativeForce(math::Vector3(force_rotor[5].x(), force_rotor[5].y(), force_rotor[5].z()/ground_effect_coeff));
     // ROS_INFO_STREAM("force:"<<force_1<<","<<force_2<<","<<force_3<<","<<force_4<<","<<force_5<<","<<force_6);
   }
   //add torque to blade link
@@ -920,12 +973,12 @@ public:
     // this->link4->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link5->AddRelativeTorque(math::Vector3(0, 0, 0));
     // this->link6->AddRelativeTorque(math::Vector3(0, 0, 0));
-    this->link1->AddRelativeTorque(math::Vector3(moment_R1x, moment_R1y, moment_1));
-    this->link2->AddRelativeTorque(math::Vector3(moment_R2x, moment_R2y, moment_2));
-    this->link3->AddRelativeTorque(math::Vector3(moment_R3x, moment_R3y, moment_3));
-    this->link4->AddRelativeTorque(math::Vector3(moment_R4x, moment_R4y, moment_4));
-    this->link5->AddRelativeTorque(math::Vector3(moment_R5x, moment_R5y, moment_5));
-    this->link6->AddRelativeTorque(math::Vector3(moment_R6x, moment_R6y, moment_6));
+    this->link1->AddRelativeTorque(math::Vector3(torque_rotor[0].x(), torque_rotor[0].y(), torque_rotor[0].z()));
+    this->link2->AddRelativeTorque(math::Vector3(torque_rotor[1].x(), torque_rotor[1].y(), torque_rotor[1].z()));
+    this->link3->AddRelativeTorque(math::Vector3(torque_rotor[2].x(), torque_rotor[2].y(), torque_rotor[2].z()));
+    this->link4->AddRelativeTorque(math::Vector3(torque_rotor[3].x(), torque_rotor[3].y(), torque_rotor[3].z()));
+    this->link5->AddRelativeTorque(math::Vector3(torque_rotor[4].x(), torque_rotor[4].y(), torque_rotor[4].z()));
+    this->link6->AddRelativeTorque(math::Vector3(torque_rotor[5].x(), torque_rotor[5].y(), torque_rotor[5].z()));
   }
 
   //apply velocity to joints with 3 metnods
