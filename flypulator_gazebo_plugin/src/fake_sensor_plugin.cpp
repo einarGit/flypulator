@@ -82,44 +82,53 @@ public:
 public:
   void OnlinkMsg(const gazebo_msgs::LinkStatesConstPtr &_msg)
   {
-    // ROS_INFO_STREAM("I am fake sensor:"<<this->world->GetSimTime().Double());
-    math::Pose drone_pose = this->link0->GetWorldPose();
-    math::Vector3 drone_vel_linear = this->link0->GetWorldLinearVel(); 
-    math::Vector3 drone_vel_angular = this->link0->GetWorldAngularVel(); 
-    math::Vector3 drone_acc_linear = this->link0->GetWorldLinearAccel();
-    math::Vector3 drone_acc_angular = this->link0->GetWorldAngularAccel();
+    static int loop_cnt = 0;
 
-    flypulator_common_msgs::UavStateStamped uav_state_msg;
-    uav_state_msg.header.stamp = ros::Time(this->world->GetSimTime().Double());
-    // pose
-    uav_state_msg.pose.position.x = drone_pose.pos.x;
-    uav_state_msg.pose.position.y = drone_pose.pos.y;
-    uav_state_msg.pose.position.z = drone_pose.pos.z;
-    uav_state_msg.pose.orientation.w = drone_pose.rot.w;
-    uav_state_msg.pose.orientation.x = drone_pose.rot.x;
-    uav_state_msg.pose.orientation.y = drone_pose.rot.y;
-    uav_state_msg.pose.orientation.z = drone_pose.rot.z;
-    // velocity
-    uav_state_msg.velocity.linear.x = drone_vel_linear.x;
-    uav_state_msg.velocity.linear.y = drone_vel_linear.y;
-    uav_state_msg.velocity.linear.z = drone_vel_linear.z;
-    uav_state_msg.velocity.angular.x = drone_vel_angular.x;
-    uav_state_msg.velocity.angular.y = drone_vel_angular.y;
-    uav_state_msg.velocity.angular.z = drone_vel_angular.z;
-    // acceleration
-    uav_state_msg.acceleration.linear.x = drone_acc_linear.x;
-    uav_state_msg.acceleration.linear.y = drone_acc_linear.y;
-    uav_state_msg.acceleration.linear.z = drone_acc_linear.z;
-    uav_state_msg.acceleration.angular.x = drone_acc_angular.x;
-    uav_state_msg.acceleration.angular.y = drone_acc_angular.y;
-    uav_state_msg.acceleration.angular.z = drone_acc_angular.z;
-   
-    // publish real states of the simulated drone
-    pub_real_state.publish(uav_state_msg);
- 
-    // publish measured states of the simulated drone
-    // TODO: add artifical noise to measured states
-    pub_meas_state.publish(uav_state_msg);
+    if(loop_cnt >= (ouput_rate_divider-1))
+    {
+      loop_cnt = 0; // reset loop counter
+      // ROS_INFO_STREAM("I am fake sensor:"<<this->world->GetSimTime().Double());
+      math::Pose drone_pose = this->link0->GetWorldPose();
+      math::Vector3 drone_vel_linear = this->link0->GetWorldLinearVel(); 
+      math::Vector3 drone_vel_angular = this->link0->GetWorldAngularVel(); 
+      math::Vector3 drone_acc_linear = this->link0->GetWorldLinearAccel();
+      math::Vector3 drone_acc_angular = this->link0->GetWorldAngularAccel();
+
+      flypulator_common_msgs::UavStateStamped uav_state_msg;
+      uav_state_msg.header.stamp = ros::Time(this->world->GetSimTime().Double());
+      // pose
+      uav_state_msg.pose.position.x = drone_pose.pos.x;
+      uav_state_msg.pose.position.y = drone_pose.pos.y;
+      uav_state_msg.pose.position.z = drone_pose.pos.z;
+      uav_state_msg.pose.orientation.w = drone_pose.rot.w;
+      uav_state_msg.pose.orientation.x = drone_pose.rot.x;
+      uav_state_msg.pose.orientation.y = drone_pose.rot.y;
+      uav_state_msg.pose.orientation.z = drone_pose.rot.z;
+      // velocity
+      uav_state_msg.velocity.linear.x = drone_vel_linear.x;
+      uav_state_msg.velocity.linear.y = drone_vel_linear.y;
+      uav_state_msg.velocity.linear.z = drone_vel_linear.z;
+      uav_state_msg.velocity.angular.x = drone_vel_angular.x;
+      uav_state_msg.velocity.angular.y = drone_vel_angular.y;
+      uav_state_msg.velocity.angular.z = drone_vel_angular.z;
+      // acceleration
+      uav_state_msg.acceleration.linear.x = drone_acc_linear.x;
+      uav_state_msg.acceleration.linear.y = drone_acc_linear.y;
+      uav_state_msg.acceleration.linear.z = drone_acc_linear.z;
+      uav_state_msg.acceleration.angular.x = drone_acc_angular.x;
+      uav_state_msg.acceleration.angular.y = drone_acc_angular.y;
+      uav_state_msg.acceleration.angular.z = drone_acc_angular.z;
+    
+      // publish real states of the simulated drone
+      pub_real_state.publish(uav_state_msg);
+  
+      // publish measured states of the simulated drone
+      // TODO: add artifical noise to measured states
+      pub_meas_state.publish(uav_state_msg);
+    }
+    else
+      loop_cnt++;
+
     ros::spinOnce();
   }
 
@@ -159,6 +168,8 @@ private:
 private:
   ros::Publisher pub_real_state;
   ros::Publisher pub_meas_state;
+
+  int ouput_rate_divider = 4; // output rate = 1000Hz/ouput_rate_divider
 };
 
 // Tell Gazebo about this plugin, so that Gazebo can call Load on this plugin.
