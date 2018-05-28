@@ -126,7 +126,7 @@ public:
 private:
   void QueueThread()
   {
-    static const double timeout = 0.01;
+    static const double timeout = 1;
     while (this->rosNode->ok())
     {
       this->rosQueue.callAvailable(ros::WallDuration(timeout));
