@@ -90,9 +90,9 @@ public:
       // ROS_INFO_STREAM("I am fake sensor:"<<this->world->GetSimTime().Double());
       math::Pose drone_pose = this->link0->GetWorldPose();
       math::Vector3 drone_vel_linear = this->link0->GetWorldLinearVel(); 
-      math::Vector3 drone_vel_angular = this->link0->GetWorldAngularVel(); 
+      math::Vector3 drone_vel_angular = this->link0->GetRelativeAngularVel(); 
       math::Vector3 drone_acc_linear = this->link0->GetWorldLinearAccel();
-      math::Vector3 drone_acc_angular = this->link0->GetWorldAngularAccel();
+      math::Vector3 drone_acc_angular = this->link0->GetRelativeAngularAccel();
 
       flypulator_common_msgs::UavStateStamped uav_state_msg;
       uav_state_msg.header.stamp = ros::Time(this->world->GetSimTime().Double());

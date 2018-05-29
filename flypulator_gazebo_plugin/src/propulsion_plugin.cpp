@@ -49,15 +49,15 @@ class PropulsionPlugin : public ModelPlugin
   bool write_data_2_file = false; // new version with more data (contains also hub force and roll moment)
   bool WRITE_CSV_FILE = false; // if save the test_data to .csv
   bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
-  bool use_ground_effect = true; // if enable ground effect
-  bool use_motor_dynamic = true; // if enable motor dynamic
+  bool use_ground_effect = false; // if enable ground effect
+  bool use_motor_dynamic = false; // if enable motor dynamic
 
   double test_data[12]; // test data for debug
   double ground_effect_coeff; // ground effect coefficient
 
   int N = 6;         //number of energie
   double c = 0.016;  //blade chord width
-  double R = 0.15;   //blade radius
+  double R = 0.75;   //blade radius
   double a = 5.7;    //2D_lift_curve_slope
   double th0 = 0.7;  //Profile inclination angle
   double thtw = 0.5; //Inclination change along radius
@@ -74,7 +74,7 @@ class PropulsionPlugin : public ModelPlugin
   double k3 = -1.718;
   double k4 = -0.655;
   double CD0 = 0.04;      //Profile_Drag_Coefficient from literatur
-  double rv = 0.7854;     //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
+  double rv = 13.6 * M_PI / 180.0;     //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
   double m;               //drone_masse
   double g = 9.81;        //gravity acceleration constant
   double s;               //rotor solidity
@@ -184,7 +184,7 @@ public:
     m = this->link0->GetInertial()->GetMass();
     s = (N * c) / (PI * R);                              //rotor solidity
     A = PI * pow(R, 2);                                  //wing area
-    Vi_h = -sqrt((m * g) / (2 * N * pho * A * cos(rv))); //induced airflow velocity in hovering case
+    Vi_h = - 1/B * sqrt((m * g) / (2 * N * pho * A * cos(rv))); //induced airflow velocity in hovering case // multiplied by 1/B according to Hiller eq. 4.58
     pa = th0 - 0.75 * thtw;                              //blade pitch angle
 
     // Initialize ros, if it has not already bee initialized.
@@ -1088,26 +1088,21 @@ private:
   }
 
   void streamDataToFile(){
-      if (write_data_2_file)
-      {
-        {
-          result_file.setf(std::ios::fixed, std::ios::floatfield);
-          result_file.precision(5);
-          result_file << this->model->GetWorld()->GetSimTime().Double() << ",";
-          for (int i = 0; i<6; i++){
-            result_file << "rotor" << i << "," << rotor_vel[i]* di_vel[i] << ","
-                        << force_rotor[i].x() << "," 
-                        << force_rotor[i].y() << "," 
-                        << force_rotor[i].z() << ","
-                        << torque_rotor[i].x() << ","
-                        << torque_rotor[i].y() << ","
-                        << torque_rotor[i].z() << ",";
-          }
-          result_file << std::endl;            
-                      
-          //result_file.close();
+        result_file.setf(std::ios::fixed, std::ios::floatfield);
+        result_file.precision(5);
+        result_file << this->model->GetWorld()->GetSimTime().Double() << ",";
+        for (int i = 0; i<6; i++){
+          result_file << "rotor" << i << "," << rotor_vel[i]* di_vel[i] << ","
+                      << force_rotor[i].x() << "," 
+                      << force_rotor[i].y() << "," 
+                      << force_rotor[i].z() << ","
+                      << torque_rotor[i].x() << ","
+                      << torque_rotor[i].y() << ","
+                      << torque_rotor[i].z() << ",";
         }
-      }
+        result_file << std::endl;            
+                    
+        //result_file.close();
 
   }
 

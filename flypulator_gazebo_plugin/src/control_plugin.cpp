@@ -38,7 +38,7 @@ class ControlPlugin : public ModelPlugin
 {
     int N = 6;                     //number of energie
     double c = 0.016;              //blade chord width
-    double R = 0.15;               //blade radius
+    double R = 0.075;               //blade radius
     double a = 5.7;                //2D_lift_curve_slope
     double th0 = 0.7;              //Profile inclination angle
     double thtw = 0.5;             //Inclination change along radius
@@ -55,7 +55,7 @@ class ControlPlugin : public ModelPlugin
     double k3 = -1.718;
     double k4 = -0.655;
     double CD0 = 0.04;      //Profile_Drag_Coefficient from literatur
-    double rv = 0.7854;     //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
+    double rv = 13.6 * M_PI / 180.0;      //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
     double m;               //drone_masse
     double g = 9.81;        //gravity acceleration constant
     double s;               //rotor solidity

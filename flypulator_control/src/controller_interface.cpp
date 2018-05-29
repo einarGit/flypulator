@@ -158,9 +158,9 @@ void ControllerInterface::computeMappingMatrix(){
     float dh = (float) drone_parameter_["delta_h"];
     // compute matrix
     for (int i = 0; i<6; i++){
-        alpha = (float) drone_parameter_["alpha"] * pow(-1,i);
-        beta = (float) drone_parameter_["beta"] * pow(-1,i);;
-        gamma = ((float) i) * M_PI / 3.0f;
+        alpha = (float) drone_parameter_["alpha"] * M_PI / 180.0 * pow(-1,i+1);
+        beta = (float) drone_parameter_["beta"];
+        gamma = ((float) i) * M_PI / 3.0f - M_PI / 6.0f;
         // compute thrust direction
         e_r = Eigen::Vector3f (cos(alpha) * sin(beta) * cos(gamma) + sin(alpha)*sin(gamma),
                                   cos(alpha) * sin(beta) * sin(gamma) - sin(alpha)*cos(gamma),
@@ -168,7 +168,7 @@ void ControllerInterface::computeMappingMatrix(){
         // compute r_ti vector;
         r_ti << l * cos(gamma), l*sin(gamma), dh ;
         // compute thrust and drag torque
-        mom = k * r_ti.cross(e_r) + b * pow(-1,i+1) * e_r; 
+        mom = k * r_ti.cross(e_r) + b * pow(-1,i) * e_r; 
         // save to class variable map_matrix
         map_matrix_.block(0,i,3,1) = k * e_r;   
         map_matrix_.block(3,i,3,1) = mom;
