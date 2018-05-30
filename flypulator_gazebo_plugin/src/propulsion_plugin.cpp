@@ -75,7 +75,7 @@ class PropulsionPlugin : public ModelPlugin
   double k4 = -0.655;
   double CD0 = 0.04;      //Profile_Drag_Coefficient from literatur
   double rv = 13.6 * M_PI / 180.0;     //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
-  double m;               //drone_masse
+  double m = 6.15;               //drone_masse
   double g = 9.81;        //gravity acceleration constant
   double s;               //rotor solidity
   double Vwind_x = 1e-20; //wind velocity in global x
@@ -181,7 +181,7 @@ public:
     // this->readParamsFromServer();    
     
     //calculation of constants
-    m = this->link0->GetInertial()->GetMass();
+    //m = this->link0->GetInertial()->GetMass();
     s = (N * c) / (PI * R);                              //rotor solidity
     A = PI * pow(R, 2);                                  //wing area
     Vi_h = - 1/B * sqrt((m * g) / (2 * N * pho * A * cos(rv))); //induced airflow velocity in hovering case // multiplied by 1/B according to Hiller eq. 4.58
