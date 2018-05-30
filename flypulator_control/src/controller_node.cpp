@@ -154,7 +154,9 @@ int main(int argc, char **argv)
 
     // set inital quaternions (default initialization zero)
     g_desired_pose.q = Eigen::Quaternionf (1,0,0,0);
+    g_desired_pose.p = Eigen::Vector3f (0,0,0.23f);
     g_current_pose.q = Eigen::Quaternionf (1,0,0,0);
+    g_current_pose.p = Eigen::Vector3f (0,0,0.22f);
 
     ros::spin();
 

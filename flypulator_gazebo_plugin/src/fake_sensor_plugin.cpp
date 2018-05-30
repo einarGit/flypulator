@@ -169,7 +169,7 @@ private:
   ros::Publisher pub_real_state;
   ros::Publisher pub_meas_state;
 
-  int ouput_rate_divider = 1; // output rate = 1000Hz/ouput_rate_divider
+  int ouput_rate_divider = 10; // output rate = 1000Hz/ouput_rate_divider
 };
 
 // Tell Gazebo about this plugin, so that Gazebo can call Load on this plugin.

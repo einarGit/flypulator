@@ -49,7 +49,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     // provide output through pass by reference
     control_force_and_torque.block(0,0,3,1) = (u_T_ + u_T_I_) * mass_; // convert to force input by multiplying with mass (f=m*a)
     ROS_DEBUG(".. translational output calculated...");
-    //ROS_DEBUG("u_T = [%f, %f, %f], u_T_I = {%f, %f, %f]", u_T_.x(), u_T_.y(), u_T_.z(), u_T_I_.x(), u_T_I_.y(), u_T_I_.z());
+    ROS_DEBUG("u_T = [%f, %f, %f], u_T_I = {%f, %f, %f]", u_T_.x(), u_T_.y(), u_T_.z(), u_T_I_.x(), u_T_I_.y(), u_T_I_.z());
     
 
     // Rotational controller
@@ -58,7 +58,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     eta_d_ = x_des.q.w();
     eps_ = x_current.q.vec();
     eps_d_ = x_des.q.vec();
-    //ROS_DEBUG("eta = %f, eta_d = %f, eps=[%f,%f,%f], eps_d = [%f,%f,%f]", eta_, eta_d_, eps_.x(), eps_.y(), eps_.z(), eps_d_.x(), eps_d_.y(), eps_d_.z());
+    ROS_DEBUG("eta = %f, eta_d = %f, eps=[%f,%f,%f], eps_d = [%f,%f,%f]", eta_, eta_d_, eps_.x(), eps_.y(), eps_.z(), eps_d_.x(), eps_d_.y(), eps_d_.z());
 
     eta_err_ = eta_d_ * eta_ + eps_d_.dot(eps_); //transposed eps_d_ times eps_ is equal to dot product
     eps_err_ = eta_d_*eps_ - eta_ * eps_d_ - eps_d_.cross(eps_); // skew symmetric matrix times vector is equal to cross product
@@ -80,7 +80,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     // calculate z2
     z_2_R_ = 0.5f * matrix_g_transposed_ * omega_err_;
 
-    //ROS_DEBUG("z_1_R = [%f, %f, %f,%f], z_2_R = {%f, %f, %f, %f]", z_1_R_(0), z_1_R_(1), z_1_R_(2), z_1_R_(3), z_2_R_(0), z_2_R_(1), z_2_R_(2), z_2_R_(3));
+    ROS_DEBUG("z_1_R = [%f, %f, %f,%f], z_2_R = {%f, %f, %f, %f]", z_1_R_(0), z_1_R_(1), z_1_R_(2), z_1_R_(3), z_2_R_(0), z_2_R_(1), z_2_R_(2), z_2_R_(3));
     
 
 
@@ -111,6 +111,6 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     
     // output is the sum of both rotational outputs (with and without integral action)
     control_force_and_torque.block(3,0,3,1) = u_R_ + u_R_I_; // already torque dimension
-    ROS_DEBUG("..rotational output calculated!");
-    
+    ROS_DEBUG("..rotational output calculated! ");
+    ROS_DEBUG("u_R =[%f, %f, %f], u_R_I = {%f, %f, %f]", u_R_.x(), u_R_.y(), u_R_.z(), u_R_I_.x(), u_R_I_.y(), u_R_I_.z());
 };

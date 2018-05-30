@@ -51,6 +51,7 @@ class PropulsionPlugin : public ModelPlugin
   bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
   bool use_ground_effect = false; // if enable ground effect
   bool use_motor_dynamic = false; // if enable motor dynamic
+  bool use_simple_aerodynamic = true; // use f=k*omega² and tau = b * omega²
 
   double test_data[12]; // test data for debug
   double ground_effect_coeff; // ground effect coefficient
@@ -89,6 +90,9 @@ class PropulsionPlugin : public ModelPlugin
   double Vz = 1e-20;      //air velocity in global z
   double Vi_h;            //induced velocity in the hovering case
   
+  double k_simple_aero = 0.000055;
+  double b_simple_aero = 0.0000011;
+
   double rotor_vel_cmd[6] = {0};               // blade spinning velocity commands
   double rotor_vel[6] = {0};                   // blade spinning velocity
   int di_blade_rot[6] = {1, -1, 1, -1, 1, -1}; //default blade rotating direction 1 counterclockwise; -1 clockwise
@@ -100,7 +104,7 @@ class PropulsionPlugin : public ModelPlugin
   // if the rotor vel smaller than 325, we will get negativ CT and moment,
   // caused by the aero dynamic eq.(Hiller's 4.57)
   double vel_min = 0.01;      // min rotor speed
-  double vel_max = 10000;      //max rotor speed
+  double vel_max = 100000;      //max rotor speed
                      
   Eigen::Matrix3d T_trans; //transformation matrix from global coordinate to body coordinate
 
@@ -396,18 +400,24 @@ public:
 
         // apply to uav
         if(add_wrench_to_drone){
-           rotor_link_ptr[i]->AddRelativeForce(math::Vector3(force_rotor[i].x(), force_rotor[i].y(), force_rotor[i].z()/ground_effect_coeff));
-           rotor_link_ptr[i]->AddRelativeTorque(math::Vector3(torque_rotor[i].x(), torque_rotor[i].y(), torque_rotor[i].z()));
-        }
-       
-    }
+           if (use_simple_aerodynamic){
+              rotor_link_ptr[i]->AddRelativeForce(math::Vector3(0, 0, di_force[i]*k_simple_aero*pow(rotor_vel[i],2)));
+              rotor_link_ptr[i]->AddRelativeTorque(math::Vector3(0, 0, di_blade_rot[i]*b_simple_aero*pow(rotor_vel[i],2)));
+           }
+           else{
+              rotor_link_ptr[i]->AddRelativeForce(math::Vector3(force_rotor[i].x(), force_rotor[i].y(), force_rotor[i].z()/ground_effect_coeff));
+              rotor_link_ptr[i]->AddRelativeTorque(math::Vector3(torque_rotor[i].x(), torque_rotor[i].y(), torque_rotor[i].z()));
+           }       
+        }       
+
+    } // end for loop
 
         //print to file
     if (write_data_2_file){
         streamDataToFile();
     }
 
-    this->SetVelocity();
+    //this->SetVelocity();
 
     // save data for csv output
     test_data[0] = rotor_vel[0]* di_vel[0];
