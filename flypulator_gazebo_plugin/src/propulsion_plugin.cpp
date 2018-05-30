@@ -46,7 +46,7 @@ namespace gazebo
 /// \brief A plugin to control drone
 class PropulsionPlugin : public ModelPlugin
 {
-  bool write_data_2_file = false; // new version with more data (contains also hub force and roll moment)
+  bool write_data_2_file = true; // new version with more data (contains also hub force and roll moment)
   bool WRITE_CSV_FILE = false; // if save the test_data to .csv
   bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
   bool use_ground_effect = false; // if enable ground effect
@@ -75,7 +75,7 @@ class PropulsionPlugin : public ModelPlugin
   double k4 = -0.655;
   double CD0 = 0.04;      //Profile_Drag_Coefficient from literatur
   double rv = 13.6 * M_PI / 180.0;     //rotor_axis_vertical_axis_angle cos(rv)=cos(pitch)*cos(yaw)
-  double m;               //drone_masse
+  double m = 6.15;               //drone_masse
   double g = 9.81;        //gravity acceleration constant
   double s;               //rotor solidity
   double Vwind_x = 1e-20; //wind velocity in global x
@@ -110,11 +110,11 @@ class PropulsionPlugin : public ModelPlugin
   std::string RESULT_CSV_PATH = "/home/jinyao/ros_ws/flypulator/result.csv";
 
 
-  std::string file_path = "/home/jan/flypulator_ws/src/flypulator/flypulator_gazebo_plugin/rotor_data.csv";
+  std::string file_path = "/home/jan/flypulator_ws/src/flypulator/flypulator_gazebo_plugin/rotor_data_v=1.csv";
 
   gazebo::physics::LinkPtr rotor_link_ptr[6]; // pointer to rotor links
 
-
+  int cnt = -1000;
 
   /// \brief Constructor
 public:
@@ -181,7 +181,9 @@ public:
     // this->readParamsFromServer();    
     
     //calculation of constants
-    m = this->link0->GetInertial()->GetMass();
+    //m = this->link0->GetInertial()->GetMass();
+    //ROS_INFO("m = %f",m);
+    //ROS_INFO("Ixx = %f, Iyy = %f, Izz = %f",this->link0->GetInertial()->GetIXX(),this->link0->GetInertial()->GetIYY(),this->link0->GetInertial()->GetIZZ());
     s = (N * c) / (PI * R);                              //rotor solidity
     A = PI * pow(R, 2);                                  //wing area
     Vi_h = - 1/B * sqrt((m * g) / (2 * N * pho * A * cos(rv))); //induced airflow velocity in hovering case // multiplied by 1/B according to Hiller eq. 4.58
@@ -343,15 +345,24 @@ public:
     Vx = Vwind_x - Vdrone_x;
     Vy = Vwind_y - Vdrone_y;
     Vz = Vwind_z - Vdrone_z;
-    Eigen::Vector3d V_airflow (Vx, Vy, Vz);
-
+    //Eigen::Vector3d V_airflow (Vx, Vy, Vz);
+    Eigen::Vector3d V_airflow (1.0,1.0,1.0);
 
 
     for (int i = 0; i < 6; i++){
+
+        rotor_vel[i] = (float) abs(cnt);
+        di_vel[i] = Sgn(cnt);
+        di_force[i] = Sgn(cnt);
+        ROS_INFO("rotor_vel = %f", rotor_vel[i]);
+        if (cnt > 1000){abort();}
+
         Eigen::Quaterniond q (msg->pose[2+i].orientation.w, msg->pose[2+i].orientation.x, msg->pose[2+i].orientation.y, msg->pose[2+i].orientation.z);
         Eigen::Matrix3d t_matrix = q.toRotationMatrix();
         Eigen::Matrix3d t_matrix_trans = t_matrix.transpose();
-        Eigen::Vector3d v_local = t_matrix_trans * V_airflow;
+        //Eigen::Vector3d v_local = t_matrix_trans * V_airflow;
+
+        Eigen::Vector3d v_local = V_airflow;
 
         // now we are in local rotor frame {R}_i
         double v_z = v_local.z();
@@ -396,11 +407,12 @@ public:
 
         // apply to uav
         if(add_wrench_to_drone){
-           rotor_link_ptr[i]->AddRelativeForce(math::Vector3(force_rotor[i].x(), force_rotor[i].y(), force_rotor[i].z()/ground_effect_coeff));
-           rotor_link_ptr[i]->AddRelativeTorque(math::Vector3(torque_rotor[i].x(), torque_rotor[i].y(), torque_rotor[i].z()));
+           //rotor_link_ptr[i]->AddRelativeForce(math::Vector3(force_rotor[i].x(), force_rotor[i].y(), force_rotor[i].z()/ground_effect_coeff));
+           //rotor_link_ptr[i]->AddRelativeTorque(math::Vector3(torque_rotor[i].x(), torque_rotor[i].y(), torque_rotor[i].z()));
         }
        
     }
+    cnt++;
 
         //print to file
     if (write_data_2_file){
