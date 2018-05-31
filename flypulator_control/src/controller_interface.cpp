@@ -26,7 +26,7 @@ ControllerInterface::ControllerInterface(){
     // calculate k_ff and z_p_ff, k_ff = Ts / (Ts + T_motor), z_p = T_motor / (Ts + T_motor)
     k_ff_ = 1/state_estimation_update_rate / (1/state_estimation_update_rate + drone_parameter_["t_motor"]);
     z_p_ff_ = drone_parameter_["t_motor"] / (1/state_estimation_update_rate + drone_parameter_["t_motor"]);
-
+    spinning_rates_last_ = Eigen::Matrix<float, 6,1>::Zero();
 
         // provide mass, inertia and gravity for controller
     float mass = (float) (drone_parameter_["mass"]);
@@ -39,12 +39,7 @@ ControllerInterface::ControllerInterface(){
 
     // precompute mapping matrix M 
     computeMappingMatrix();
-    convert_force_part_to_b_.block(3,3,3,3) << 1,0,0,
-                                                0,1,0,
-                                                0,0,1;
-    convert_force_part_to_b_.block(0,0,3,3) << 1,0,0,
-    0,1,0,
-    0,0,1;
+    convert_force_part_to_b_ = Eigen::Matrix<float, 6, 6>::Identity();
 
     // create controller object depending on desired controller type (in controller_type_, read from parameter in readDroneParameterFromServer())
     if (controller_type_.compare("ism") == 0) // controller type ISM, create object of ism class
@@ -173,5 +168,4 @@ void ControllerInterface::computeMappingMatrix(){
         map_matrix_.block(0,i,3,1) = k*e_r;   //k*e_r
         map_matrix_.block(3,i,3,1) = mom;
     }
-    std::cout << map_matrix_ << std::endl;
 }

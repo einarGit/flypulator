@@ -11,6 +11,10 @@ struct PoseVelocityAcceleration {
     Eigen::Vector3f omega;
     Eigen::Vector3f p_ddot;
     Eigen::Vector3f omega_dot;
+    // initialize to zero (except quaternion) with default constructor
+    PoseVelocityAcceleration() : p(Eigen::Vector3f(0,0,0)), q(Eigen::Quaternionf(1,0,0,0)), 
+        p_dot(Eigen::Vector3f(0,0,0)), omega(Eigen::Vector3f(0,0,0)), p_ddot(Eigen::Vector3f(0,0,0)), omega_dot(Eigen::Vector3f(0,0,0))
+        {};
     void printToROSINFO(){
         ROS_INFO("pose: \n \t x \t\t = [%f, %f, %f], \n \t x_dot \t\t = [%f, %f, %f], \n \t x_ddot \t = [%f, %f, %f], \n \t q \t\t = [%f, %f, %f, %f], \n \t omega \t\t = [%f, %f, %f], \n \t omega_dot \t = [%f, %f, %f]", 
             p.x(), p.y(), p.z(), p_dot.x(), p_dot.y(), p_dot.z(), p_ddot.x(), p_ddot.y(), p_ddot.z(), 

@@ -6,16 +6,14 @@
 
 class SlidingModeController : public BaseController {
     public: 
-        SlidingModeController(){};
-        SlidingModeController(const float mass, const Eigen::Matrix3f inertia, const float gravity){
-            // set static parameter
-            mass_ = mass;
-            inertia_ = inertia;
-            inertia_inv_ = inertia.inverse();
-            gravity_ = Eigen::Vector3f (0,0,gravity);
-            integral_T_ = Eigen::Vector3f (0,0,0);
-            integral_R_ = Eigen::Vector4f (0,0,0,0);
-        };
+        SlidingModeController(){ROS_ERROR("Sliding mode Controller, dont know why this constructor has been called");};
+        SlidingModeController(const float mass, const Eigen::Matrix3f inertia, const float gravity) : mass_(mass), inertia_(inertia), 
+                                            inertia_inv_(inertia.inverse()), gravity_(Eigen::Vector3f (0,0,gravity)), integral_T_(Eigen::Vector3f (0,0,0)),
+                                            integral_R_(Eigen::Vector4f (0,0,0,0)), control_started_(false), s_T_I_(Eigen::Vector3f(0,0,0)), u_T_I_(Eigen::Vector3f(0,0,0)),
+                                            s_R_I_(Eigen::Vector4f(0,0,0,0)), u_R_I_(Eigen::Vector3f(0,0,0))
+        
+        {};
+
         // compute Control Force and Torque
         void computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& control_force_and_torque);
 
@@ -67,6 +65,7 @@ class SlidingModeController : public BaseController {
         ros::Time t_last_;
         ros::Time t_current_;
         ros::Duration t_delta_;
+        bool control_started_;
 
         // sign function without zero (sgn(x) <0 or sgn(x) > 0, there is NO x such that sgn(x) = 0)
         float sgn(float x){if (x>= 0.0f) {return 1.0f;} else {return -1.0f;}};

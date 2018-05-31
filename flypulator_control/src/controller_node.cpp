@@ -115,7 +115,7 @@ void stateMessageCallback(const flypulator_common_msgs::UavStateStamped::ConstPt
 
     //ros::Duration duration = msg->time_from_start;
 
-    ROS_DEBUG("Received state message: x_des = [%f, %f, %f], q_des = [%f, %f, %f, %f]", g_current_pose.p.x(), g_current_pose.p.y(), g_current_pose.p.z(), 
+    ROS_DEBUG("Received state message: x_cur = [%f, %f, %f], q_cur = [%f, %f, %f, %f]", g_current_pose.p.x(), g_current_pose.p.y(), g_current_pose.p.z(), 
         g_current_pose.q.w(), g_current_pose.q.x(), g_current_pose.q.y(), g_current_pose.q.z());
     //ROS_DEBUG("    Time from start: %f s", duration.toSec());
 
@@ -152,10 +152,8 @@ int main(int argc, char **argv)
     cb = boost::bind(&BaseController::configCallback, g_drone_controller_p->getControllerReference() , _1, _2); //set callback of controller object
     dr_srv.setCallback(cb);
 
-    // set inital quaternions (default initialization zero)
-    g_desired_pose.q = Eigen::Quaternionf (1,0,0,0);
+    // set inital pose
     g_desired_pose.p = Eigen::Vector3f (0,0,0.23f);
-    g_current_pose.q = Eigen::Quaternionf (1,0,0,0);
     g_current_pose.p = Eigen::Vector3f (0,0,0.22f);
 
     ros::spin();

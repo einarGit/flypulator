@@ -26,7 +26,12 @@ void SlidingModeController::configCallback(flypulator_control::control_parameter
 void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAcceleration& x_des, const PoseVelocityAcceleration& x_current, Eigen::Matrix<float,6,1>& control_force_and_torque){
 
     ROS_DEBUG("Sliding Mode Controller calculates control force and torque..");
-
+    ROS_DEBUG("Sliding Mode Controller, desired: x_des = [%f, %f, %f], q_des = [%f, %f, %f, %f]", x_des.p.x(), x_des.p.y(), x_des.p.z(), 
+        x_des.q.w(), x_des.q.x(), x_des.q.y(), x_des.q.z());
+        ROS_DEBUG("Sliding Mode Controller, current: x_cur = [%f, %f, %f], q_cur = [%f, %f, %f, %f]", x_current.p.x(), x_current.p.y(), x_current.p.z(), 
+        x_current.q.w(), x_current.q.x(), x_current.q.y(), x_current.q.z());
+    ROS_DEBUG("Integral values are int_T = [%f,%f,%f], int_R = [%f,%f,%f,%f]", integral_T_.x(), integral_T_.y(), integral_T_.z(), integral_R_(0), integral_R_(1),
+    integral_R_(2), integral_R_(3));
     //compute force and torque
     //translational control
     z_1_T_ = x_current.p - x_des.p;
@@ -42,10 +47,12 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     t_current_ = ros::Time::now(); // get current time
     t_delta_ = t_current_ - t_last_; // calculate time difference for integral action
     t_last_ = t_current_;
-    integral_T_ = integral_T_ + 2.0f /M_PI * K_T_ * (atan(s_T_.array())).matrix() * t_delta_.toSec(); 
-    s_T_I_ = s_T_ + integral_T_;
-    u_T_I_ = - 2/M_PI * K_T_I_ * (atan(s_T_I_.array())).matrix(); 
-
+    if (control_started_) // start integral action at first message, so no integral in first run. bool is set to true in rotational below
+    {
+        integral_T_ = integral_T_ + 2.0f /M_PI * K_T_ * (atan(s_T_.array())).matrix() * t_delta_.toSec(); 
+        s_T_I_ = s_T_ + integral_T_;
+        u_T_I_ = - 2/M_PI * K_T_I_ * (atan(s_T_I_.array())).matrix(); 
+    }
     // provide output through pass by reference
     control_force_and_torque.block(0,0,3,1) = (u_T_ + u_T_I_) * mass_; // convert to force input by multiplying with mass (f=m*a)
     ROS_DEBUG(".. translational output calculated...");
@@ -103,11 +110,16 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
             inertia_*x_des.omega_dot + x_current.omega.cross(inertia_*x_current.omega);
             
     // integral sliding mode: calculate integral value
-    integral_R_ = integral_R_ + 2.0f /M_PI * K_R_ * (atan(s_R_.array())).matrix() * t_delta_.toSec(); 
-    // calculate integral sliding surface
-    s_R_I_ = s_R_ + integral_R_;
-    // calculate integral output
-    u_R_I_ = - K_R_I_ * 2.0f / M_PI * ( atan( ( 0.5f*inertia_inv_.transpose()*matrix_g_transposed_.transpose() * s_R_I_ ).array())).matrix();
+    if (control_started_){
+        integral_R_ = integral_R_ + 2.0f /M_PI * K_R_ * (atan(s_R_.array())).matrix() * t_delta_.toSec(); 
+        // calculate integral sliding surface
+        s_R_I_ = s_R_ + integral_R_;
+        // calculate integral output
+        u_R_I_ = - K_R_I_ * 2.0f / M_PI * ( atan( ( 0.5f*inertia_inv_.transpose()*matrix_g_transposed_.transpose() * s_R_I_ ).array())).matrix();
+    }
+    else{
+        control_started_ = true;
+    }
     
     // output is the sum of both rotational outputs (with and without integral action)
     control_force_and_torque.block(3,0,3,1) = u_R_ + u_R_I_; // already torque dimension
