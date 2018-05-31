@@ -42,8 +42,8 @@ class MotorModel
     double b = 1.0;
     double omega_H = 1.0;
     double Im = 1.0;
-    double k_rotor = km / (km * km + 2 * Ra * b * omega_H); // ~0.9
-    double T_rotor = Im * Ra / (km * km + 2 * Ra * b * omega_H); // ~0.045
+    double k_rotor = 1; //km / (km * km + 2 * Ra * b * omega_H); // ~0.9
+    double T_rotor = 0.1; //Im * Ra / (km * km + 2 * Ra * b * omega_H); // ~0.045
     double omega_ = 0;
 };
 
