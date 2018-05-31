@@ -39,8 +39,6 @@
 
 #include <motor_model.hpp>
 
-#define PI (M_PI) 
-
 namespace gazebo
 {
 /// \brief A plugin to control drone
@@ -186,8 +184,8 @@ public:
     
     //calculation of constants
     //m = this->link0->GetInertial()->GetMass();
-    s = (N * c) / (PI * R);                              //rotor solidity
-    A = PI * pow(R, 2);                                  //wing area
+    s = (N * c) / (M_PI * R);                              //rotor solidity
+    A = M_PI * pow(R, 2);                                  //wing area
     Vi_h = - 1/B * sqrt((m * g) / (2 * N * pho * A * cos(rv))); //induced airflow velocity in hovering case // multiplied by 1/B according to Hiller eq. 4.58
     pa = th0 - 0.75 * thtw;                              //blade pitch angle
 
@@ -308,18 +306,45 @@ public:
     }
     
     // motors dynamic
+    double rotor_vel_raw[6]; // rotor velocity with sign
     if(use_motor_dynamic){
-      rotor_vel[0] = motor1.update(rotor_vel_cmd[0], dt);
-      rotor_vel[1] = motor2.update(rotor_vel_cmd[1], dt);
-      rotor_vel[2] = motor3.update(rotor_vel_cmd[2], dt);
-      rotor_vel[3] = motor4.update(rotor_vel_cmd[3], dt);
-      rotor_vel[4] = motor5.update(rotor_vel_cmd[4], dt);
-      rotor_vel[5] = motor6.update(rotor_vel_cmd[5], dt);
+      rotor_vel_raw[0] = motor1.update(rotor_vel_cmd[0], dt);
+      rotor_vel_raw[1] = motor2.update(rotor_vel_cmd[1], dt);
+      rotor_vel_raw[2] = motor3.update(rotor_vel_cmd[2], dt);
+      rotor_vel_raw[3] = motor4.update(rotor_vel_cmd[3], dt);
+      rotor_vel_raw[4] = motor5.update(rotor_vel_cmd[4], dt);
+      rotor_vel_raw[5] = motor6.update(rotor_vel_cmd[5], dt);
     }
     else{
       for(int i=0; i<6; i++)
-        rotor_vel[i] = rotor_vel_cmd[i];
+        rotor_vel_raw[i] = rotor_vel_cmd[i];
     }
+
+  // check direction of the rotors' velocity
+  for(int i=0; i<6; i++){
+    if(bidirectional){ // use bi-direction
+      if (rotor_vel_raw[i] < 0){
+        rotor_vel[i] = -rotor_vel_raw[i];
+        di_vel[i] = -di_blade_rot[i]; //inverse rotating direction
+        di_force[i] = -1;
+      }
+      else{
+        rotor_vel[i] = rotor_vel_raw[i];
+        di_vel[i] = di_blade_rot[i]; //keep default rotating direction
+        di_force[i] = 1;
+      }
+    }
+    else{ // use uni-direction
+    
+      if (rotor_vel_raw[i] < 0)
+        rotor_vel[i] = 0;
+      else
+        rotor_vel[i] = rotor_vel_raw[i];
+
+      di_vel[i] = di_blade_rot[i];
+      di_force[i] = 1;
+    }
+  }
 
     // clamp rotors angular velocity
     for(int i=0; i<6; i++)
@@ -485,50 +510,10 @@ public:
     }
 
     for (int i = 0; i < 6; i++)
-    {
-        //TODO: di_vel and di_force should change after motor dynamic, not here
-      if (bidirectional) //bi-directional rotors
-      {
-          if (_msg->velocity[i] < 0)
-          {
-            rotor_vel_cmd[i] = abs(_msg->velocity[i]);
-            di_vel[i] = -di_blade_rot[i]; //inverse rotating direction
-            di_force[i] = -1;
-          }
-          else
-          {
             rotor_vel_cmd[i] = _msg->velocity[i];
-            di_vel[i] = di_blade_rot[i]; //keep default rotating direction
-            di_force[i] = 1;
-          }
-      } else
-      {
-          if (_msg->velocity[i] < 0)
-          {
-            rotor_vel_cmd[i] = 0; //lower boundary
-          }
-          else
-          {
-            rotor_vel_cmd[i] = _msg->velocity[i];
-          }
-          di_vel[i] = di_blade_rot[i];
-          di_force[i] = 1;
-      }
 
-    }
-    
     // ROS_INFO_STREAM("aero:"<<_msg->velocity[0]<<","<<_msg->velocity[1]<<","<<_msg->velocity[2]<<","<<_msg->velocity[3]<<","<<_msg->velocity[4]<<","<<_msg->velocity[5]);
     // ROS_INFO_STREAM("aero:"<<rotor_vel[0]<<","<<rotor_vel[1]<<","<<rotor_vel[2]<<","<<rotor_vel[3]<<","<<rotor_vel[4]<<","<<rotor_vel[5]);
-    // static double vel_temp = 100;
-    // for (int i=0; i<6; i++)
-    // {
-    //   rotor_vel[i] = vel_temp;
-    //   di_vel[i] = di_blade_rot[i];
-    //   di_force[i] = 1;
-    // }
-    // vel_temp += 10;
-    // if(vel_temp > 2500)
-    //   vel_temp = 2500;
   }    
     
 private:
