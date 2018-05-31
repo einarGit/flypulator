@@ -65,6 +65,11 @@ The control parameters can be changed via runtime using the [dynamic_reconfigure
 
 The new values are passed to the controller, which also can be watched in console output. Note that the parameters are for an ISM controller; to support additional controllers, they need to implement the BaseController interface/abstract class and the file `control_parameter.cfg` needs to be adapted as well as the ControllerInterface class, where the new controller type has to be registered.
 
+The debug level can be changed in a GUI by running
+
+` rosrun rqt_logger_level rqt_logger_level ` or simply ` rqt_logger_level`
+
+
 ### Structure
 
 The trajectory generator publishes [MultiDOFJointTrajectoryPoint Messages](http://docs.ros.org/jade/api/trajectory_msgs/html/msg/MultiDOFJointTrajectoryPoint.html) to the topic 
