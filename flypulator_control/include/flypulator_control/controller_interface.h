@@ -57,10 +57,10 @@ class ControllerInterface {
         Eigen::Matrix<float, 6, 6> convert_force_part_to_b_;
         // inverse of mapping matrix
         Eigen::Matrix<float, 6, 6> map_matrix_inverse_b_;
-        // spinning rates of last calculation, auto zero initialization
-        Eigen::Matrix<float, 6, 1> spinning_rates_last_;
         // spinning rates of current calculation,
         Eigen::Matrix<float, 6, 1> spinning_rates_current_;
+        // spinning rates of last calculation
+        Eigen::Matrix<float, 6, 1> spinning_rates_last_;
         // feedforward control parameters, set in constructor
         float k_ff_;
         float z_p_ff_;

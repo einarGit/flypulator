@@ -132,12 +132,14 @@ void ControllerInterface::motorFeedForwardControl(Eigen::Matrix<float,6,1>& spin
     for (int i = 0; i<6; i++){
         if (use_motor_ff_control_)
         {
-            spinning_rates_current_(i,0) = z_p_ff_* spinning_rates_last_(i,0) + k_ff_ * spinning_rates_current_(i,0);
+            spinning_rates(i,0) = 1/k_ff_ * spinning_rates_current_(i,0) - z_p_ff_/k_ff_ * spinning_rates_last_(i,0);
+        } 
+        else{
+            // save to output variable
+            spinning_rates(i,0) = spinning_rates_current_(i,0);
         }
-        // save spinning rates in both cases for probable future dynamic reconfigure of feedforward control
+         // save spinning rates in both cases for probable future dynamic reconfigure of feedforward control
         spinning_rates_last_(i,0) = spinning_rates_current_(i,0); // save last value
-        // save to output variable
-        spinning_rates(i,0) = spinning_rates_current_(i,0);
     }
 }
 

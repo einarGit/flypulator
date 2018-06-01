@@ -49,7 +49,7 @@ class PropulsionPlugin : public ModelPlugin
   bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
   bool use_ground_effect = false; // if enable ground effect
   bool use_motor_dynamic = true; // if enable motor dynamic
-  bool use_simple_aerodynamic = false; // use f=k*omega² and tau = b * omega²
+  bool use_simple_aerodynamic = false; // use f=k*omega² and tau = b * omega² // care, aerodynamic k and b have to be adapted in controller as well!
 
   double test_data[12]; // test data for debug
   double ground_effect_coeff; // ground effect coefficient
@@ -683,7 +683,7 @@ private:
         result_file.precision(5);
         result_file << this->model->GetWorld()->GetSimTime().Double() << ",";
         for (int i = 0; i<6; i++){
-          result_file << "rotor" << i << "," << rotor_vel[i]* di_vel[i] << ","
+          result_file << "rotor" << i << "," << rotor_vel[i]* rotor_vel_raw[i] << ","
                       << force_rotor[i].x() << "," 
                       << force_rotor[i].y() << "," 
                       << force_rotor[i].z() << ","
