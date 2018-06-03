@@ -1,0 +1,4 @@
+state/three_sigma_p: 0 # [m] three sigma value for position measurement noise (gaussian)
+state/three_sigma_v: 0 # [m/s] three sigma value for velocity measurement noise (gaussian)
+state/three_sigma_phi: 0 # [°] three sigma value for attitude measurement noise (gaussian)
+state/three_sigma_omega: 0 # [rad/s] three sigma value for angular velocity measurement noise (gaussian)
