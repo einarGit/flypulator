@@ -6,11 +6,12 @@ uav/alpha: 13.6 # [°]
 uav/beta: 0 # [°]
 uav/delta_h: 0 # [m]
 uav/length: 0.6 # [m]
-uav/k: 0.0138 # [N/(rad/s)²] , f=k*omega_i² 0.0138 0.000057
-uav/b: 0.00022 # [Nm/(rad/s)²] , tau = b * omega_i² 0.00022  0.0000012
+uav/k: 0.000057 # [N/(rad/s)²] , f=k*omega_i² 0.0138 0.000057
+uav/b: 0.0000012 # [Nm/(rad/s)²] , tau = b * omega_i² 0.00022  0.0000012
 uav/gravity: 9.81 # [m/s²]
 uav/t_motor: 0.11 # [s] motor PT1 time constant 
 controller/type: "ism" #controller type, "ism" for integral sliding mode
+controller/use_motor_ff: true # enable or disable feedforward motor control
 trajectory/update_rate: 100 # update rate for trajectory generator
 state/update_rate: 100 # update rate of state estimation, for motor feedforward
-controller/use_motor_ff: true # enable or disable feedforward motor control
+

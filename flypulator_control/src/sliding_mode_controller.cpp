@@ -32,6 +32,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
         x_current.q.w(), x_current.q.x(), x_current.q.y(), x_current.q.z());
     ROS_DEBUG("Integral values are int_T = [%f,%f,%f], int_R = [%f,%f,%f,%f]", integral_T_.x(), integral_T_.y(), integral_T_.z(), integral_R_(0), integral_R_(1),
     integral_R_(2), integral_R_(3));
+    ROS_DEBUG("omega = [%f,%f,%f], omega_des = [%f,%f,%f]", x_current.omega.x(), x_current.omega.y(),x_current.omega.z(),x_des.omega.x(), x_des.omega.y(), x_des.omega.z());
     //compute force and torque
     //translational control
     z_1_T_ = x_current.p - x_des.p;
@@ -41,7 +42,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     s_T_ = z_2_T_ + lambda_T_ * z_1_T_;
 
     // calculate translational output, take elementwise arctan with .array() and convert back with .matrix()
-    u_T_ = - lambda_T_ * z_2_T_ + gravity_ + x_des.p_ddot - 2.0f/M_PI * K_T_ * (atan(s_T_.array())).matrix(); 
+    u_T_ = mass_ * ( -lambda_T_ * z_2_T_ + gravity_ + x_des.p_ddot - 2.0f/M_PI * K_T_ * (atan(s_T_.array())).matrix() ); 
     
     // integral sliding mode: suppose zero intial conditions (?)
     t_current_ = ros::Time::now(); // get current time
@@ -54,7 +55,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
         u_T_I_ = - 2/M_PI * K_T_I_ * (atan(s_T_I_.array())).matrix(); 
     }
     // provide output through pass by reference
-    control_force_and_torque.block(0,0,3,1) = (u_T_ + u_T_I_) * mass_; // convert to force input by multiplying with mass (f=m*a)
+    control_force_and_torque.block(0,0,3,1) = u_T_ + u_T_I_;  // convert to force input by multiplying with mass (f=m*a)
     ROS_DEBUG(".. translational output calculated...");
     ROS_DEBUG("u_T = [%f, %f, %f], u_T_I = {%f, %f, %f]", u_T_.x(), u_T_.y(), u_T_.z(), u_T_I_.x(), u_T_I_.y(), u_T_I_.z());
     
@@ -93,7 +94,9 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
 
     // calculate first derivative of error quaternion 
     eta_dot_err_ = -0.5f * (eps_err_).dot(omega_err_);
-    eps_dot_err_ = matrix_g_transposed_.block(1,0,3,3) * omega_err_;
+    eps_dot_err_ = 0.5f * matrix_g_transposed_.block(1,0,3,3) * omega_err_;
+
+    ROS_DEBUG("eta_dot_err_ = %f, eps_dot_err_ = [%f,%f,%f]", eta_dot_err_, eps_dot_err_.x(), eps_dot_err_.y(), eps_dot_err_.z());
 
     // calculate matrix G_dot_T (T.. transposed, means 4x3)
     matrix_g_dot_transposed_.row(0) << sgn(eta_err_)*eps_dot_err_.x(), sgn(eta_err_)*eps_dot_err_.y(), sgn(eta_err_)*eps_dot_err_.z();
@@ -103,6 +106,7 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     
     // calculate sliding surface s
     s_R_ = z_2_R_ + lambda_R_ * z_1_R_;
+    ROS_DEBUG("s_R_ = [%f,%f,%f,%f]", s_R_(0), s_R_(1), s_R_(2), s_R_(3));
 
     // calculate output
     u_R_ = - inertia_*matrix_g_transposed_.transpose()* 
@@ -124,5 +128,5 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     // output is the sum of both rotational outputs (with and without integral action)
     control_force_and_torque.block(3,0,3,1) = u_R_ + u_R_I_; // already torque dimension
     ROS_DEBUG("..rotational output calculated! ");
-    ROS_DEBUG("u_R =[%f, %f, %f], u_R_I = {%f, %f, %f]", u_R_.x(), u_R_.y(), u_R_.z(), u_R_I_.x(), u_R_I_.y(), u_R_I_.z());
+    ROS_DEBUG("u_R =[%f, %f, %f], u_R_I = [%f, %f, %f]", u_R_.x(), u_R_.y(), u_R_.z(), u_R_I_.x(), u_R_I_.y(), u_R_I_.z());
 };

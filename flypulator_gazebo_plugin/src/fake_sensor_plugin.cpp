@@ -20,10 +20,49 @@
 
 #include <flypulator_common_msgs/UavStateStamped.h>
 
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/seed_seq.hpp>
+
 #define PI (M_PI)
 
 namespace gazebo
 {
+
+   int g_output_rate_divider = 10; // output rate = 1000Hz/ouput_rate_divider
+
+   float g_sigma_p = 0;//1 / 3.0f;
+   float g_sigma_v = 0; //sqrt(2)*g_sigma_p/(g_output_rate_divider/1000) / 3.0f;
+   float g_sigma_phi = 0;//M_PI / 180.0f * 1 / 3.0f;
+   float g_sigma_omega = 0;//sqrt(2)*g_sigma_phi/(g_output_rate_divider/1000) / 3.0f;
+   //https://stackoverflow.com/questions/25193991/how-to-initialize-boostmt19937-with-multiple-values-without-using-c11
+   boost::random::seed_seq seed_x ({1ul, 2ul, 3ul, 4ul});
+   boost::random::seed_seq seed_y ({5ul, 6ul, 7ul, 8ul});
+   boost::random::seed_seq seed_z ({9ul, 10ul, 11ul, 12ul});
+   boost::random::seed_seq seed_v_x ({13ul, 14ul, 15ul, 16ul});
+   boost::random::seed_seq seed_v_y ({17ul, 18ul, 19ul, 20ul});
+   boost::random::seed_seq seed_v_z ({21ul, 22ul, 23ul, 24ul});
+   boost::random::seed_seq seed_roll ({25ul, 26ul, 27ul, 28ul});
+   boost::random::seed_seq seed_pitch ({29ul, 30ul, 31ul, 32ul});
+   boost::random::seed_seq seed_yaw ({33ul, 34ul, 35ul, 36ul});
+   boost::random::seed_seq seed_om_x ({37ul, 38ul, 39ul, 40ul});
+   boost::random::seed_seq seed_om_y ({41ul, 42ul, 43ul, 44ul});
+   boost::random::seed_seq seed_om_z ({45ul, 46ul, 47ul, 48ul});
+
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_x (boost::mt19937(seed_x), boost::normal_distribution<>(0,g_sigma_p));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_y (boost::mt19937(seed_y), boost::normal_distribution<>(0,g_sigma_p));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_z (boost::mt19937(seed_z), boost::normal_distribution<>(0,g_sigma_p));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_v_x (boost::mt19937(seed_v_x), boost::normal_distribution<>(0,g_sigma_v));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_v_y (boost::mt19937(seed_v_y), boost::normal_distribution<>(0,g_sigma_v));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_v_z (boost::mt19937(seed_v_z), boost::normal_distribution<>(0,g_sigma_v));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_roll (boost::mt19937(seed_roll), boost::normal_distribution<>(0,g_sigma_phi));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_pitch (boost::mt19937(seed_pitch), boost::normal_distribution<>(0,g_sigma_phi));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_yaw (boost::mt19937(seed_yaw), boost::normal_distribution<>(0,g_sigma_phi));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_om_x (boost::mt19937(seed_om_x), boost::normal_distribution<>(0,g_sigma_omega));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_om_y (boost::mt19937(seed_om_y), boost::normal_distribution<>(0,g_sigma_omega));
+   boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_om_z (boost::mt19937(seed_om_z), boost::normal_distribution<>(0,g_sigma_omega));
+
 
 class FakeSensorPlugin : public ModelPlugin
 {
@@ -46,6 +85,44 @@ public:
     this->world = _model->GetWorld();
 
     this->link0 = _model->GetChildLink("base_link");
+
+    float three_sigma_p = 0;
+    float three_sigma_v = 0;
+    float three_sigma_phi = 0;
+    float three_sigma_omega = 0;
+    // take noise values from parameter server
+    // and change distributions if value read from file
+    // https://stackoverflow.com/questions/36289180/boostrandomvariate-generator-change-parameters-after-construction
+    if (ros::param::get("state/three_sigma_p", three_sigma_p)){
+        ROS_DEBUG("Three_sigma_p load successfully from parameter server");
+        boost::normal_distribution<> new_dist ( 0, three_sigma_p / 3.0f );
+        g_noise_generator_x.distribution() = new_dist;
+        g_noise_generator_y.distribution() = new_dist;
+        g_noise_generator_z.distribution() = new_dist;
+    } 
+    if (ros::param::get("state/three_sigma_v", three_sigma_v)){
+        ROS_DEBUG("Three_sigma_v load successfully from parameter server");
+        boost::normal_distribution<> new_dist ( 0, three_sigma_v / 3.0f );
+        g_noise_generator_v_x.distribution() = new_dist;
+        g_noise_generator_v_y.distribution() = new_dist;
+        g_noise_generator_v_z.distribution() = new_dist;
+    } 
+    if (ros::param::get("state/three_sigma_phi", three_sigma_phi)){
+        ROS_DEBUG("Three_sigma_phi load successfully from parameter server");
+        boost::normal_distribution<> new_dist ( 0, three_sigma_phi * M_PI/180.0f / 3.0f );
+        g_noise_generator_roll.distribution() = new_dist;
+        g_noise_generator_pitch.distribution() = new_dist;
+        g_noise_generator_yaw.distribution() = new_dist;
+    } 
+    if (ros::param::get("state/three_sigma_omega", three_sigma_omega)){
+        ROS_DEBUG("Three_sigma_omega load successfully from parameter server");
+        boost::normal_distribution<> new_dist ( 0, three_sigma_omega * M_PI/180.0f / 3.0f );
+        g_noise_generator_om_x.distribution() = new_dist;
+        g_noise_generator_om_y.distribution() = new_dist;
+        g_noise_generator_om_z.distribution() = new_dist;
+    } 
+
+    
  
     // Initialize ros, if it has not already bee initialized.
     if (!ros::isInitialized())
@@ -84,7 +161,7 @@ public:
   {
     static int loop_cnt = 0;
 
-    if(loop_cnt >= (ouput_rate_divider-1))
+    if(loop_cnt >= (g_output_rate_divider-1))
     {
       loop_cnt = 0; // reset loop counter
       // ROS_INFO_STREAM("I am fake sensor:"<<this->world->GetSimTime().Double());
@@ -118,13 +195,49 @@ public:
       uav_state_msg.acceleration.angular.x = drone_acc_angular.x;
       uav_state_msg.acceleration.angular.y = drone_acc_angular.y;
       uav_state_msg.acceleration.angular.z = drone_acc_angular.z;
+
+      //ROS_INFO("x noise = %f ", g_noise_generator_x());
+      // ROS_INFO("y noise = %f ", g_noise_generator_y());
+
+      flypulator_common_msgs::UavStateStamped uav_state_meas_msg;
+      // pose
+      uav_state_meas_msg.pose.position.x = drone_pose.pos.x + g_noise_generator_x();
+      uav_state_meas_msg.pose.position.y = drone_pose.pos.y + g_noise_generator_y();
+      uav_state_meas_msg.pose.position.z = drone_pose.pos.z + g_noise_generator_z();
+
+      // add attitude noise using roll pitch yaw representation
+      math::Vector3 eul (drone_pose.rot.GetRoll(), drone_pose.rot.GetPitch(), drone_pose.rot.GetYaw());
+      eul.x = eul.x + g_noise_generator_roll();
+      eul.y = eul.y + g_noise_generator_pitch();
+      eul.z = eul.z + g_noise_generator_yaw();
+      math::Quaternion q_n (eul);
+      uav_state_meas_msg.pose.orientation.w = q_n.w;
+      uav_state_meas_msg.pose.orientation.x = q_n.x;
+      uav_state_meas_msg.pose.orientation.y = q_n.y;
+      uav_state_meas_msg.pose.orientation.z = q_n.z;
+
+      // velocity
+      uav_state_meas_msg.velocity.linear.x = drone_vel_linear.x + g_noise_generator_v_x();
+      uav_state_meas_msg.velocity.linear.y = drone_vel_linear.y + g_noise_generator_v_y();
+      uav_state_meas_msg.velocity.linear.z = drone_vel_linear.z + g_noise_generator_v_z();
+      uav_state_meas_msg.velocity.angular.x = drone_vel_angular.x + g_noise_generator_om_x();
+      uav_state_meas_msg.velocity.angular.y = drone_vel_angular.y + g_noise_generator_om_y();
+      uav_state_meas_msg.velocity.angular.z = drone_vel_angular.z + g_noise_generator_om_z();
+      // acceleration // still very noisy
+      uav_state_meas_msg.acceleration.linear.x = drone_acc_linear.x;
+      uav_state_meas_msg.acceleration.linear.y = drone_acc_linear.y;
+      uav_state_meas_msg.acceleration.linear.z = drone_acc_linear.z;
+      uav_state_meas_msg.acceleration.angular.x = drone_acc_angular.x;
+      uav_state_meas_msg.acceleration.angular.y = drone_acc_angular.y;
+      uav_state_meas_msg.acceleration.angular.z = drone_acc_angular.z;
+
+      uav_state_meas_msg.header.stamp = ros::Time(this->world->GetSimTime().Double());
     
       // publish real states of the simulated drone
       pub_real_state.publish(uav_state_msg);
   
       // publish measured states of the simulated drone
-      // TODO: add artifical noise to measured states
-      pub_meas_state.publish(uav_state_msg);
+      pub_meas_state.publish(uav_state_meas_msg);
     }
     else
       loop_cnt++;
@@ -169,7 +282,6 @@ private:
   ros::Publisher pub_real_state;
   ros::Publisher pub_meas_state;
 
-  int ouput_rate_divider = 10; // output rate = 1000Hz/ouput_rate_divider
 };
 
 // Tell Gazebo about this plugin, so that Gazebo can call Load on this plugin.

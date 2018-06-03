@@ -49,7 +49,7 @@ class PropulsionPlugin : public ModelPlugin
   bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
   bool use_ground_effect = false; // if enable ground effect
   bool use_motor_dynamic = true; // if enable motor dynamic
-  bool use_simple_aerodynamic = false; // use f=k*omega² and tau = b * omega² // care, aerodynamic k and b have to be adapted in controller as well!
+  bool use_simple_aerodynamic = true; // use f=k*omega² and tau = b * omega² // care, aerodynamic k and b have to be adapted in controller as well!
 
   double test_data[12]; // test data for debug
   double ground_effect_coeff; // ground effect coefficient
@@ -91,6 +91,7 @@ class PropulsionPlugin : public ModelPlugin
   double k_simple_aero = 0.000055;
   double b_simple_aero = 0.0000011;
 
+  double rotor_vel_raw[6] = {0};  // rotor velocity with sign, used for motor dynamic
   double rotor_vel_cmd[6] = {0};               // blade spinning velocity commands
   double rotor_vel[6] = {0};                   // blade spinning velocity
   int di_blade_rot[6] = {1, -1, 1, -1, 1, -1}; //default blade rotating direction 1 counterclockwise; -1 clockwise
@@ -306,7 +307,6 @@ public:
     }
     
     // motors dynamic
-    double rotor_vel_raw[6]; // rotor velocity with sign
     if(use_motor_dynamic){
       rotor_vel_raw[0] = motor1.update(rotor_vel_cmd[0], dt);
       rotor_vel_raw[1] = motor2.update(rotor_vel_cmd[1], dt);

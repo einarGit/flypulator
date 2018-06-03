@@ -40,84 +40,15 @@ data1['vel6'] = data1['vel6']
 
 # show path
 plt.figure(1)
-plt.scatter(data1['vel1']**2,data1['f_z_1'], marker='x', label='motor1')
-plt.scatter(data1['vel2']**2,data1['f_z_2'], marker='+', label='motor2')
-plt.scatter(data1['vel3']**2,data1['f_z_3'], marker='x', label='motor3')
-plt.scatter(data1['vel4']**2,data1['f_z_4'], marker='+', label='motor4')
-plt.scatter(data1['vel5']**2,data1['f_z_5'], marker='x', label='motor5')
-plt.scatter(data1['vel6']**2,data1['f_z_6'], marker='+', label='motor6')
-plt.xlabel('vel_sq')
+plt.plot(data1['time'],data1['vel1'], label='motor1')
+plt.plot(data1['time'],data1['vel2'], label='motor1')
+plt.xlabel('time')
 plt.ticklabel_format(axis='x', style='sci', scilimits=(-2,2))
-plt.ylabel('force')
+plt.ylabel('omega')
 plt.grid()
 plt.legend(loc='best', shadow=False)
 
-plt.figure(2)
-plt.scatter(data1['vel1']**2,data1['tau_z_1'], marker='x', label='motor1')
-plt.scatter(data1['vel2']**2,data1['tau_z_2'], marker='+', label='motor2')
-plt.scatter(data1['vel3']**2,data1['tau_z_3'], marker='x', label='motor3')
-plt.scatter(data1['vel4']**2,data1['tau_z_4'], marker='+', label='motor4')
-plt.scatter(data1['vel5']**2,data1['tau_z_5'], marker='x', label='motor5')
-plt.scatter(data1['vel6']**2,data1['tau_z_6'], marker='+', label='motor6')
-plt.xlabel('vel_sq')
-plt.ticklabel_format(axis='x', style='sci', scilimits=(-2,2))
-plt.ylabel('torque')
-plt.grid()
-plt.legend(loc='best', shadow=False)
 
-plt.figure(3)
-for i in range(0, 5):
-    plt.plot(data1['time']**2,data1['f_z_'+str(i+1)], label='f_z_'+str(i+1))
-plt.xlabel('time')
-#plt.ticklabel_format(axis='x', style='sci', scilimits=(-2,2))
-plt.ylabel('f_z')
-plt.grid()
-plt.legend(loc='best', shadow=False)
-
-plt.figure(4)
-for i in range(0, 5):
-    plt.plot(data1['time']**2,data1['f_x_'+str(i+1)], label='f_x_'+str(i+1))
-plt.xlabel('time')
-#plt.ticklabel_format(axis='x', style='sci', scilimits=(-2,2))
-plt.ylabel('f_x')
-plt.grid()
-plt.legend(loc='best', shadow=False)
-
-plt.figure(5)
-for i in range(0, 5):
-    plt.plot(data1['time']**2,data1['f_y_'+str(i+1)], label='f_y_'+str(i+1))
-plt.xlabel('time')
-#plt.ticklabel_format(axis='x', style='sci', scilimits=(-2,2))
-plt.ylabel('f_y')
-plt.grid()
-plt.legend(loc='best', shadow=False)
-
-plt.figure(6)
-for i in range(0, 5):
-    plt.plot(data1['time']**2,data1['tau_x_'+str(i+1)], label='tau_x_'+str(i+1))
-plt.xlabel('time')
-#plt.ticklabel_format(axis='x', style='sci', scilimits=(-2,2))
-plt.ylabel('tau_x')
-plt.grid()
-plt.legend(loc='best', shadow=False)
-
-plt.figure(7)
-for i in range(0, 5):
-    plt.plot(data1['time']**2,data1['tau_y_'+str(i+1)], label='tau_y_'+str(i+1))
-plt.xlabel('time')
-#plt.ticklabel_format(axis='x', style='sci', scilimits=(-2,2))
-plt.ylabel('tau_y')
-plt.grid()
-plt.legend(loc='best', shadow=False)
-
-plt.figure(8)
-for i in range(0, 5):
-    plt.plot(data1['time']**2,data1['tau_z_'+str(i+1)], label='tau_z_'+str(i+1))
-plt.xlabel('time')
-#plt.ticklabel_format(axis='x', style='sci', scilimits=(-2,2))
-plt.ylabel('tau_z')
-plt.grid()
-plt.legend(loc='best', shadow=False)
 
 plt.show()
 

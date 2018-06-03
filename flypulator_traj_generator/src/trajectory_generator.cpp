@@ -132,7 +132,8 @@ void TrajectoryGenerator::euler2Quaternion(const float roll, const float pitch, 
     Eigen::AngleAxisf pitchAngle (pitch, Eigen::Vector3f::UnitY());
     Eigen::AngleAxisf yawAngle (yaw, Eigen::Vector3f::UnitZ());
 
-    q = yawAngle * pitchAngle * rollAngle;
+    //q = yawAngle * pitchAngle * rollAngle; // fixed axes
+    q = rollAngle * pitchAngle * yawAngle; // consecutive axes
 }
 
 // calculate angular velocity from euler angles and its derivatives, following Fje94 p.42

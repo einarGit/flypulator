@@ -2,6 +2,7 @@
 <launch>
  <!-- <param name="robot_description" textfile="$(find flypulator_description)/urdf/drone.urdf" /> -->
  <!-- <param name="robot_description" command="cat $(find flypulator_description)/urdf/drone.xml" /> -->
+ <rosparam command="load" file="$(find flypulator_description)/param/state_estimation_param.yaml" />
 
  <arg name="model" default="$(find flypulator_description)/urdf/hexarotor_igs.urdf"/>
 
