@@ -5,10 +5,11 @@ PS: merge the develop branch to master only after validation.
 ## Gazebo simulation
 
 ### Launch:  
-roslaunch flypulator gazebo.launch
+` roslaunch flypulator gazebo.launch ` 
+includes aerodynamics, fake sensor plugin & parameters.
 
 ### Check tf in rviz: 
-roslaunch flypulator_description igs.launch
+roslaunch flypulator_description display.launch
 
 ## Trajectory Generator and Controller
 The controller package (flypulator_control) provides a sliding mode controller for a fully actuated hexarotor. 
@@ -75,8 +76,9 @@ The debug level can be changed in a GUI by running
 The trajectory generator publishes [MultiDOFJointTrajectoryPoint Messages](http://docs.ros.org/jade/api/trajectory_msgs/html/msg/MultiDOFJointTrajectoryPoint.html) to the topic 
 "/trajectory". The controller suscribes to this topic, and to state estimation messages (*UavStateStamped.msg* from `flypulator_common_msgs`). Every time the controller gets a state estimation message, the control output is calculated using the latest available desired pose. The calculated spinning velocities are published on topic `rotor_cmd` using a *RotorVelStamped* - message from package `flypulator_common_msgs`.
 For further information, consider the corresponding diploma thesis, chapter 6.
+The motors feedforward control requires the sampling time of the state estimation as parameter, which must be on ros parameter server as `state_estimation/sampling_time`. This is included in launchfile `gazebo.launch`.
 
 ### Code
 
-The code style follows the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). Hence, class member variables have a underscore at the end (e.g. `variable1_`). Global variables have a leading `g_` prefix (e.g. `g_variable2`). For performance reasons, all functions which are called frequently do not return values, but get a reference on the output passed as argument, so the result can be stored in this reference.
+The code style follows the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). Hence, class member variables have a underscore suffix (e.g. `variable1_`). Global variables have a leading `g_` prefix (e.g. `g_variable2`). For performance reasons, functions which are called frequently do not return values, but get a reference on the output passed as argument, so the result can be stored in this reference. This is a commonly used principle in C++.
 
