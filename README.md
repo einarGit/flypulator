@@ -20,6 +20,7 @@ From [gazebosim.org](http://gazebosim.org/tutorials?cat=guided_b&tut=guided_b1):
    - Nvidia cards tend to work well in Ubuntu
  - A CPU that is at least an Intel I5, or equivalent,
  - At least 500MB of free disk space
+ - Ubuntu Trusty or later installed.
 
 ### Install ROS and Gazebo
 To install ROS Kinetic, follow the instructions of [Ros Wiki](http://wiki.ros.org/kinetic/Installation). It is highly recommended to use Ubuntu 16.04 64Bit. Choose to install full version of ROS (for Ubuntu, [Step 1.4: sudo apt-get install ros-kinetic-desktop-full](http://wiki.ros.org/kinetic/Installation/Ubuntu#Installation-1)). Gazebo 7 is already included in this package.
