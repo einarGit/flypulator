@@ -2,17 +2,7 @@ PS: merge the develop branch to master only after validation.
 
 # Flypulator Project
 
-## Gazebo simulation
-
-### Launch:  
-` roslaunch flypulator gazebo.launch ` 
-includes aerodynamics, fake sensor plugin & parameters.
-
-### Check tf in rviz: 
-roslaunch flypulator_description display.launch
-
-## Trajectory Generator and Controller
-The controller package (flypulator_control) provides a sliding mode controller for a fully actuated hexarotor. 
+## Prerequisites
 
 ### System requirements
 From [gazebosim.org](http://gazebosim.org/tutorials?cat=guided_b&tut=guided_b1):
@@ -38,9 +28,19 @@ Dont forget sourcing the setup.bash file:
 ```
 source ~/catkin_ws/devel/setup.bash
 ```
-To do sourcing permanently, edit the .bashrc file with `gedit ~/.bashrc` and add the source command from above (`source ~/catkin_ws/devel/setup.bash`). *Note that you have to start a new terminal to apply the changes*. You can check if it has worked by trying to locate your package using `rospack find flypulator_control`.
+To do sourcing permanently, edit the .bashrc file with `gedit ~/.bashrc` and add the source command from above (`source ~/catkin_ws/devel/setup.bash`). *Note that you have to start a new terminal to apply the changes*. You can check if it has worked by trying to locate a package using `rospack find flypulator_control`.
 
-So by now, the packages are located at `~/catkin_ws/src/flypulator/flypulator_traj_generator` and `~/catkin_ws/src/flypulator/flypulator_control`.
+## Gazebo simulation
+
+### Launch:  
+` roslaunch flypulator gazebo.launch ` 
+includes aerodynamics, fake sensor plugin & parameters.
+
+### Check tf in rviz: 
+roslaunch flypulator_description display.launch
+
+## Trajectory Generator and Controller
+The controller package (flypulator_control) provides a sliding mode controller for a fully actuated hexarotor. By now, the packages are located at `~/catkin_ws/src/flypulator/flypulator_traj_generator` and `~/catkin_ws/src/flypulator/flypulator_control`.
 
 ### Start
 The *rosrun* command works as follows: `rosrun <package> <node>`
