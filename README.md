@@ -14,8 +14,18 @@ roslaunch flypulator_description display.launch
 ## Trajectory Generator and Controller
 The controller package (flypulator_control) provides a sliding mode controller for a fully actuated hexarotor. 
 
+### System requirements
+From [gazebosim.org](http://gazebosim.org/tutorials?cat=guided_b&tut=guided_b1):
+ - A dedicated GPU,
+   - Nvidia cards tend to work well in Ubuntu
+ - A CPU that is at least an Intel I5, or equivalent,
+ - At least 500MB of free disk space
+
+### Install ROS and Gazebo
+To install ROS Kinetic, follow the instructions of [Ros Wiki](http://wiki.ros.org/kinetic/Installation). It is highly recommended to use Ubuntu 16.04 64Bit. Choose to install full version of ROS (for Ubuntu, [Step 1.4: sudo apt-get install ros-kinetic-desktop-full](http://wiki.ros.org/kinetic/Installation/Ubuntu#Installation-1)). Gazebo 7 is already included in this package.
+
 ### Build
-The content of this repository must be cloned into the `/src` folder of a catkin workspace. For example, an existing workspace in `~/catkin_ws` requires the following steps (in a new terminal):
+The content of this repository must be cloned into the `/src` folder of a catkin workspace ([how to create an empty workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace)). For an existing workspace in `~/catkin_ws` that requires the following steps (in a new terminal):
 
 ```
 cd ~/catkin_ws/src/
@@ -86,4 +96,4 @@ The code style follows the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGui
 
  - Sometimes gazebo fails to start. Just exit and start again
  - If `catkin_make` does not succeed because some header files are missing, just run it twice.
- - Sometimes the drone model is not loaded correctly and there are errors in console. Try log out and log in (Linux) or delete `/build` and `/devel` folder in `~/flypulator_ws/` and rerun `catkin_make`.
+ - Sometimes the drone model is not loaded correctly and there are errors in console. Try log out and log in (Linux) or delete `/build` and `/devel` folder in `~/catkin_ws/` and rerun `catkin_make`.
