@@ -17,16 +17,16 @@ ControllerInterface::ControllerInterface(){
     ROS_DEBUG("use_motor_ff_control_ = %s",use_motor_ff_control_ ? "true" : "false");
 
     // read state estimation update rate, also do if boolean false to allow future dynamic reconfiguring of boolean
-    float state_estimation_update_rate = 10.0f;
-    if (ros::param::get("/state/update_rate", state_estimation_update_rate)){
-        ROS_DEBUG("State estimation update rate load successfully from parameter server, rate = %f", state_estimation_update_rate);
+    float state_estimation_sampling_time = 0.01f;
+    if (ros::param::get("state_estimation/sampling_time", state_estimation_sampling_time)){
+        ROS_DEBUG("State estimation sampling time load successfully from parameter server, sampling time = %f", state_estimation_sampling_time);
     } else
     {
-        ROS_INFO("State estimation update rate load from parameter server failed, take default value 10 Hz");
+        ROS_WARN("State estimation sampling time load from parameter server failed, no parameter found on <state_estimation/sampling_time>, take default value 10ms");
     }
     // calculate k_ff and z_p_ff, k_ff = Ts / (Ts + T_motor), z_p = T_motor / (Ts + T_motor)
-    k_ff_ = 1/state_estimation_update_rate / (1/state_estimation_update_rate + drone_parameter_["t_motor"]);
-    z_p_ff_ = drone_parameter_["t_motor"] / (1/state_estimation_update_rate + drone_parameter_["t_motor"]);
+    k_ff_ = state_estimation_sampling_time / (state_estimation_sampling_time + drone_parameter_["t_motor"]);
+    z_p_ff_ = drone_parameter_["t_motor"] / (state_estimation_sampling_time + drone_parameter_["t_motor"]);
     ROS_INFO("k_ff_ = %f, z_p_ff_ = %f", k_ff_, z_p_ff_);
 
     spinning_rates_last_ = Eigen::Matrix<float, 6,1>::Zero();

@@ -2,6 +2,7 @@
 #define _FAKE_SENSOR_PLUGIN_HH_
 
 #include <vector>
+#include <queue>
 #include <iostream>
 #include <math.h>
 #include <thread>
@@ -30,8 +31,13 @@
 namespace gazebo
 {
 
-   int g_output_rate_divider = 10; // output rate = 1000Hz/ouput_rate_divider
+   bool write_data_2_file = false; // save pose data to file
+   std::string file_path = "/home/jan/flypulator_ws/src/flypulator/flypulator_gazebo_plugin/position_data.csv";
+   
+   int g_output_rate_divider = 10; // output rate = 1000Hz/ouput_rate_divider // used if not specified in state_estimation_param_yaml
+   unsigned size_of_queue = 2; // number of messages which meas_state messages are delayed by if not specified in state_estimation_param_yaml
 
+   // initial values for noise generators if no noise specified in state_estimation_param.yaml
    float g_sigma_p = 0;//1 / 3.0f;
    float g_sigma_v = 0; //sqrt(2)*g_sigma_p/(g_output_rate_divider/1000) / 3.0f;
    float g_sigma_phi = 0;//M_PI / 180.0f * 1 / 3.0f;
@@ -63,7 +69,7 @@ namespace gazebo
    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_om_y (boost::mt19937(seed_om_y), boost::normal_distribution<>(0,g_sigma_omega));
    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > g_noise_generator_om_z (boost::mt19937(seed_om_z), boost::normal_distribution<>(0,g_sigma_omega));
 
-
+   
 class FakeSensorPlugin : public ModelPlugin
 {
   
@@ -93,28 +99,28 @@ public:
     // take noise values from parameter server
     // and change distributions if value read from file
     // https://stackoverflow.com/questions/36289180/boostrandomvariate-generator-change-parameters-after-construction
-    if (ros::param::get("state/three_sigma_p", three_sigma_p)){
+    if (ros::param::get("state_estimation/three_sigma_p", three_sigma_p)){
         ROS_DEBUG("Three_sigma_p load successfully from parameter server");
         boost::normal_distribution<> new_dist ( 0, three_sigma_p / 3.0f );
         g_noise_generator_x.distribution() = new_dist;
         g_noise_generator_y.distribution() = new_dist;
         g_noise_generator_z.distribution() = new_dist;
     } 
-    if (ros::param::get("state/three_sigma_v", three_sigma_v)){
+    if (ros::param::get("state_estimation/three_sigma_v", three_sigma_v)){
         ROS_DEBUG("Three_sigma_v load successfully from parameter server");
         boost::normal_distribution<> new_dist ( 0, three_sigma_v / 3.0f );
         g_noise_generator_v_x.distribution() = new_dist;
         g_noise_generator_v_y.distribution() = new_dist;
         g_noise_generator_v_z.distribution() = new_dist;
     } 
-    if (ros::param::get("state/three_sigma_phi", three_sigma_phi)){
+    if (ros::param::get("state_estimation/three_sigma_phi", three_sigma_phi)){
         ROS_DEBUG("Three_sigma_phi load successfully from parameter server");
         boost::normal_distribution<> new_dist ( 0, three_sigma_phi * M_PI/180.0f / 3.0f );
         g_noise_generator_roll.distribution() = new_dist;
         g_noise_generator_pitch.distribution() = new_dist;
         g_noise_generator_yaw.distribution() = new_dist;
     } 
-    if (ros::param::get("state/three_sigma_omega", three_sigma_omega)){
+    if (ros::param::get("state_estimation/three_sigma_omega", three_sigma_omega)){
         ROS_DEBUG("Three_sigma_omega load successfully from parameter server");
         boost::normal_distribution<> new_dist ( 0, three_sigma_omega * M_PI/180.0f / 3.0f );
         g_noise_generator_om_x.distribution() = new_dist;
@@ -122,7 +128,24 @@ public:
         g_noise_generator_om_z.distribution() = new_dist;
     } 
 
+    float sampling_time;
+    if (ros::param::get("state_estimation/sampling_time", sampling_time)){
+        ROS_INFO("sampling time load successfully from parameter server");
+        g_output_rate_divider = (int) (sampling_time * 1000.0); // convert sampling time to divider
+    } 
+    int nr_of_msg_delay;
+    if (ros::param::get("state_estimation/nr_of_msg_delay", nr_of_msg_delay)){
+        ROS_INFO("nr of message delay load successfully from parameter server");
+        size_of_queue = nr_of_msg_delay; 
+    } 
     
+
+
+
+    if (write_data_2_file){
+      result_file.open(file_path);
+      result_file << "time,x,y,z,roll,pitch,yaw" << std::endl;
+    }
  
     // Initialize ros, if it has not already bee initialized.
     if (!ros::isInitialized())
@@ -235,15 +258,30 @@ public:
     
       // publish real states of the simulated drone
       pub_real_state.publish(uav_state_msg);
-  
-      // publish measured states of the simulated drone
-      pub_meas_state.publish(uav_state_meas_msg);
+      
+      // delay measurement messages by multiplies of T_s
+      // push message to queue
+      queue.push(uav_state_meas_msg); // pushes new messages to the back
+      // at beginning, queue must be filled, so no pop
+      if (queue.size() > size_of_queue){
+          // publish measured states of the simulated drone
+          pub_meas_state.publish(queue.front()); // take first element and publish
+          queue.pop(); // delete first element
+      }
+
     }
     else
       loop_cnt++;
 
     ros::spinOnce();
+
+    // save pose data to file
+    if (write_data_2_file){
+        streamDataToFile();
+    }
+
   }
+
 
 private:
   void QueueThread()
@@ -253,6 +291,21 @@ private:
     {
       this->rosQueue.callAvailable(ros::WallDuration(timeout));
     }
+  }
+
+  void streamDataToFile(){
+    result_file.setf(std::ios::fixed, std::ios::floatfield);
+        result_file.precision(5);
+        math::Pose drone_pose = this->link0->GetWorldPose();
+        math::Vector3 eul (drone_pose.rot.GetRoll(), drone_pose.rot.GetPitch(), drone_pose.rot.GetYaw());
+        result_file << this->model->GetWorld()->GetSimTime().Double() << ",";
+        result_file << drone_pose.pos.x << ","
+                    << drone_pose.pos.y << ","
+                    << drone_pose.pos.z << ","
+                    << eul.x << ","
+                    << eul.y << ","
+                    << eul.z;
+        result_file << std::endl;  
   }
 
   /// \brief Pointer to the model.
@@ -281,6 +334,10 @@ private:
 private:
   ros::Publisher pub_real_state;
   ros::Publisher pub_meas_state;
+
+  std::ofstream result_file;
+
+  std::queue<flypulator_common_msgs::UavStateStamped> queue;
 
 };
 

@@ -44,12 +44,12 @@ namespace gazebo
 /// \brief A plugin to control drone
 class PropulsionPlugin : public ModelPlugin
 {
-  bool write_data_2_file = true; // new version with more data (contains also hub force and roll moment)
+  bool write_data_2_file = false; // new version with more data (contains also hub force and roll moment)
   bool WRITE_CSV_FILE = false; // if save the test_data to .csv
   bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
   bool use_ground_effect = false; // if enable ground effect
   bool use_motor_dynamic = true; // if enable motor dynamic
-  bool use_simple_aerodynamic = true; // use f=k*omega² and tau = b * omega² // care, aerodynamic k and b have to be adapted in controller as well!
+  bool use_simple_aerodynamic = false; // use f=k*omega² and tau = b * omega² // care, aerodynamic k and b have to be adapted in controller as well!
 
   double test_data[12]; // test data for debug
   double ground_effect_coeff; // ground effect coefficient
