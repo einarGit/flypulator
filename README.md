@@ -93,7 +93,7 @@ The motors feedforward control requires the sampling time of the state estimatio
 
 The code style follows the [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide). Hence, class member variables have a underscore suffix (e.g. `variable1_`). Global variables have a leading `g_` prefix (e.g. `g_variable2`). For performance reasons, functions which are called frequently do not return values, but get a reference on the output passed as argument, so the result can be stored in this reference. This is a commonly used principle in C++.
 
-### Known Issues
+## Known Issues
 
  - Sometimes gazebo fails to start. Just exit and start again
  - If `catkin_make` does not succeed because some header files are missing, just run it twice.
