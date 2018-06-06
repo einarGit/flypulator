@@ -49,7 +49,7 @@ class PropulsionPlugin : public ModelPlugin
   bool add_wrench_to_drone = true; // if add force and torque to drone in gazebo
   bool use_ground_effect = false; // if enable ground effect
   bool use_motor_dynamic = true; // if enable motor dynamic
-  bool use_simple_aerodynamic = false; // use f=k*omega² and tau = b * omega² // care, aerodynamic k and b have to be adapted in controller as well!
+  bool use_simple_aerodynamic = false; // use f=k*omega² and tau = b * omega² 
 
   double test_data[12]; // test data for debug
   double ground_effect_coeff; // ground effect coefficient
@@ -117,7 +117,9 @@ class PropulsionPlugin : public ModelPlugin
 
   gazebo::physics::LinkPtr rotor_link_ptr[6]; // pointer to rotor links
 
-  bool add_dist = false;
+  bool add_dist = true;
+
+  math::Vector3 distforce = math::Vector3(0,0,0);
 
 
   /// \brief Constructor
@@ -439,7 +441,8 @@ public:
     } // end for loop
 
     if (add_dist){
-      //this->link0->AddForce(math::Vector3(10, 10, 10));
+      this->link0->AddForce(distforce);
+      //this->link0->AddTorque(distforce);
       //this->link0->AddTorque(math::Vector3(1,1,1));
     }
 
@@ -504,7 +507,7 @@ public:
     // Vwind_y = _wind_msg->y;
     // Vwind_z = _wind_msg->z;
     ROS_INFO("add disturbance");
-    add_dist = true;
+    distforce = math::Vector3 (_wind_msg->x, _wind_msg->y, _wind_msg->z);
   }
 
 public:
