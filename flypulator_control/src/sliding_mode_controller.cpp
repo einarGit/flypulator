@@ -42,20 +42,23 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
     s_T_ = z_2_T_ + lambda_T_ * z_1_T_;
 
     // calculate translational output, take elementwise arctan with .array() and convert back with .matrix()
-    u_T_ = mass_ * ( -lambda_T_ * z_2_T_ + gravity_ + x_des.p_ddot - 2.0f/M_PI * K_T_ * (atan(s_T_.array())).matrix() ); 
+    u_T_ =  ( -lambda_T_ * z_2_T_ + gravity_ + x_des.p_ddot - 2.0f/M_PI * K_T_ * (atan(s_T_.array())).matrix() ); 
     
     // integral sliding mode: suppose zero intial conditions (?)
     t_current_ = ros::Time::now(); // get current time
     t_delta_ = t_current_ - t_last_; // calculate time difference for integral action
     t_last_ = t_current_;
+    ROS_DEBUG("t_delta = %f", t_delta_.toSec());
     if (control_started_) // start integral action at first message, so no integral in first run. bool is set to true in rotational below
     {
-        integral_T_ = integral_T_ + 2.0f /M_PI * K_T_ * (atan(s_T_.array())).matrix() * t_delta_.toSec(); 
-        s_T_I_ = s_T_ + integral_T_;
+        s_T_I_ = s_T_ - integral_T_;
+        integral_T_ = integral_T_ - 2.0f /M_PI * K_T_ * (atan(s_T_.array())).matrix() * t_delta_.toSec(); 
         u_T_I_ = - 2/M_PI * K_T_I_ * (atan(s_T_I_.array())).matrix(); 
     }
     // provide output through pass by reference
-    control_force_and_torque.block(0,0,3,1) = u_T_ + u_T_I_;  // convert to force input by multiplying with mass (f=m*a)
+    control_force_and_torque.block(0,0,3,1) = mass_ * (u_T_ + u_T_I_);  // convert to force input by multiplying with mass (f=m*a)
+    ROS_DEBUG("s_T_ = [%f,%f,%f]", s_T_.x(), s_T_.y(), s_T_.z());
+    ROS_DEBUG("s_T_I_ = [%f,%f,%f]", s_T_I_.x(), s_T_I_.y(), s_T_I_.z());
     ROS_DEBUG(".. translational output calculated...");
     ROS_DEBUG("u_T = [%f, %f, %f], u_T_I = {%f, %f, %f]", u_T_.x(), u_T_.y(), u_T_.z(), u_T_I_.x(), u_T_I_.y(), u_T_I_.z());
     
@@ -115,11 +118,11 @@ void SlidingModeController:: computeControlForceTorqueInput(const PoseVelocityAc
             
     // integral sliding mode: calculate integral value
     if (control_started_){
-        integral_R_ = integral_R_ + 2.0f /M_PI * K_R_ * (atan(s_R_.array())).matrix() * t_delta_.toSec(); 
         // calculate integral sliding surface
         s_R_I_ = s_R_ + integral_R_;
+        integral_R_ = integral_R_ + 2.0f /M_PI * K_R_ * (atan(s_R_.array())).matrix() * t_delta_.toSec(); 
         // calculate integral output
-        u_R_I_ = - K_R_I_ * 2.0f / M_PI * ( atan( ( 0.5f*inertia_inv_.transpose()*matrix_g_transposed_.transpose() * s_R_I_ ).array())).matrix();
+        u_R_I_ = - K_R_I_ * 2.0f / M_PI * ( atan( ( 0.5f* (matrix_g_transposed_ * inertia_inv_).transpose() *  s_R_I_ ).array())).matrix();
     }
     else{
         control_started_ = true;

@@ -128,7 +128,7 @@ void ControllerInterface::mapControlForceTorqueInputToPropellerRates(const PoseV
 
 // perform feedforward control if boolean class variable use_motor_ff_control_ is true
 void ControllerInterface::motorFeedForwardControl(Eigen::Matrix<float,6,1>& spinning_rates){
-    // Y(z) / U(z) = k_ff * z / (z - z_p_ff); Y.. output, u.. input; -> y[k] = z_p_ff*y[k-1] + k_ff * u[k]
+    // U(z) / Y(z) = k_ff * z / (z - z_p_ff); Y.. output, u.. input; -> y[k] = - z_p_ff/k_ff_ * u[k-1] + 1/k_ff * u[k]
     for (int i = 0; i<6; i++){
         if (use_motor_ff_control_)
         {
@@ -138,7 +138,7 @@ void ControllerInterface::motorFeedForwardControl(Eigen::Matrix<float,6,1>& spin
             // save to output variable
             spinning_rates(i,0) = spinning_rates_current_(i,0);
         }
-         // save spinning rates in both cases for probable future dynamic reconfigure of feedforward control
+         // save spinning rates in both cases for possible future dynamic reconfigure of feedforward control
         spinning_rates_last_(i,0) = spinning_rates_current_(i,0); // save last value
     }
 }

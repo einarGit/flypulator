@@ -1,4 +1,4 @@
-uav/mass: 6.15 # [kg] too large
+uav/mass: 6.15 # [kg] 
 uav/i_xx: 0.45 # [kg m²]
 uav/i_yy: 0.33 # [kg m²]
 uav/i_zz: 0.70 # [kg m²]
@@ -12,6 +12,6 @@ uav/gravity: 9.81 # [m/s²]
 uav/t_motor: 0.11 # [s] motor PT1 time constant 
 controller/type: "ism" #controller type, "ism" for integral sliding mode
 controller/use_motor_ff: true # enable or disable feedforward motor control
-trajectory/update_rate: 50 # [Hz] update rate for trajectory generator
+trajectory/update_rate: 250 # [Hz] update rate for trajectory generator
 
 

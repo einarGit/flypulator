@@ -110,6 +110,14 @@ bool TrajectoryGenerator::createAndSendTrajectory(const geometry_msgs::Vector3& 
         ROS_DEBUG("Current Time: %f", t.toSec());
     }
 
+    // send final message with zero velocities and accelerations
+    for (int i = 0; i<6; i++){ vel_current[i] = 0; acc_current[i] = 0;}
+    Eigen::Vector3f zeros ( 0,0,0 );
+    trajectory_msgs::MultiDOFJointTrajectoryPoint msg = generateTrajectoryMessage(pose_current, vel_current, acc_current, 
+                                                                                    q_current, zeros, zeros, ros::Duration(t-t_start));
+    this->trajectory_publisher_.publish(msg); //publish message to topic /trajectory
+
+
     ROS_INFO("trajectory finished!");
 
     return true;
@@ -132,8 +140,7 @@ void TrajectoryGenerator::euler2Quaternion(const float roll, const float pitch, 
     Eigen::AngleAxisf pitchAngle (pitch, Eigen::Vector3f::UnitY());
     Eigen::AngleAxisf yawAngle (yaw, Eigen::Vector3f::UnitZ());
 
-    //q = yawAngle * pitchAngle * rollAngle; // fixed axes
-    q = rollAngle * pitchAngle * yawAngle; // consecutive axes
+    q = yawAngle * pitchAngle * rollAngle; //(yaw-pitch-roll sequence) with consequtive axes, q B to I
 }
 
 // calculate angular velocity from euler angles and its derivatives, following Fje94 p.42

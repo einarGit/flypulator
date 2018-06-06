@@ -31,8 +31,8 @@
 namespace gazebo
 {
 
-   bool write_data_2_file = false; // save pose data to file
-   std::string file_path = "/home/jan/flypulator_ws/src/flypulator/flypulator_gazebo_plugin/position_data.csv";
+   bool write_data_2_file = true; // save pose data to file
+   std::string file_path = "/home/jan/flypulator_ws/src/flypulator/flypulator_gazebo_plugin/position_data_refstep.csv";
    
    int g_output_rate_divider = 10; // output rate = 1000Hz/ouput_rate_divider // used if not specified in state_estimation_param_yaml
    unsigned size_of_queue = 2; // number of messages which meas_state messages are delayed by if not specified in state_estimation_param_yaml
@@ -200,6 +200,9 @@ public:
       uav_state_msg.pose.position.x = drone_pose.pos.x;
       uav_state_msg.pose.position.y = drone_pose.pos.y;
       uav_state_msg.pose.position.z = drone_pose.pos.z;
+
+      // Eigen::Quaterniond q_ItoB (drone_pose.rot.w,drone_pose.rot.x,drone_pose.rot.y,drone_pose.rot.z);
+      // Eigen::Quaterniond q_BtoI (q_ItoB.toRotationMatrix().transpose());
       uav_state_msg.pose.orientation.w = drone_pose.rot.w;
       uav_state_msg.pose.orientation.x = drone_pose.rot.x;
       uav_state_msg.pose.orientation.y = drone_pose.rot.y;
@@ -228,7 +231,7 @@ public:
       uav_state_meas_msg.pose.position.y = drone_pose.pos.y + g_noise_generator_y();
       uav_state_meas_msg.pose.position.z = drone_pose.pos.z + g_noise_generator_z();
 
-      // add attitude noise using roll pitch yaw representation
+      // add attitude noise using roll pitch yaw representation (yaw-pitch-roll sequence)
       math::Vector3 eul (drone_pose.rot.GetRoll(), drone_pose.rot.GetPitch(), drone_pose.rot.GetYaw());
       eul.x = eul.x + g_noise_generator_roll();
       eul.y = eul.y + g_noise_generator_pitch();

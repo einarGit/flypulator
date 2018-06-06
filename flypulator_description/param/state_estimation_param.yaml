@@ -1,6 +1,6 @@
 state_estimation/three_sigma_p: 0.001 # [m] three sigma value for position measurement noise (gaussian)
-state_estimation/three_sigma_v: 0.067 # [m/s] three sigma value for velocity measurement noise (gaussian)
+state_estimation/three_sigma_v: 0.04 #11 # [m/s] three sigma value for velocity measurement noise (gaussian)
 state_estimation/three_sigma_phi: 0.5 # [°] three sigma value for attitude measurement noise (gaussian)
-state_estimation/three_sigma_omega: 0.41 # [rad/s] three sigma value for angular velocity measurement noise (gaussian)
-state_estimation/sampling_time: 0.020 # [s] sampling time
-state_estimation/nr_of_msg_delay: 2 # number of messages (int!) which the state estimation is delayed by
+state_estimation/three_sigma_omega: 23 #7.1 # [°/s] three sigma value for angular velocity measurement noise (gaussian)
+state_estimation/sampling_time: 0.03 # [s] sampling time
+state_estimation/nr_of_msg_delay: 1 # number of messages (integer!) which the state estimation is delayed by

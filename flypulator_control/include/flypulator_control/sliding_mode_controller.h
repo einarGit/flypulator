@@ -7,6 +7,7 @@
 class SlidingModeController : public BaseController {
     public: 
         SlidingModeController(){ROS_ERROR("Sliding mode Controller, dont know why this constructor has been called");};
+        // initialize class variables in constructor with initialization list as best practise
         SlidingModeController(const float mass, const Eigen::Matrix3f inertia, const float gravity) : mass_(mass), inertia_(inertia), 
                                             inertia_inv_(inertia.inverse()), gravity_(Eigen::Vector3f (0,0,gravity)), integral_T_(Eigen::Vector3f (0,0,0)),
                                             integral_R_(Eigen::Vector4f (0,0,0,0)), control_started_(false), s_T_I_(Eigen::Vector3f(0,0,0)), u_T_I_(Eigen::Vector3f(0,0,0)),

@@ -88,8 +88,8 @@ class PropulsionPlugin : public ModelPlugin
   double Vz = 1e-20;      //air velocity in global z
   double Vi_h;            //induced velocity in the hovering case
   
-  double k_simple_aero = 0.000055;
-  double b_simple_aero = 0.0000011;
+  double k_simple_aero = 0.0138;
+  double b_simple_aero = 0.00022;
 
   double rotor_vel_raw[6] = {0};  // rotor velocity with sign, used for motor dynamic
   double rotor_vel_cmd[6] = {0};               // blade spinning velocity commands
@@ -117,6 +117,7 @@ class PropulsionPlugin : public ModelPlugin
 
   gazebo::physics::LinkPtr rotor_link_ptr[6]; // pointer to rotor links
 
+  bool add_dist = false;
 
 
   /// \brief Constructor
@@ -437,6 +438,11 @@ public:
 
     } // end for loop
 
+    if (add_dist){
+      //this->link0->AddForce(math::Vector3(10, 10, 10));
+      //this->link0->AddTorque(math::Vector3(1,1,1));
+    }
+
         //print to file
     if (write_data_2_file){
         streamDataToFile();
@@ -494,9 +500,11 @@ public:
 public:
   void OnRosWindMsg(const geometry_msgs::Vector3ConstPtr &_wind_msg)
   {
-    Vwind_x = _wind_msg->x;
-    Vwind_y = _wind_msg->y;
-    Vwind_z = _wind_msg->z;
+    // Vwind_x = _wind_msg->x;
+    // Vwind_y = _wind_msg->y;
+    // Vwind_z = _wind_msg->z;
+    ROS_INFO("add disturbance");
+    add_dist = true;
   }
 
 public:
