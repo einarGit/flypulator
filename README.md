@@ -67,9 +67,9 @@ They can be called by the following command (for instance):
 
 ` rosservice call /linear_trajectory '{x_start: [0,0,0], x_end:  [5,5,-1], rpy_start: [-9,0,23], rpy_end: [5,85,360], delta_t: 10}'`
 
-The model parameters are defined in the file `drone_parameter.yaml` located at `~/catkin_ws/src/flypulator/flypulator_control/cfg/`. They have to be load to ROS parameter server either using the provided launchfile `controller.launch` or using the following command: 
+The model parameters are defined in the file `drone_parameter.yaml` located at `~/catkin_ws/src/flypulator/flypulator_description/param/`. They have to be load to ROS parameter server either using the provided launchfile `controller.launch` or using the following command: 
 
-` rosparam load flypulator_ws/src/flypulator/flypulator_control/cfg/drone_parameter.yaml `
+` rosparam load flypulator_ws/src/flypulator/flypulator_description/param/drone_parameter.yaml `
 
 The control parameters can be changed via runtime using the [dynamic_reconfigure package](http://wiki.ros.org/dynamic_reconfigure). The default values are defined in the file `control_parameter.cfg` located at `~/catkin_ws/src/flypulator/flypulator_control/cfg/`. To start the dynamic reconfigure GUI, use the following command:
 
