@@ -8,6 +8,7 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  flypulator_common_msgs
   roscpp
   std_msgs
   message_generation
@@ -130,7 +131,7 @@ include_directories(
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
  #add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#add_dependencies(controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS}) 
+#add_dependencies(controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
@@ -141,7 +142,7 @@ add_executable(controller_node src/controller_node.cpp src/controller_interface.
 #add_executable(controller_node src/controller_node.cpp src/sliding_mode_controller.cpp)
 
 add_dependencies(controller_node ${PROJECT_NAME}_gencfg)
-#add_dependencies(controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS}) 
+#add_dependencies(controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 
 ## Rename C++ executable without prefix
