@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>flypulator_control</name>
-  <version>0.0.0</version>
+  <version>1.0.0</version>
   <description>The controller package for flypulator project</description>
 
   <maintainer email="jan.krieglstein@tu-dresden.de">Jan Krieglstein</maintainer>
