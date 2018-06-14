@@ -1,7 +1,7 @@
 #include "flypulator_control/sliding_mode_controller.h"
 
 // callback for dynamic reconfigure, sets dynamic parameters (controller gains)
-void SlidingModeController::configCallback(flypulator_control::control_parameterConfig& config, uint32_t level){
+void SlidingModeController::configCallback(flypulator_control::ism_parameterConfig& config, uint32_t level){
     ROS_INFO("Reconfigure Request: \n lambda_T = %f, \n k_T \t  = %f, \n k_T_I \t  = %f, \n lambda_R = %f, \n k_R \t  = %f, \n k_R_I \t  = %f",
     config.ism_lambda_T, config.ism_k_T, config.ism_k_T_I, config.ism_lambda_R, config.ism_k_R, config.ism_k_R_I);
     // set new values to class variables

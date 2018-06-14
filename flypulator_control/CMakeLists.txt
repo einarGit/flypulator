@@ -90,7 +90,7 @@ find_package(Eigen3 REQUIRED)
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  cfg/control_parameter.cfg
+  cfg/ism_parameter.cfg
 )
 
 ###################################
