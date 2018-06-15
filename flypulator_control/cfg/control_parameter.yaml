@@ -1,0 +1,3 @@
+controller/type: "ism" #controller type, "ism" for integral sliding mode
+controller/use_motor_ff: true # enable or disable feedforward motor control
+trajectory/update_rate: 250 # [Hz] update rate for trajectory generator

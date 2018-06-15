@@ -11,7 +11,7 @@
 
 //dynamic reconfigure includes
 #include <dynamic_reconfigure/server.h>
-#include <flypulator_control/control_parameterConfig.h>
+#include <flypulator_control/ism_parameterConfig.h>
 
 // include message structs
 #include "geometry_msgs/Transform.h"
