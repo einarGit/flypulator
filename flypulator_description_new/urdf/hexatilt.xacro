@@ -1,0 +1,355 @@
+<?xml version="1.0"?>
+
+<robot name="hexatilt" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Properties -->
+  <xacro:property name="namespace" value="/drone" />
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  <xacro:property name="deg_to_rad" value="0.017453278"/>
+  <xacro:property name="rotor_velocity_slowdown_sim" value="10" />
+  <xacro:property name="mesh_file" value="hexatilt.dae" />
+  <xacro:property name="mesh_scale" value="0.001 0.001 0.001"/>
+  <xacro:property name="mesh_scale_prop" value="0.098 0.098 0.098"/>
+  <xacro:property name="mass" value="4.5" /> <!-- [kg] -->
+  <xacro:property name="body_width" value="0.45" /> <!-- [m] -->
+  <xacro:property name="body_height" value="0.085" /> <!-- [m] -->
+  <xacro:property name="mass_rotor" value="0.010" /> <!-- [kg] -->
+  <xacro:property name="arm_length_front_x" value="0.22" /> <!-- [m] -->
+  <xacro:property name="arm_length_back_x" value="0.22" /> <!-- [m] -->
+  <xacro:property name="arm_length_front_y" value="0.37" /> <!-- [m] -->
+  <xacro:property name="arm_length_back_y" value="0.37" /> <!-- [m] -->
+  <!--Added for Hexacopter -->
+  <xacro:property name="arm_length_side_x" value="0.43" /> <!-- [m] -->
+  <xacro:property name="arm_length_side_y" value="0.01" /> <!-- [m] -->
+
+  <xacro:property name="leg_pos_side_x" value="0.11" /> <!-- [m] -->
+  <xacro:property name="mass_leg" value="0.180" /> <!-- [kg] -->
+  <xacro:property name="radius_leg" value="0.0125" /> <!-- [m] -->
+  <xacro:property name="length_leg" value="0.413" /> <!-- [m] -->
+  <xacro:property name="max_leg_velocity" value="0.10" /> <!-- [m] -->
+  <xacro:property name="mesh_scale_leg" value="0.1 0.1 0.1"/>
+
+  <!--#################### -->
+  <xacro:property name="rotor_offset_top" value="0.06" /> <!-- [m] -->
+  <xacro:property name="radius_rotor" value="0.1905" /> <!-- [m] -->
+  <xacro:property name="motor_constant" value="8.54858e-06" /> <!-- [kg.m/s^2] -->
+  <xacro:property name="moment_constant" value="0.06" /> <!-- [m] -->
+  <xacro:property name="time_constant_up" value="0.0125" /> <!-- [s] -->
+  <xacro:property name="time_constant_down" value="0.025" /> <!-- [s] -->
+  <xacro:property name="max_rot_velocity" value="1100" /> <!-- [rad/s] -->
+  <xacro:property name="sin30" value="0.5" />
+  <xacro:property name="cos30" value="0.866025403784" />
+  <xacro:property name="sqrt2" value="1.4142135623730951" />
+  <xacro:property name="rotor_drag_coefficient" value="8.06428e-04" />
+  <xacro:property name="rolling_moment_coefficient" value="0.000001" />
+  <xacro:property name="color" value="DarkGrey" />
+
+  <!-- Property Blocks -->
+  <xacro:property name="body_inertia">
+    <inertia ixx="0.0347563" ixy="0.0" ixz="0.0" iyy="0.0458929" iyz="0.0" izz="0.0977" /> <!-- [kg.m^2] [kg.m^2] [kg.m^2] [kg.m^2] [kg.m^2] [kg.m^2] -->
+  </xacro:property>
+
+  <!-- inertia of a single rotor, assuming it is a cuboid. Height=3mm, width=15mm -->
+  <xacro:property name="rotor_inertia">
+    <inertia
+    ixx="${1/12 * mass_rotor * (0.015 * 0.015 + 0.003 * 0.003) * rotor_velocity_slowdown_sim}"
+    iyy="${1/12 * mass_rotor * (4 * radius_rotor * radius_rotor + 0.003 * 0.003) * rotor_velocity_slowdown_sim}"
+    izz="${1/12 * mass_rotor * (4 * radius_rotor * radius_rotor + 0.015 * 0.015) * rotor_velocity_slowdown_sim}"
+    ixy="0.0" ixz="0.0"  iyz="0.0" /> <!-- [kg.m^2] [kg.m^2] [kg.m^2] [kg.m^2] [kg.m^2] [kg.m^2] -->
+  </xacro:property>
+
+  <!-- Included URDF Files -->
+  <xacro:include filename="$(find flypulator_description_new)/urdf/multirotor_base.xacro" />
+
+  <!-- Instantiate multirotor_base_macro once -->
+  <xacro:multirotor_base_macro
+    robot_namespace="${namespace}"
+    mass="${mass}"
+    body_width="${body_width}"
+    body_height="${body_height}"
+    mesh_file="${mesh_file}"
+    mesh_scale="${mesh_scale}"
+    color="${color}"
+    >
+    <xacro:insert_block name="body_inertia" />
+  </xacro:multirotor_base_macro>
+
+  <!-- Instantiate rotors -->
+  <xacro:vertical_rotor
+    robot_namespace="${namespace}"
+    suffix="front_right"
+    direction="ccw"
+    motor_constant="${motor_constant}"
+    moment_constant="${moment_constant}"
+    parent="base_link"
+    mass_rotor="${mass_rotor}"
+    radius_rotor="${radius_rotor}"
+    time_constant_up="${time_constant_up}"
+    time_constant_down="${time_constant_down}"
+    max_rot_velocity="${max_rot_velocity}"
+    motor_number="0"
+    rotor_drag_coefficient="${rotor_drag_coefficient}"
+    rolling_moment_coefficient="${rolling_moment_coefficient}"
+    mesh="hexatilt_prop"
+    mesh_scale="${mesh_scale_prop}"
+    color="DarkGrey">
+    <origin xyz="${arm_length_front_x+0.01} -${arm_length_front_y} ${rotor_offset_top}" rpy="${13.6*deg_to_rad} 0  ${120*deg_to_rad}" />
+    <xacro:insert_block name="rotor_inertia" />
+  </xacro:vertical_rotor>
+
+  <xacro:vertical_rotor
+    robot_namespace="${namespace}"
+    suffix="back_left"
+    direction="ccw"
+    motor_constant="${motor_constant}"
+    moment_constant="${moment_constant}"
+    parent="base_link"
+    mass_rotor="${mass_rotor}"
+    radius_rotor="${radius_rotor}"
+    time_constant_up="${time_constant_up}"
+    time_constant_down="${time_constant_down}"
+    max_rot_velocity="${max_rot_velocity}"
+    motor_number="1"
+    rotor_drag_coefficient="${rotor_drag_coefficient}"
+    rolling_moment_coefficient="${rolling_moment_coefficient}"
+    mesh="hexatilt_prop"
+    mesh_scale="${mesh_scale_prop}"
+    color="Red">
+    <origin xyz="-${arm_length_back_x-0.02} ${arm_length_back_y} ${rotor_offset_top}" rpy="-${13.6*deg_to_rad} 0  -${60*deg_to_rad}" />
+    <xacro:insert_block name="rotor_inertia" />
+  </xacro:vertical_rotor>
+
+  <xacro:vertical_rotor robot_namespace="${namespace}"
+    suffix="front_left"
+    direction="cw"
+    motor_constant="${motor_constant}"
+    moment_constant="${moment_constant}"
+    parent="base_link"
+    mass_rotor="${mass_rotor}"
+    radius_rotor="${radius_rotor}"
+    time_constant_up="${time_constant_up}"
+    time_constant_down="${time_constant_down}"
+    max_rot_velocity="${max_rot_velocity}"
+    motor_number="2"
+    rotor_drag_coefficient="${rotor_drag_coefficient}"
+    rolling_moment_coefficient="${rolling_moment_coefficient}"
+    mesh="hexatilt_prop"
+    mesh_scale="${mesh_scale_prop}"
+    color="Red">
+    <origin xyz="${arm_length_front_x-0.02} ${arm_length_front_y} ${rotor_offset_top}" rpy= "${13.6*deg_to_rad} 0  ${240*deg_to_rad}"/>
+    <xacro:insert_block name="rotor_inertia" />
+  </xacro:vertical_rotor>
+
+  <xacro:vertical_rotor robot_namespace="${namespace}"
+    suffix="back_right"
+    direction="cw"
+    motor_constant="${motor_constant}"
+    moment_constant="${moment_constant}"
+    parent="base_link"
+    mass_rotor="${mass_rotor}"
+    radius_rotor="${radius_rotor}"
+    time_constant_up="${time_constant_up}"
+    time_constant_down="${time_constant_down}"
+    max_rot_velocity="${max_rot_velocity}"
+    motor_number="3"
+    rotor_drag_coefficient="${rotor_drag_coefficient}"
+    rolling_moment_coefficient="${rolling_moment_coefficient}"
+    mesh="hexatilt_prop"
+    mesh_scale="${mesh_scale_prop}"
+    color="DarkGrey">
+    <origin xyz="-${arm_length_back_x+0.01} -${arm_length_back_y} ${rotor_offset_top}" rpy= "-${13.6*deg_to_rad} 0  ${60*deg_to_rad}"/>
+    <xacro:insert_block name="rotor_inertia" />
+  </xacro:vertical_rotor>
+
+  <xacro:vertical_rotor robot_namespace="${namespace}"
+    suffix="back_right"
+    direction="cw"
+    motor_constant="${motor_constant}"
+    moment_constant="${moment_constant}"
+    parent="base_link"
+    mass_rotor="${mass_rotor}"
+    radius_rotor="${radius_rotor}"
+    time_constant_up="${time_constant_up}"
+    time_constant_down="${time_constant_down}"
+    max_rot_velocity="${max_rot_velocity}"
+    motor_number="4"
+    rotor_drag_coefficient="${rotor_drag_coefficient}"
+    rolling_moment_coefficient="${rolling_moment_coefficient}"
+    mesh="hexatilt_prop"
+    mesh_scale="${mesh_scale_prop}"
+    color="DarkGrey">
+    <origin xyz="-${arm_length_side_x} -${arm_length_side_y} ${rotor_offset_top}" rpy="${13.6*deg_to_rad} 0  ${0*deg_to_rad}" />
+    <xacro:insert_block name="rotor_inertia" />
+  </xacro:vertical_rotor>
+
+
+  <xacro:vertical_rotor robot_namespace="${namespace}"
+    suffix="back_right"
+    direction="cw"
+    motor_constant="${motor_constant}"
+    moment_constant="${moment_constant}"
+    parent="base_link"
+    mass_rotor="${mass_rotor}"
+    radius_rotor="${radius_rotor}"
+    time_constant_up="${time_constant_up}"
+    time_constant_down="${time_constant_down}"
+    max_rot_velocity="${max_rot_velocity}"
+    motor_number="5"
+    rotor_drag_coefficient="${rotor_drag_coefficient}"
+    rolling_moment_coefficient="${rolling_moment_coefficient}"
+    mesh="hexatilt_prop"
+    mesh_scale="${mesh_scale_prop}"
+    color="DarkGrey">
+    <origin xyz="${arm_length_side_x} -${arm_length_side_y} ${rotor_offset_top}" rpy="-${13.6*deg_to_rad} 0  ${180*deg_to_rad}" />
+    <xacro:insert_block name="rotor_inertia" />
+  </xacro:vertical_rotor>
+
+<xacro:landing_gear robot_namespace="${namespace}"
+    suffix="left"
+    parent="base_link"
+    mass_leg="${mass_leg}"
+    radius_leg="${radius_leg}"
+    max_leg_velocity="${max_leg_velocity}"
+    leg_number="1"
+    mesh="hexatilt_leg"
+    length_leg="${length_leg}"
+    mesh_scale="${mesh_scale_leg}"
+    color="DarkGrey"
+    reflect="-1">
+    <origin xyz="${leg_pos_side_x} 0 -0.02" rpy="0 -${10*deg_to_rad} 0" />
+    <xacro:insert_block name="rotor_inertia" />
+  </xacro:landing_gear>
+
+
+<xacro:landing_gear robot_namespace="${namespace}"
+    suffix="right"
+    parent="base_link"
+    mass_leg="${mass_leg}"
+    radius_leg="${radius_leg}"
+    max_leg_velocity="${max_leg_velocity}"
+    leg_number="2"
+    mesh="hexatilt_leg"
+    length_leg="${length_leg}"
+    mesh_scale="${mesh_scale_leg}"
+    reflect="1"
+    color="DarkGrey">
+    <origin xyz="-${leg_pos_side_x} 0 -0.02" rpy="0 ${10*deg_to_rad} 0" />
+
+    <xacro:insert_block name="rotor_inertia" />
+  </xacro:landing_gear>
+  <!--<gazebo>
+    <plugin name="control_plugin" filename="libcontrol_plugin.so">
+    </plugin>
+  </gazebo>-->
+
+  <gazebo>
+    <plugin name="fake_sensor_plugin" filename="libfake_sensor_plugin.so">
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>${namespace}</robotNamespace>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="drone_internal_imu_plugin" filename="libhector_gazebo_ros_imu.so" >
+      <robotNamespace>${namespace}</robotNamespace>
+      <alwaysOn>true</alwaysOn>
+      <bodyName>base_link</bodyName>
+      <frameName>base_link</frameName>
+      <topicName>IMU/imu_data</topicName>
+      <serviceName>drone/internal_sensors/imu_service</serviceName>
+      <updateRate>100.0</updateRate>
+      <gaussianNoise>0.001</gaussianNoise>
+      <!-- accelerometer params -->
+      <accelOffset>0.0 0.0 0.0</accelOffset>
+      <accelGaussianNoise>0.0003 0.0003 0.0003</accelGaussianNoise>
+      <accelDrift>0.00004 0.00004 0.00004</accelDrift>
+      <accelFrequency>0.0025 0.0025 0.0025</accelFrequency>
+      <!-- gyroscope params -->
+      <rateOffset>0.0 0.0 0.0</rateOffset>
+      <rateDrift>0.01 0.01 0.01</rateDrift>
+      <rateDriftFrequency>0.001 0.001 0.001</rateDriftFrequency>
+      <rateGaussianNoise>0.01 0.01 0.01</rateGaussianNoise>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="drone_internal_magnetic_sim" filename="libhector_gazebo_ros_magnetic.so">
+      <robotNamespace>${namespace}</robotNamespace>
+      <updateRate>100.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <frameId>base_link</frameId>
+      <topicName>MAGNET/magnetic_data</topicName>
+      <offset>0 0 0</offset>
+      <drift>0.0 0.0 0.0</drift>
+      <gaussianNoise>1.3e-3 1.3e-3 1.3e-3</gaussianNoise>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="drone_internal_gps_sim" filename="libhector_gazebo_ros_gps.so">
+      <robotNamespace>${namespace}</robotNamespace>
+      <updateRate>4.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <frameId>base_link</frameId>
+      <topicName>GPS/fix</topicName>
+      <velocityTopicName>GPS/fix_velocity</velocityTopicName>
+      <referenceLatitude>49.860246</referenceLatitude>
+      <referenceLongitude>8.687077</referenceLongitude>
+      <drift>0.0 0.0 0.0</drift>
+      <gaussianNoise>0.01 0.01 0.01</gaussianNoise>
+      <velocityDrift>0 0 0</velocityDrift>
+      <velocityGaussianNoise>0.01 0.01 0.01</velocityGaussianNoise>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="base_link">
+    <sensor type="camera" name="camera1">
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <vertical_fov>3.1415926</vertical_fov>
+        <image>
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>  -->
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. -->
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <robotNamespace>${namespace}</robotNamespace>
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>camera1</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>base_link</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+<gazebo>
+    <plugin name="propulsion_plugin_hexa" filename="libpropulsion_plugin_hexa.so">
+    </plugin>
+  </gazebo>
+
+
+</robot>

@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+ 
+ <rosparam command="load" file="$(find flypulator_description_new)/param/state_estimation_param.yaml" />
+
+  <arg name="model" default="'$(find flypulator_description_new)/urdf/hexatilt_base.xacro'"/>
+
+ <include file="$(find gazebo_ros)/launch/empty_world.launch" >
+  <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
+
+  <!-- <node -->
+  <!--   name="spawn_model" -->
+  <!--   pkg="gazebo_ros" -->
+  <!--   type="spawn_model" -->
+  <!--   args="-file $(find flypulator_description)/urdf/hexarotor_igs.urdf -urdf -model drone" -->
+  <!--   output="screen" > --> 
+  <!--   <rosparam file="$(find flypulator_description)/param/aeroparam.yaml" command="load"/> -->
+  <!-- </node> -->
+     
+ <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model"
+        args="-z 1.0 -unpause -urdf -model robot -param robot_description" respawn="false" output="screen" />
+
+<!-- <node pkg="robot_state_publisher" type="robot_state_publisher"  name="robot_state_publisher"> -->
+<!--     <param name="publish_frequency" type="double" value="30.0" /> -->
+<!--   </node> -->
+
+ <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+    <remap from="/joint_states" to="/drone/joint_states" />
+ </node>
+
+<!-- <include file="$(find flypulator_teleop)/launch/joy.launch" /> -->
+
+</launch>

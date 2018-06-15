@@ -1,0 +1,38 @@
+digraph G {
+node [shape=box];
+"base_link" [label="base_link"];
+"base_link_inertia" [label="base_link_inertia"];
+"leg_1" [label="leg_1"];
+"foot_1" [label="foot_1"];
+"leg_2" [label="leg_2"];
+"foot_2" [label="foot_2"];
+"rotor_0" [label="rotor_0"];
+"rotor_1" [label="rotor_1"];
+"rotor_2" [label="rotor_2"];
+"rotor_3" [label="rotor_3"];
+"rotor_4" [label="rotor_4"];
+"rotor_5" [label="rotor_5"];
+node [shape=ellipse, color=blue, fontcolor=blue];
+"base_link" -> "base_joint" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"base_joint" -> "base_link_inertia"
+"base_link" -> "leg_1_joint" [label="xyz: 0.11 0 -0.02 \nrpy: 0 -0 0"]
+"leg_1_joint" -> "leg_1"
+"leg_1" -> "foot_1_joint" [label="xyz: 0 0 -0.413 \nrpy: 1.57 -0 0"]
+"foot_1_joint" -> "foot_1"
+"base_link" -> "leg_2_joint" [label="xyz: -0.11 0 -0.02 \nrpy: 0 -0 0"]
+"leg_2_joint" -> "leg_2"
+"leg_2" -> "foot_2_joint" [label="xyz: 0 0 -0.413 \nrpy: 1.57 -0 0"]
+"foot_2_joint" -> "foot_2"
+"base_link" -> "rotor_0_joint" [label="xyz: 0.23 -0.37 0.06 \nrpy: 0.237365 -0 2.09439"]
+"rotor_0_joint" -> "rotor_0"
+"base_link" -> "rotor_1_joint" [label="xyz: -0.2 0.37 0.06 \nrpy: -0.237365 1.38778e-17 -1.0472"]
+"rotor_1_joint" -> "rotor_1"
+"base_link" -> "rotor_2_joint" [label="xyz: 0.2 0.37 0.06 \nrpy: 0.237365 -0 -2.0944"]
+"rotor_2_joint" -> "rotor_2"
+"base_link" -> "rotor_3_joint" [label="xyz: -0.23 -0.37 0.06 \nrpy: -0.237365 -1.38778e-17 1.0472"]
+"rotor_3_joint" -> "rotor_3"
+"base_link" -> "rotor_4_joint" [label="xyz: -0.43 -0.01 0.06 \nrpy: 0.237365 -0 0"]
+"rotor_4_joint" -> "rotor_4"
+"base_link" -> "rotor_5_joint" [label="xyz: 0.43 -0.01 0.06 \nrpy: -0.237365 -0 3.14159"]
+"rotor_5_joint" -> "rotor_5"
+}
